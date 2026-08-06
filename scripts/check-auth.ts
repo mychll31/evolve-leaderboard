@@ -82,9 +82,10 @@ check(rosterOk, "Authorised roster", rosterDetail);
 
 // --- Dev bypass ----------------------------------------------------------
 const devEmail = process.env.AUTH_DEV_EMAIL;
-if (devEmail) {
+const devPicker = process.env.AUTH_DEV_LOGIN === "true";
+if (devEmail || devPicker) {
   console.log(
-    `\n[33m⚠  AUTH_DEV_EMAIL is set to "${devEmail}".[0m\n` +
+    `\n\x1b[33m⚠  Development sign-in is enabled${devPicker ? " (AUTH_DEV_LOGIN)" : ` (AUTH_DEV_EMAIL=${devEmail})`}.\x1b[0m\n` +
       "   Real Google sign-in is bypassed while this is set, so it will mask\n" +
       "   any credential problem. Clear it to test the actual sign-in path.\n",
   );

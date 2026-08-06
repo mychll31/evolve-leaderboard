@@ -1,7 +1,12 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import { DevSignIn } from "@/components/auth/DevSignIn";
 import { signIn } from "@/lib/auth/config";
-import { getSessionUser } from "@/lib/auth/guards";
+import {
+  listDevelopmentAccounts,
+  listDevelopmentRoleSamples,
+} from "@/lib/auth/dev";
+import { getSessionUser, hasDevelopmentAuthBypass } from "@/lib/auth/guards";
 
 /**
  * Auth.js reports allowlist rejections as `AccessDenied`. Because there is no
@@ -32,6 +37,13 @@ export default async function SignInPage(props: {
   const misconfigured =
     process.env.NODE_ENV !== "production" &&
     !(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
+
+  const devEnabled = hasDevelopmentAuthBypass();
+  const samples = devEnabled ? await listDevelopmentRoleSamples() : [];
+  const sampleIds = new Set(samples.map((s) => s.id));
+  const others = devEnabled
+    ? (await listDevelopmentAccounts()).filter((a) => !sampleIds.has(a.id))
+    : [];
 
   return (
     <main className="bg-shell relative flex min-h-screen items-center justify-center overflow-hidden p-6">
@@ -120,6 +132,10 @@ export default async function SignInPage(props: {
             sign in.
           </p>
         </div>
+
+        {devEnabled && (
+          <DevSignIn samples={samples} others={others} />
+        )}
       </div>
     </main>
   );

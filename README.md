@@ -36,32 +36,39 @@ npm run dev
 plain `file:./local.db`, so `TURSO_DATABASE_URL="file:./local.db"` works out of the box and
 `TURSO_AUTH_TOKEN` stays empty.
 
-### Signing in locally
+### Signing in locally, without Google
 
 Leaderboard is invite-only — there is no public signup, and Google OAuth needs
-credentials. To click through the app before setting that up, put a seeded
-address in `.env`:
+credentials. To click through the app before setting that up:
 
 ```
-AUTH_DEV_EMAIL="admin@core.example"
+AUTH_DEV_LOGIN="true"
 ```
 
-This bypass is double-guarded: it does nothing unless the build is a development build
-**and** the variable is set, and it only impersonates a user who already exists in the
-database. It is inert in any production build.
+`/signin` then shows a **Development sign-in** panel with one button per role,
+so switching between them is a click rather than an edit-and-restart:
+
+| Button | Seeded account | Sees |
+|---|---|---|
+| Super Admin | Michael · Founders | Everything, plus `/admin` |
+| Coach | Ana Reyes · Mavericks | Their own team's desk and score entry |
+| Member | Amara · Builders | Read-only, plus their own check-in |
+
+A drop-down lists every other seeded account. Sign out returns you to the
+picker.
+
+The bypass is guarded three ways: it is dead unless the build is a development
+build **and** the variable is set, the chosen account must already exist in the
+database, and the cookie holds an opaque user id that is re-validated on every
+request. It is compiled out of any production build.
+
+`AUTH_DEV_EMAIL="someone@example.com"` still works if you would rather be
+signed in automatically as one fixed account with no picker.
 
 To use real Google sign-in, create OAuth credentials with redirect URI
 `http://localhost:3000/api/auth/callback/google`, then set `AUTH_SECRET`
 (`npx auth secret`), `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`, and clear
-`AUTH_DEV_EMAIL`.
-
-Seeded sample users for `AUTH_DEV_EMAIL`:
-
-| Role | Email | Notes |
-|---|---|---|
-| Super admin + member | `admin@core.example` | Michael on Founders |
-| Coach | `john.doe@core.example` | Founders coach |
-| Member | `john@core.example` | John on Titans |
+`AUTH_DEV_LOGIN`. Run `npm run auth:check` to verify.
 
 ### Scripts
 

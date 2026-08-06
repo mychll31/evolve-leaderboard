@@ -12,11 +12,18 @@ export type SessionUser = Actor & {
   image?: string | null;
 };
 
-const DEV_SIGNED_OUT_COOKIE = "core-plus-dev-signed-out";
+const DEV_SIGNED_OUT_COOKIE = "leaderboard-dev-signed-out";
+const DEV_USER_COOKIE = "leaderboard-dev-user";
 
+/**
+ * Enabled by `AUTH_DEV_LOGIN=true` (which offers the account picker) or by
+ * `AUTH_DEV_EMAIL` (which signs a single account in automatically). Either way
+ * it is dead in a production build.
+ */
 export function hasDevelopmentAuthBypass(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
   return (
-    process.env.NODE_ENV !== "production" && Boolean(process.env.AUTH_DEV_EMAIL)
+    process.env.AUTH_DEV_LOGIN === "true" || Boolean(process.env.AUTH_DEV_EMAIL)
   );
 }
 
@@ -27,7 +34,25 @@ async function isDevelopmentAuthSignedOut(): Promise<boolean> {
 
 export async function suppressDevelopmentAuth(): Promise<void> {
   if (!hasDevelopmentAuthBypass()) return;
-  (await cookies()).set(DEV_SIGNED_OUT_COOKIE, "1", {
+  const jar = await cookies();
+  jar.delete(DEV_USER_COOKIE);
+  jar.set(DEV_SIGNED_OUT_COOKIE, "1", {
+    httpOnly: true,
+    path: "/",
+    sameSite: "lax",
+  });
+}
+
+/**
+ * Signs in as a specific seeded account. Stores the user id rather than the
+ * email so the value is opaque, and it is validated against the database on
+ * every request regardless.
+ */
+export async function setDevelopmentUser(userId: string): Promise<void> {
+  if (!hasDevelopmentAuthBypass()) return;
+  const jar = await cookies();
+  jar.delete(DEV_SIGNED_OUT_COOKIE);
+  jar.set(DEV_USER_COOKIE, userId, {
     httpOnly: true,
     path: "/",
     sameSite: "lax",
@@ -47,10 +72,28 @@ async function developmentUser(): Promise<SessionUser | null> {
   if (!hasDevelopmentAuthBypass()) return null;
   if (await isDevelopmentAuthSignedOut()) return null;
 
+  // A picked account wins over the env default, so switching roles in the UI
+  // does not require editing .env and restarting.
+  const pickedId = (await cookies()).get(DEV_USER_COOKIE)?.value;
+  const db = getDb();
+
+  if (pickedId) {
+    const [row] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, pickedId))
+      .limit(1);
+    if (row) {
+      return { id: row.id, role: row.role, name: row.name, email: row.email };
+    }
+    // Cookie points at a user who no longer exists — e.g. after a reseed.
+    // Fall through to the env default rather than stranding the session.
+  }
+
   const email = process.env.AUTH_DEV_EMAIL;
   if (!email) return null;
 
-  const [row] = await getDb()
+  const [row] = await db
     .select()
     .from(users)
     .where(eq(users.email, email))
