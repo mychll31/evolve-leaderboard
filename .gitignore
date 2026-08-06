@@ -4,3 +4,4 @@ node_modules/
 !.env.example
 local.db*
 .DS_Store
+.vercel
