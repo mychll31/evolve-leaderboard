@@ -25,9 +25,17 @@ describe("admin + member queries", () => {
 
   it("summarises seasons with counts", async () => {
     const rows = await listSeasons(t.db);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ status: "active", teamCount: 10, memberCount: 14 });
-    expect(rows[0].meetingCount).toBeGreaterThan(15);
+    // The active season plus the archived preseason the fixture seeds for
+    // cross-season Hall of Fame history.
+    expect(rows).toHaveLength(2);
+
+    const active = rows.find((r) => r.status === "active")!;
+    expect(active).toMatchObject({ teamCount: 10, memberCount: 14 });
+    expect(active.meetingCount).toBeGreaterThan(15);
+
+    const archived = rows.find((r) => r.status === "archived")!;
+    expect(archived.name).toBe("Core+ Preseason");
+    expect(archived.meetingCount).toBe(0);
   });
 
   it("lists meetings with attendance counts", async () => {

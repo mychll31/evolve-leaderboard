@@ -31,7 +31,10 @@ describe("seed", () => {
   });
 
   it("creates one active season anchored around today", async () => {
-    const [season] = await t.db.select().from(seasons);
+    const [season] = await t.db
+      .select()
+      .from(seasons)
+      .where(eq(seasons.id, result.seasonId));
     expect(season.status).toBe("active");
     expect(season.startsOn).toBe("2026-07-02");
     expect(season.endsOn).toBe("2026-09-03");
@@ -39,14 +42,22 @@ describe("seed", () => {
   });
 
   it("creates the ten teams from the design", async () => {
-    const rows = await t.db.select().from(teams);
+    // Scoped to the active season: the fixture also seeds an archived
+    // preseason so the Hall of Fame has real cross-season history.
+    const rows = await t.db
+      .select()
+      .from(teams)
+      .where(eq(teams.seasonId, result.seasonId));
     expect(rows).toHaveLength(10);
     expect(rows.map((r) => r.name)).toContain("Founders");
     expect(rows.map((r) => r.abbr)).toContain("TBZ");
   });
 
   it("creates 14 member and 10 coach memberships", async () => {
-    const rows = await t.db.select().from(memberships);
+    const rows = await t.db
+      .select()
+      .from(memberships)
+      .where(eq(memberships.seasonId, result.seasonId));
     expect(rows.filter((r) => r.role === "member")).toHaveLength(14);
     expect(rows.filter((r) => r.role === "coach")).toHaveLength(10);
   });
@@ -138,7 +149,10 @@ describe("seed", () => {
   });
 
   it("writes a full set of weekly snapshots with rank 1 present each week", async () => {
-    const rows = await t.db.select().from(scoreSnapshots);
+    const rows = await t.db
+      .select()
+      .from(scoreSnapshots)
+      .where(eq(scoreSnapshots.seasonId, result.seasonId));
     const weeks = [...new Set(rows.map((r) => r.weekNo))].sort((a, b) => a - b);
     expect(weeks.length).toBeGreaterThanOrEqual(5);
     for (const week of weeks) {

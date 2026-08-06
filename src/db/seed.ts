@@ -13,6 +13,7 @@ import {
   seasons,
   teams,
   users,
+  weeklyAwards,
 } from "./schema";
 
 /* -------------------------------------------------------------------------
@@ -55,13 +56,53 @@ const PLAYERS = [
   { name: "Marcus", team: 4, pos: "C", att: 82, asn: 85, quiz: 78, streak: 3 },
 ] as const;
 
+/**
+ * Rules are what make these awardable by the weekly rollup. Without a rule a
+ * badge is display-only, so every seeded badge carries one.
+ */
 const BADGES = [
-  { key: "on-fire", icon: "🔥", name: "On Fire", requirementText: "5 day streak" },
-  { key: "triple-double", icon: "🏀", name: "Triple Double", requirementText: "100% att · asn · quiz" },
-  { key: "iron-man", icon: "💎", name: "Iron Man", requirementText: "30 days perfect attendance" },
-  { key: "rookie", icon: "🚀", name: "Rookie", requirementText: "First assignment submitted" },
-  { key: "mvp", icon: "👑", name: "MVP", requirementText: "Highest overall score" },
-  { key: "defensive", icon: "🛡", name: "Defensive Player", requirementText: "Most improved this week" },
+  {
+    key: "on-fire",
+    icon: "🔥",
+    name: "On Fire",
+    requirementText: "5 session streak",
+    rule: { type: "streak", threshold: 5 },
+  },
+  {
+    key: "triple-double",
+    icon: "🏀",
+    name: "Triple Double",
+    requirementText: "100% in every metric",
+    rule: { type: "all_metrics_at_least", value: 100 },
+  },
+  {
+    key: "iron-man",
+    icon: "💎",
+    name: "Iron Man",
+    requirementText: "20 session perfect streak",
+    rule: { type: "streak", threshold: 20 },
+  },
+  {
+    key: "rookie",
+    icon: "🚀",
+    name: "Rookie",
+    requirementText: "First assignment recorded",
+    rule: { type: "has_any_entry", metricKey: "assignment" },
+  },
+  {
+    key: "mvp",
+    icon: "👑",
+    name: "MVP",
+    requirementText: "Finish the week at rank 1",
+    rule: { type: "rank_at_most", value: 1 },
+  },
+  {
+    key: "defensive",
+    icon: "🛡",
+    name: "Defensive Player",
+    requirementText: "Biggest rank gain of the week",
+    rule: { type: "most_improved" },
+  },
 ] as const;
 
 const METRICS = [
@@ -117,6 +158,7 @@ export type SeedOptions = {
 
 export type SeedResult = {
   seasonId: string;
+  previousSeasonId: string;
   teamIds: string[];
   membershipIds: string[];
   heldMeetings: number;
@@ -399,6 +441,7 @@ export async function seed(
         icon: b.icon,
         name: b.name,
         requirementText: b.requirementText,
+        ruleJson: JSON.stringify(b.rule),
         sortOrder: i,
       })),
     )
@@ -497,10 +540,186 @@ export async function seed(
 
   await db.insert(scoreSnapshots).values(snapshotValues);
 
+  // --- Weekly MVP awards for the completed weeks ------------------------
+  const awardValues: (typeof weeklyAwards.$inferInsert)[] = [];
+  for (let week = 1; week <= currentWeek; week++) {
+    const inWeek = snapshotValues.filter((s) => s.weekNo === week);
+    const winner = inWeek.find((s) => s.rank === 1);
+    if (winner) {
+      awardValues.push({
+        seasonId: season.id,
+        weekNo: week,
+        category: "overall",
+        membershipId: winner.membershipId,
+        value: winner.score,
+      });
+    }
+    const climbers = inWeek
+      .filter((s) => s.prevRank != null && s.prevRank > s.rank)
+      .sort((a, b) => (b.prevRank! - b.rank) - (a.prevRank! - a.rank));
+    if (climbers[0]) {
+      awardValues.push({
+        seasonId: season.id,
+        weekNo: week,
+        category: "most_improved",
+        membershipId: climbers[0].membershipId,
+        value: climbers[0].prevRank! - climbers[0].rank,
+      });
+    }
+  }
+  if (awardValues.length > 0) {
+    await db.insert(weeklyAwards).values(awardValues);
+  }
+
+  const previousSeasonId = await seedPreviousSeason(db, {
+    startsOn: toIso(addDays(startsOn, -70)),
+    endsOn: toIso(addDays(startsOn, -7)),
+    badgeIds: badgeRows,
+    rand,
+  });
+
   return {
     seasonId: season.id,
+    previousSeasonId,
     teamIds: teamRows.map((t) => t.id),
     membershipIds: memberRows.map((m) => m.id),
     heldMeetings: heldCount,
   };
+}
+
+/**
+ * A completed, archived season so the Hall of Fame has genuine cross-season
+ * history rather than restating the current standings.
+ *
+ * Compact on purpose: four teams, eight members, final snapshots and MVP
+ * awards. No meetings or entries — the season is closed, and its results are
+ * what matter.
+ */
+async function seedPreviousSeason(
+  db: Database,
+  options: {
+    startsOn: string;
+    endsOn: string;
+    badgeIds: { id: string; key: string }[];
+    rand: () => number;
+  },
+): Promise<string> {
+  const { startsOn, endsOn, badgeIds, rand } = options;
+
+  const [season] = await db
+    .insert(seasons)
+    .values({
+      name: "Core+ Preseason",
+      startsOn,
+      endsOn,
+      status: "archived",
+      formula: "weighted",
+    })
+    .returning({ id: seasons.id });
+
+  const priorTeams = TEAMS.slice(0, 4);
+  const teamRows = await db
+    .insert(teams)
+    .values(
+      priorTeams.map((t, i) => ({
+        seasonId: season.id,
+        name: t.name,
+        abbr: t.abbr,
+        color: t.color,
+        sortOrder: i,
+      })),
+    )
+    .returning({ id: teams.id });
+
+  const alumni = [
+    { name: "Amara", score: 96.4 },
+    { name: "John", score: 95.1 },
+    { name: "Grace", score: 93.8 },
+    { name: "Michael", score: 92.2 },
+    { name: "Diego", score: 90.7 },
+    { name: "Leila", score: 88.3 },
+    { name: "Samuel", score: 86.9 },
+    { name: "Yara", score: 85.4 },
+  ];
+
+  // Reuse the existing user rows where the name matches, so the same person
+  // genuinely appears across both seasons.
+  const existing = await db.select({ id: users.id, name: users.name }).from(users);
+
+  const membershipValues: (typeof memberships.$inferInsert)[] = [];
+  for (const [i, person] of alumni.entries()) {
+    const match = existing.find((u) => u.name === person.name);
+    const userId =
+      match?.id ??
+      (
+        await db
+          .insert(users)
+          .values({ name: person.name, email: slugEmail(`${person.name}.alum`) })
+          .returning({ id: users.id })
+      )[0].id;
+
+    membershipValues.push({
+      seasonId: season.id,
+      teamId: teamRows[i % teamRows.length].id,
+      userId,
+      role: "member",
+      position: PLAYERS.find((p) => p.name === person.name)?.pos ?? null,
+    });
+  }
+
+  const memberRows = await db
+    .insert(memberships)
+    .values(membershipValues)
+    .returning({ id: memberships.id });
+
+  // Final standings only — three weeks of history, converging on the result.
+  const snapshotValues: (typeof scoreSnapshots.$inferInsert)[] = [];
+  const awardValues: (typeof weeklyAwards.$inferInsert)[] = [];
+
+  for (let week = 1; week <= 3; week++) {
+    const shuffled = alumni
+      .map((person, i) => ({
+        membershipId: memberRows[i].id,
+        score: person.score - (3 - week) * (1 + rand() * 2),
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    shuffled.forEach((row, index) => {
+      const previous = snapshotValues.find(
+        (s) => s.membershipId === row.membershipId && s.weekNo === week - 1,
+      );
+      snapshotValues.push({
+        seasonId: season.id,
+        membershipId: row.membershipId,
+        weekNo: week,
+        score: Math.round(row.score * 10) / 10,
+        rank: index + 1,
+        prevRank: previous?.rank ?? null,
+      });
+    });
+
+    awardValues.push({
+      seasonId: season.id,
+      weekNo: week,
+      category: "overall",
+      membershipId: shuffled[0].membershipId,
+      value: Math.round(shuffled[0].score * 10) / 10,
+    });
+  }
+
+  await db.insert(scoreSnapshots).values(snapshotValues);
+  await db.insert(weeklyAwards).values(awardValues);
+
+  // The season's champion keeps their crown.
+  const champion = snapshotValues.find((s) => s.weekNo === 3 && s.rank === 1);
+  const mvpBadge = badgeIds.find((b) => b.key === "mvp");
+  if (champion && mvpBadge) {
+    await db.insert(memberBadges).values({
+      membershipId: champion.membershipId,
+      badgeId: mvpBadge.id,
+      seasonId: season.id,
+    });
+  }
+
+  return season.id;
 }
