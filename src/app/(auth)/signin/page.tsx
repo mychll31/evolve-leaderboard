@@ -26,6 +26,13 @@ export default async function SignInPage(props: {
     ? (ERRORS[error] ?? "Something went wrong signing in. Please try again.")
     : null;
 
+  // Without credentials the button bounces off Google with an opaque error.
+  // Say so plainly instead — in development only, since in production this
+  // would be leaking configuration state to anyone who loads the page.
+  const misconfigured =
+    process.env.NODE_ENV !== "production" &&
+    !(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
+
   return (
     <main className="bg-shell relative flex min-h-screen items-center justify-center overflow-hidden p-6">
       <div
@@ -65,6 +72,19 @@ export default async function SignInPage(props: {
             </div>
           )}
 
+          {misconfigured && (
+            <div
+              role="alert"
+              className="mb-5 rounded-2xl border border-[#7A5A2A] bg-[#2A2112] px-4 py-3 text-[13px] leading-relaxed font-medium text-[#F5D9A8]"
+            >
+              <strong className="font-extrabold">Google sign-in is not configured.</strong>{" "}
+              Set <code>AUTH_GOOGLE_ID</code> and <code>AUTH_GOOGLE_SECRET</code>{" "}
+              in <code>.env</code>, then run{" "}
+              <code>npm run auth:check</code>. This notice appears in
+              development only.
+            </div>
+          )}
+
           <form
             action={async () => {
               "use server";
@@ -73,7 +93,8 @@ export default async function SignInPage(props: {
           >
             <button
               type="submit"
-              className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl bg-white px-5 py-3.5 text-[14px] font-extrabold text-[#1F2937] transition hover:bg-[#F1F5F8]"
+              disabled={misconfigured}
+              className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl bg-white px-5 py-3.5 text-[14px] font-extrabold text-[#1F2937] transition hover:bg-[#F1F5F8] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
                 <path
