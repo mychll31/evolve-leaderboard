@@ -27,7 +27,7 @@ export default async function AppLayout({
   return (
     <div className="bg-surface flex min-h-dvh">
       <Sidebar
-        seasonName={ctx.standings.season.name}
+        seasonName="Leaderboard"
         userName={name}
         roleLabel={roleLabel}
         teamName={own?.teamName ?? ctx.coachedTeams[0]?.name ?? null}

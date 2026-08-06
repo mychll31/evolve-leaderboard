@@ -75,7 +75,7 @@ export default async function DashboardPage() {
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <div className="text-[11px] font-extrabold tracking-[0.24em] text-white/85 uppercase">
-                {standings.season.name} · {standings.season.startsOn} —{" "}
+                Leaderboard · {standings.season.startsOn} —{" "}
                 {standings.season.endsOn}
               </div>
               <DisplayNumber className="mt-2 text-[56px] text-white sm:text-[76px]">

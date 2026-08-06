@@ -17,7 +17,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Core+ Season 1",
+  title: "Leaderboard",
   description: "E-VOLVE Core+ accountability season leaderboard",
 };
 

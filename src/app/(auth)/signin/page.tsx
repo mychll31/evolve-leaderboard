@@ -57,9 +57,6 @@ export default async function SignInPage(props: {
           <div className="font-display mt-7 text-[76px] leading-[0.9] font-extrabold tracking-tight text-white">
             Leaderboard
           </div>
-          <p className="text-shell-ink mt-3 text-[13px] font-semibold tracking-[0.22em] uppercase">
-            Season 1 · Accountability
-          </p>
         </div>
 
         <div className="border-shell-line rounded-[22px] border bg-white/5 p-7 backdrop-blur">

@@ -132,5 +132,5 @@ export function titleFor(pathname: string, isAdmin: boolean, isCoach: boolean): 
   const match = buildNav({ isCoach, isAdmin }).find((item) =>
     pathname.startsWith(item.href),
   );
-  return match?.title ?? "Core+";
+  return match?.title ?? "Leaderboard";
 }
