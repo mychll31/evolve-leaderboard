@@ -33,23 +33,9 @@ export default async function DashboardPage() {
           0,
         ) / standings.members.length;
 
-  // Group held sessions into weeks for the trend chart.
-  const weeks = new Map<number, { present: number; total: number }>();
-  standings.attendanceByMeeting.forEach((row, i) => {
-    const week = Math.floor(i / 3) + 1;
-    const bucket = weeks.get(week) ?? { present: 0, total: 0 };
-    bucket.present += row.present;
-    bucket.total += row.total;
-    weeks.set(week, bucket);
-  });
-  const trend = [...weeks.entries()].map(([week, b]) => ({
-    week,
-    pct: b.total ? (b.present / b.total) * 100 : 0,
-  }));
-  const trendDelta =
-    trend.length > 1 ? trend[trend.length - 1].pct - trend[0].pct : 0;
-
-  const heat = standings.attendanceByMeeting.slice(-28);
+  // The attendance trend and session heatmap used to sit here too. They are
+  // on /analytics, which charts them from stored weekly snapshots rather than
+  // recomputing — so this was a duplicate that could disagree with itself.
   const topFive = standings.members.slice(0, 5);
   const maxTeamPoints = Math.max(1, ...teams.map((t) => t.points));
 
@@ -152,65 +138,6 @@ export default async function DashboardPage() {
             ))}
           </ul>
         </Card>
-
-        {/* Trend + heatmap */}
-        <div className="grid gap-5 md:grid-cols-2">
-          <Card>
-            <div className="flex items-center justify-between">
-              <Eyebrow>Attendance trend</Eyebrow>
-              <span
-                className={`text-[11.5px] font-extrabold ${trendDelta >= 0 ? "text-positive" : "text-negative"}`}
-              >
-                {trendDelta >= 0 ? "▲" : "▼"} {Math.abs(trendDelta).toFixed(1)}%
-              </span>
-            </div>
-            <div className="mt-4 flex h-[150px] items-end gap-2.5">
-              {trend.map((t) => (
-                <div
-                  key={t.week}
-                  className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
-                >
-                  <div className="text-ink-2 text-[11px] font-extrabold">
-                    {Math.round(t.pct)}%
-                  </div>
-                  <div
-                    className="w-full rounded-t-[7px] transition-[height] duration-500"
-                    style={{
-                      height: `${Math.max(4, t.pct)}%`,
-                      background: "linear-gradient(180deg,#5FD3E0,#12B5CB)",
-                    }}
-                  />
-                  <div className="text-ink-4 text-[10px] font-bold">
-                    W{t.week}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card>
-            <Eyebrow>Daily activity</Eyebrow>
-            <div className="mt-4 grid grid-cols-7 gap-1.5 sm:grid-cols-14">
-              {heat.map((cell) => {
-                const ratio = cell.total ? cell.present / cell.total : 0;
-                return (
-                  <div
-                    key={cell.meetingId}
-                    title={`${cell.meetsOn}: ${cell.present}/${cell.total}`}
-                    className="aspect-square rounded-[5px]"
-                    style={{
-                      background: `rgba(18,181,203,${(0.1 + ratio * 0.85).toFixed(2)})`,
-                    }}
-                  />
-                );
-              })}
-            </div>
-            <div className="text-ink-4 mt-2.5 flex justify-between text-[10px] font-bold">
-              <span>{heat[0]?.meetsOn ?? "—"}</span>
-              <span>LATEST</span>
-            </div>
-          </Card>
-        </div>
       </div>
 
       {/* Rail */}
