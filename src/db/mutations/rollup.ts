@@ -309,7 +309,7 @@ export async function runWeeklyRollup(
       kind: "badge_earned",
       title: `${award.badgeIcon} ${award.badgeName} unlocked`,
       body: "A new badge has been added to your cabinet.",
-      link: "/leaderboard#hall-of-fame",
+      link: "/leaderboard",
       dedupeKey: `badge:${seasonId}:${award.badgeId}`,
       createdAt: now,
     });
@@ -324,7 +324,7 @@ export async function runWeeklyRollup(
       kind: "mvp_awarded",
       title: `🏆 ${describeAwardCategory(award.category, metricNames)} — week ${weekNo}`,
       body: "You topped the season this week.",
-      link: "/leaderboard#hall-of-fame",
+      link: "/leaderboard",
       dedupeKey: `award:${seasonId}:${weekNo}:${award.category}`,
       createdAt: now,
     });

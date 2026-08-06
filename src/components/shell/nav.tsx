@@ -107,7 +107,7 @@ export function buildNav({
 }): (NavItem & { name: NavName })[] {
   const items: (NavItem & { name: NavName })[] = [
     { href: "/dashboard", label: "Dashboard", short: "Home", title: "Season Dashboard", name: "home", icon: null, phone: true },
-    { href: "/leaderboard", label: "Leaderboard", short: "Ranks", title: "Leaderboard & Hall of Fame", name: "ranks", icon: null, phone: true },
+    { href: "/leaderboard", label: "Leaderboard", short: "Ranks", title: "Player Leaderboard", name: "ranks", icon: null, phone: true },
     { href: "/teams", label: "Teams", short: "Teams", title: "Team Standings", name: "teams", icon: null, phone: true },
   ];
 
@@ -121,10 +121,7 @@ export function buildNav({
     items.push({ href: "/admin", label: "Admin", short: "Admin", title: "Admin", name: "admin", icon: null, phone: true });
   }
 
-  items.push(
-    { href: "/me", label: "My Card", short: "Me", title: "My Card", name: "me", icon: null, phone: true },
-    { href: "/notifications", label: "Notifications", short: "Alerts", title: "Notifications", name: "bell", icon: null, phone: false },
-  );
+  items.push({ href: "/me", label: "My Card", short: "Me", title: "My Card", name: "me", icon: null, phone: true });
 
   return items;
 }
@@ -139,6 +136,7 @@ const SUB_TITLES: Record<string, string> = {
   "/admin/badges": "Badges & Rollup",
   "/admin/import": "Import & Export",
   "/admin": "Metric Builder",
+  "/notifications": "Notifications",
   "/members": "Player",
 };
 

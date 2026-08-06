@@ -130,7 +130,7 @@ export default async function MePage() {
               Total · {ctx.standings.season.formula}
             </span>
             <DisplayNumber className="text-ink text-[32px]">
-              {fmt.score(member.score)}
+              {fmt.total(member.score)}
             </DisplayNumber>
           </div>
         </Card>

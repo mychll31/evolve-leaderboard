@@ -15,13 +15,18 @@ describe("shell navigation", () => {
     expect(titleFor("/admin/analytics", true, true)).toBe("Season Analytics");
   });
 
-  it("folds Hall of Fame into the leaderboard route", () => {
+  it("keeps Hall of Fame hidden from leaderboard navigation", () => {
     const hrefs = buildNav({ isAdmin: true, isCoach: true }).map((i) => i.href);
 
     expect(hrefs).toContain("/leaderboard");
     expect(hrefs).not.toContain("/hall-of-fame");
-    expect(titleFor("/leaderboard", true, true)).toBe(
-      "Leaderboard & Hall of Fame",
-    );
+    expect(titleFor("/leaderboard", true, true)).toBe("Player Leaderboard");
+  });
+
+  it("keeps notifications out of the menu while preserving the route title", () => {
+    const hrefs = buildNav({ isAdmin: true, isCoach: true }).map((i) => i.href);
+
+    expect(hrefs).not.toContain("/notifications");
+    expect(titleFor("/notifications", true, true)).toBe("Notifications");
   });
 });

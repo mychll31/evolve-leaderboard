@@ -236,7 +236,7 @@ export function MetricBuilder({
                 {row.member.name}
               </span>
               <DisplayNumber className="text-ink text-[19px]">
-                {fmt.score(row.score)}
+                {fmt.total(row.score)}
               </DisplayNumber>
             </li>
           ))}

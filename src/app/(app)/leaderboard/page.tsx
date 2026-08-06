@@ -1,9 +1,8 @@
-import { HallOfFamePanel } from "@/components/leaderboard/HallOfFamePanel";
 import { LeaderboardClient } from "@/components/leaderboard/LeaderboardClient";
 import { getAppContext } from "@/db/queries/context";
 
 export default async function LeaderboardPage() {
-  const { standings, membershipId } = await getAppContext();
+  const { standings } = await getAppContext();
 
   // Teams that actually have members, in standings order.
   const seen = new Map<string, { id: string; name: string; color: string }>();
@@ -14,13 +13,10 @@ export default async function LeaderboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <LeaderboardClient
-        members={standings.members}
-        teams={[...seen.values()].sort((a, b) => a.name.localeCompare(b.name))}
-        metrics={standings.metrics.map((m) => ({ key: m.key, name: m.name }))}
-      />
-      <HallOfFamePanel standings={standings} membershipId={membershipId} />
-    </div>
+    <LeaderboardClient
+      members={standings.members}
+      teams={[...seen.values()].sort((a, b) => a.name.localeCompare(b.name))}
+      metrics={standings.metrics.map((m) => ({ key: m.key, name: m.name }))}
+    />
   );
 }

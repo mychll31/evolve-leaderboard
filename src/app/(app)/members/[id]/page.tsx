@@ -75,7 +75,7 @@ export default async function MemberPage(props: {
                   Score
                 </div>
                 <DisplayNumber className="mt-0.5 text-[26px] text-white">
-                  {fmt.score(member.standing.score)}
+                  {fmt.total(member.standing.score)}
                 </DisplayNumber>
               </div>
               <div className="rounded-[14px] border border-white/30 bg-white/20 px-4 py-2.5">
@@ -117,7 +117,7 @@ export default async function MemberPage(props: {
               <div className="border-line mt-5 flex items-center justify-between border-t pt-4">
                 <Delta value={member.standing.delta} />
                 <DisplayNumber className="text-ink text-[30px]">
-                  {fmt.score(member.standing.score)}
+                  {fmt.total(member.standing.score)}
                 </DisplayNumber>
               </div>
             </Card>

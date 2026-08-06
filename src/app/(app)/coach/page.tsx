@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AttendanceList, DeskCounters } from "@/components/coach/AttendanceList";
 import { CoachChoice } from "@/components/coach/CoachChoice";
-import { Card, DisplayNumber, Eyebrow } from "@/components/ui";
+import { Card, DisplayNumber, Eyebrow, fmt } from "@/components/ui";
 import { getDb } from "@/db/client";
 import { getCoachDesk } from "@/db/queries/coach";
 import { getAppContext } from "@/db/queries/context";
@@ -117,7 +117,7 @@ export default async function CoachPage(props: {
                     {p.name}
                   </span>
                   <DisplayNumber className="text-ink text-[20px]">
-                    {p.score.toFixed(1)}
+                    {fmt.total(p.score)}
                   </DisplayNumber>
                 </li>
               ))}
@@ -138,7 +138,7 @@ export default async function CoachPage(props: {
                     {p.name}
                   </span>
                   <DisplayNumber className="text-ink-2 text-[20px]">
-                    {p.score.toFixed(1)}
+                    {fmt.total(p.score)}
                   </DisplayNumber>
                 </li>
               ))}

@@ -39,7 +39,7 @@ export async function AnalyticsPanel({ standings }: { standings: Standings }) {
         <Card className="py-4">
           <Eyebrow>Season average</Eyebrow>
           <DisplayNumber className="text-ink mt-0.5 text-[34px]">
-            {last ? fmt.score(last.averageScore) : "—"}
+            {last ? fmt.total(last.averageScore) : "—"}
           </DisplayNumber>
         </Card>
         <Card className="py-4">
@@ -156,7 +156,7 @@ export async function AnalyticsPanel({ standings }: { standings: Standings }) {
                 </span>
                 <Delta value={mover.delta} />
                 <DisplayNumber className="text-ink w-12 text-right text-[20px]">
-                  {fmt.score(mover.score)}
+                  {fmt.total(mover.score)}
                 </DisplayNumber>
               </li>
             ))}
@@ -186,7 +186,7 @@ export async function AnalyticsPanel({ standings }: { standings: Standings }) {
                 </span>
                 <Delta value={faller.delta} />
                 <DisplayNumber className="text-ink w-12 text-right text-[20px]">
-                  {fmt.score(faller.score)}
+                  {fmt.total(faller.score)}
                 </DisplayNumber>
               </li>
             ))}

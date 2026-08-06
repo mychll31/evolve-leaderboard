@@ -224,6 +224,16 @@ export function rankColor(rank: number): string {
 
 export const fmt = {
   score: (n: number) => n.toFixed(1),
+  /**
+   * A member's overall score, always shown as a percentage.
+   *
+   * Every metric is normalised and clamped to 0-100 before the formula runs,
+   * so `weighted` and `average` are percentages by construction. `points`
+   * sums them instead and can exceed 100 — it will read as e.g. "230.0%".
+   *
+   * NOT for team points, which are a sum of member scores and have no ceiling.
+   */
+  total: (n: number) => `${n.toFixed(1)}%`,
   pct: (n: number) => `${Math.round(n)}%`,
   points: (n: number) => Math.round(n).toLocaleString(),
 };

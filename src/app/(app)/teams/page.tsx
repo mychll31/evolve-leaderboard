@@ -2,7 +2,6 @@ import {
   Card,
   DisplayNumber,
   Eyebrow,
-  ProgressBar,
   fmt,
   rankColor,
 } from "@/components/ui";
@@ -13,7 +12,6 @@ import { getTeamStandings } from "@/db/queries/teams";
 export default async function TeamsPage() {
   const { standings } = await getAppContext();
   const teams = await getTeamStandings(getDb(), standings);
-  const maxPoints = Math.max(1, ...teams.map((t) => t.points));
 
   return (
     <div className="grid gap-4 xl:grid-cols-2">
@@ -67,12 +65,6 @@ export default async function TeamsPage() {
             </div>
           </div>
 
-          <ProgressBar
-            className="mt-4"
-            height={6}
-            color={team.color}
-            value={(team.points / maxPoints) * 100}
-          />
         </Card>
       ))}
     </div>

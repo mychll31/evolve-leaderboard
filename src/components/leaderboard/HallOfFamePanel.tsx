@@ -92,7 +92,7 @@ export async function HallOfFamePanel({
                   </div>
                 </div>
                 <DisplayNumber className="text-ink shrink-0 text-[30px] sm:text-[34px]">
-                  {fmt.score(legend.score)}
+                  {fmt.total(legend.score)}
                 </DisplayNumber>
               </div>
             ))}

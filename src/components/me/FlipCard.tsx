@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DisplayNumber } from "@/components/ui";
+import { DisplayNumber, fmt } from "@/components/ui";
 import type { MemberStanding } from "@/db/queries/standings";
 import type { BadgeView } from "@/db/queries/badges";
 
@@ -72,7 +72,7 @@ export function FlipCard({
             {member.position ? ` · ${member.position}` : ""}
           </div>
           <div className="relative mt-5 grid grid-cols-4 gap-2">
-            <CardStat label="Pts" value={member.score.toFixed(1)} />
+            <CardStat label="Pts" value={fmt.total(member.score)} />
             {member.breakdown.slice(0, 2).map((b) => (
               <CardStat
                 key={b.key}

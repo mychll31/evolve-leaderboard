@@ -131,7 +131,7 @@ export default async function DashboardPage() {
                 <div className="w-[62px] shrink-0 text-right sm:w-[72px]">
                   <Eyebrow className="text-ink-4">Pts</Eyebrow>
                   <DisplayNumber className="text-ink text-[24px] sm:text-[26px]">
-                    {fmt.score(p.score)}
+                    {fmt.total(p.score)}
                   </DisplayNumber>
                 </div>
               </li>
@@ -177,7 +177,7 @@ export default async function DashboardPage() {
               </div>
             </div>
             <div className="relative mt-5 grid grid-cols-3 gap-2.5">
-              <StatTile tone="onColor" label="Pts" value={fmt.score(mvp.score)} />
+              <StatTile tone="onColor" label="Pts" value={fmt.total(mvp.score)} />
               <StatTile
                 tone="onColor"
                 label="Att"
@@ -245,10 +245,10 @@ export default async function DashboardPage() {
               </span>
             </div>
             <Link
-              href="/leaderboard#hall-of-fame"
+              href="/leaderboard"
               className="text-accent-dark mt-4 inline-block text-[11.5px] font-extrabold tracking-[0.08em]"
             >
-              SEE BADGE CABINET ›
+              VIEW LEADERBOARD ›
             </Link>
           </div>
         )}

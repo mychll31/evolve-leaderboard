@@ -113,8 +113,8 @@ export function LeaderboardClient({
             </div>
 
             <div className="grid grid-cols-3 gap-2.5">
-              <StatTile tone="onColor" label="Pts" value={fmt.score(leader.score)} />
-              <StatTile tone="onColor" label="Avg" value={fmt.score(averageScore)} />
+              <StatTile tone="onColor" label="Pts" value={fmt.total(leader.score)} />
+              <StatTile tone="onColor" label="Avg" value={fmt.total(averageScore)} />
               <StatTile tone="onColor" label="Top streak" value={`🔥${bestStreak}`} />
             </div>
           </div>
@@ -277,7 +277,7 @@ export function LeaderboardClient({
                   <div className="w-[92px] shrink-0 text-right">
                     <Eyebrow className="text-ink-4">Pts</Eyebrow>
                     <DisplayNumber className="text-ink text-[30px]">
-                      {fmt.score(p.score)}
+                      {fmt.total(p.score)}
                     </DisplayNumber>
                   </div>
                 </div>
@@ -313,7 +313,7 @@ export function LeaderboardClient({
                 </div>
                 <Delta value={p.delta} />
                 <DisplayNumber className="text-ink w-14 text-right text-[24px]">
-                  {fmt.score(p.score)}
+                  {fmt.total(p.score)}
                 </DisplayNumber>
               </li>
             ))}
@@ -370,7 +370,7 @@ export function LeaderboardClient({
                     className="mt-3 text-[52px]"
                     style={{ color: first ? "#FFFFFF" : "var(--color-ink)" }}
                   >
-                    {fmt.score(p.score)}
+                    {fmt.total(p.score)}
                   </DisplayNumber>
                 </div>
               );
@@ -401,7 +401,7 @@ export function LeaderboardClient({
                 </div>
                 <Delta value={p.delta} />
                 <DisplayNumber className="text-ink text-[24px]">
-                  {fmt.score(p.score)}
+                  {fmt.total(p.score)}
                 </DisplayNumber>
               </div>
             ))}
@@ -464,7 +464,7 @@ export function LeaderboardClient({
                   </td>
                   <td className="px-2 py-3 text-right">
                     <DisplayNumber className="text-ink text-[22px]">
-                      {fmt.score(p.score)}
+                      {fmt.total(p.score)}
                     </DisplayNumber>
                   </td>
                   {metrics.map((m) => (
