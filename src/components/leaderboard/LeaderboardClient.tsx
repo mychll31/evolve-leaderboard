@@ -11,6 +11,7 @@ import {
   ProgressBar,
   fmt,
   rankColor,
+  StatTile,
 } from "@/components/ui";
 import type { MemberStanding } from "@/db/queries/standings";
 
@@ -63,74 +64,141 @@ export function LeaderboardClient({
 
   const maxScore = Math.max(1, ...members.map((m) => m.score));
 
+  const leader = rows[0];
+  const activeTeam = teams.find((t) => t.id === teamId) ?? null;
+  const averageScore =
+    rows.length > 0 ? rows.reduce((s, m) => s + m.score, 0) / rows.length : 0;
+  const bestStreak = rows.reduce((best, m) => Math.max(best, m.streak), 0);
+  const sortLabel = sortOptions.find((s) => s.key === sort)?.label ?? "PTS";
+
   return (
     <div>
-      {/* Controls */}
-      <div className="flex flex-wrap items-center gap-3">
+      {/* Leader banner. The page used to open straight onto three rows of
+          chips with no focal point. Follows the current filter, so narrowing
+          to one team shows that team's leader. */}
+      {leader && (
         <div
-          role="tablist"
-          aria-label="Leaderboard layout"
-          className="border-line bg-card flex gap-1 rounded-xl border p-1"
+          className="relative overflow-hidden rounded-[22px] p-6 sm:p-7"
+          style={{
+            background: `linear-gradient(112deg, ${leader.teamColor} 0%, #0F1720 118%)`,
+          }}
         >
-          {LAYOUTS.map((l) => (
-            <button
-              key={l.id}
-              role="tab"
-              aria-selected={layout === l.id}
-              onClick={() => setLayout(l.id)}
-              className={clsx(
-                "cursor-pointer rounded-[9px] px-3 py-2 text-[11.5px] font-extrabold tracking-[0.08em] uppercase transition-colors sm:px-5",
-                layout === l.id ? "bg-primary text-white" : "text-ink-2",
-              )}
-            >
-              {l.label}
-            </button>
-          ))}
-        </div>
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(420px 220px at 88% 0%, rgba(255,255,255,.28), transparent 70%)",
+            }}
+          />
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
+              <div className="text-[10.5px] font-extrabold tracking-[0.22em] text-white/80 uppercase">
+                {activeTeam ? `${activeTeam.name} · leader` : "Season leader"}
+              </div>
+              <div className="mt-3 flex items-center gap-4">
+                <div className="font-display flex size-[62px] shrink-0 items-center justify-center rounded-[18px] bg-white/95 text-[24px] font-extrabold text-[#0F1720] sm:size-[70px] sm:text-[28px]">
+                  {leader.initials}
+                </div>
+                <div className="min-w-0">
+                  <DisplayNumber className="truncate text-[40px] text-white sm:text-[52px]">
+                    {leader.name}
+                  </DisplayNumber>
+                  <div className="mt-1 truncate text-[11.5px] font-extrabold tracking-[0.1em] text-white/75 uppercase">
+                    {leader.teamName}
+                    {leader.position ? ` · ${leader.position}` : ""}
+                  </div>
+                </div>
+              </div>
+            </div>
 
-        <div className="flex flex-1 flex-wrap items-center gap-1.5 sm:justify-end">
-          <Eyebrow className="mr-1">Sort</Eyebrow>
-          {sortOptions.map((s) => (
-            <button
-              key={s.key}
-              onClick={() => setSort(s.key)}
-              aria-pressed={sort === s.key}
-              className={clsx(
-                "cursor-pointer rounded-[9px] px-3 py-1.5 text-[11.5px] font-extrabold tracking-[0.06em] transition-colors",
-                sort === s.key
-                  ? "bg-primary text-white"
-                  : "border-line bg-card text-ink-2 border",
-              )}
-            >
-              {s.label}
-            </button>
-          ))}
+            <div className="grid grid-cols-3 gap-2.5">
+              <StatTile tone="onColor" label="Pts" value={fmt.score(leader.score)} />
+              <StatTile tone="onColor" label="Avg" value={fmt.score(averageScore)} />
+              <StatTile tone="onColor" label="Top streak" value={`🔥${bestStreak}`} />
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Team filter */}
-      <div className="mt-4 flex flex-wrap gap-2">
-        {[{ id: null, name: "All teams", color: "#12B5CB" }, ...teams].map(
-          (chip) => {
-            const active = teamId === chip.id;
-            return (
+      {/* Controls, gathered onto one surface rather than floating loose. */}
+      <Card className="mt-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <div
+            role="tablist"
+            aria-label="Leaderboard layout"
+            className="border-line bg-surface flex gap-1 rounded-xl border p-1"
+          >
+            {LAYOUTS.map((l) => (
               <button
-                key={chip.id ?? "all"}
-                onClick={() => setTeamId(chip.id)}
-                aria-pressed={active}
-                className="cursor-pointer rounded-full border px-3.5 py-2 text-[12px] font-bold whitespace-nowrap transition-colors"
-                style={{
-                  background: active ? chip.color : "#FFFFFF",
-                  color: active ? "#FFFFFF" : "var(--color-ink-2)",
-                  borderColor: active ? chip.color : "var(--color-line)",
-                }}
+                key={l.id}
+                role="tab"
+                aria-selected={layout === l.id}
+                onClick={() => setLayout(l.id)}
+                className={clsx(
+                  "cursor-pointer rounded-[9px] px-3 py-2 text-[11.5px] font-extrabold tracking-[0.08em] uppercase transition-colors sm:px-5",
+                  layout === l.id
+                    ? "bg-primary text-white"
+                    : "text-ink-2 hover:text-ink",
+                )}
               >
-                {chip.name}
+                {l.label}
               </button>
-            );
-          },
-        )}
-      </div>
+            ))}
+          </div>
+
+          <div className="flex flex-1 flex-wrap items-center gap-1.5 sm:justify-end">
+            <Eyebrow className="mr-1">Sort</Eyebrow>
+            {sortOptions.map((s) => (
+              <button
+                key={s.key}
+                onClick={() => setSort(s.key)}
+                aria-pressed={sort === s.key}
+                className={clsx(
+                  "cursor-pointer rounded-[9px] px-3 py-1.5 text-[11.5px] font-extrabold tracking-[0.06em] transition-colors",
+                  sort === s.key
+                    ? "bg-primary text-white"
+                    : "border-line bg-card text-ink-2 hover:bg-surface-2 border",
+                )}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="border-line-2 mt-4 flex flex-wrap gap-2 border-t pt-4">
+          {[{ id: null, name: "All teams", color: "#12B5CB" }, ...teams].map(
+            (chip) => {
+              const active = teamId === chip.id;
+              return (
+                <button
+                  key={chip.id ?? "all"}
+                  onClick={() => setTeamId(chip.id)}
+                  aria-pressed={active}
+                  className="cursor-pointer rounded-full border px-3.5 py-2 text-[12px] font-bold whitespace-nowrap transition-colors"
+                  style={{
+                    background: active ? chip.color : "#FFFFFF",
+                    color: active ? "#FFFFFF" : "var(--color-ink-2)",
+                    borderColor: active ? chip.color : "var(--color-line)",
+                  }}
+                >
+                  {chip.name}
+                </button>
+              );
+            },
+          )}
+        </div>
+      </Card>
+
+      {/* States what you are actually looking at, which chips alone do not. */}
+      {rows.length > 0 && (
+        <p className="text-ink-3 mt-4 text-[12px] font-bold tracking-[0.04em]">
+          {rows.length} player{rows.length === 1 ? "" : "s"}
+          {activeTeam ? ` · ${activeTeam.name}` : " · all teams"} · sorted by{" "}
+          {sortLabel.toLowerCase()}
+        </p>
+      )}
 
       {rows.length === 0 && (
         <Card className="mt-5 text-center">

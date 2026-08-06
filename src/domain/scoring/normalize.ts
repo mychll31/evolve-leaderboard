@@ -7,16 +7,18 @@ const clamp = (n: number) => Math.min(100, Math.max(0, n));
  * each other. Without this step "Assignments: 7" and "Attendance: 93%" are
  * incommensurable and no formula can combine them.
  *
- * `integer` and `decimal` scale against `metric.target`. A missing or
- * non-positive target yields 0 rather than `Infinity` or `NaN` — a
- * misconfigured metric should read as "no credit", never poison the score.
+ * `integer` and `decimal` scale against `metric.target`. Boolean metrics use
+ * 0/1 for season-level values and fractional 0-1 values for session-bound
+ * rates. A missing or non-positive target yields 0 rather than `Infinity` or
+ * `NaN` — a misconfigured metric should read as "no credit", never poison the
+ * score.
  */
 export function normalize(metric: Metric, raw: number): number {
   switch (metric.type) {
     case "percentage":
       return clamp(raw);
     case "boolean":
-      return raw ? 100 : 0;
+      return clamp(raw * 100);
     case "manual_score":
       return clamp(raw * 10);
     case "integer":

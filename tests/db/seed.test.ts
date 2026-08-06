@@ -66,8 +66,8 @@ describe("seed", () => {
     const rows = await t.db.select().from(metrics);
     expect(rows).toHaveLength(3);
     expect(rows.reduce((s, m) => s + m.weight, 0)).toBe(100);
-    const assignment = rows.find((m) => m.key === "assignment");
-    expect(assignment?.target).toBe(8);
+    expect(rows.map((m) => m.type)).toEqual(["boolean", "boolean", "boolean"]);
+    expect(rows.every((m) => m.target === null)).toBe(true);
   });
 
   it("records attendance for every member at every held meeting, bar the demo gap", async () => {

@@ -13,8 +13,9 @@ function mean(values: number[]): number {
  * scoring, which is what stops an unapproved check-in from moving the
  * leaderboard.
  *
- * `entries` is assumed to be ordered oldest-first; `boolean` and
- * `manual_score` metrics read the most recent value.
+ * `entries` is assumed to be ordered oldest-first. Session-bound booleans are
+ * averaged across held meetings; season-level booleans and manual scores read
+ * the most recent value.
  */
 export function aggregate(
   metric: Metric,
@@ -42,8 +43,13 @@ export function aggregate(
       return approved.reduce((sum, e) => sum + e.value, 0);
     case "decimal":
       return mean(approved.map((e) => e.value));
-    case "boolean":
+    case "boolean": {
+      if (eligibleMeetings > 0 && approved.some((e) => e.meetingId !== null)) {
+        const yes = approved.reduce((sum, e) => sum + (e.value ? 1 : 0), 0);
+        return yes / eligibleMeetings;
+      }
       return approved.length > 0 && approved[approved.length - 1].value ? 1 : 0;
+    }
     case "manual_score":
       return approved.length > 0 ? approved[approved.length - 1].value : 0;
   }

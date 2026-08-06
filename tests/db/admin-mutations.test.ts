@@ -896,7 +896,7 @@ describe("admin mutations", () => {
       await setEntryValue(t.db, coach, {
         membershipId,
         metricId: assignmentId,
-        value: 2,
+        value: 0,
       });
 
       const after = await getStandings(t.db, season!, TODAY);
@@ -910,12 +910,12 @@ describe("admin mutations", () => {
       await setEntryValue(t.db, coach, {
         membershipId,
         metricId: assignmentId,
-        value: 3,
+        value: 0,
       });
       await setEntryValue(t.db, coach, {
         membershipId,
         metricId: assignmentId,
-        value: 6,
+        value: 1,
       });
 
       const rows = await t.db
@@ -928,14 +928,14 @@ describe("admin mutations", () => {
           ),
         );
       expect(rows).toHaveLength(1);
-      expect(rows[0].value).toBe(6);
+      expect(rows[0].value).toBe(1);
     });
 
     it("tags the source by who recorded it", async () => {
       await setEntryValue(t.db, admin, {
         membershipId,
         metricId: assignmentId,
-        value: 4,
+        value: 1,
       });
       const [row] = await t.db
         .select()

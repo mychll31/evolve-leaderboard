@@ -35,7 +35,7 @@ const TEAMS = [
 
 /**
  * `att`, `asn` and `quiz` are the *target percentages* from the prototype.
- * The seeder works backwards from them to generate real entries that produce
+ * The seeder works backwards from them to generate yes/no entries that produce
  * roughly those figures, so the screens match the design without any of the
  * numbers being hardcoded into the app.
  */
@@ -106,9 +106,9 @@ const BADGES = [
 ] as const;
 
 const METRICS = [
-  { key: "attendance", name: "Attendance", type: "percentage", weight: 40, target: null, required: true },
-  { key: "assignment", name: "Assignment", type: "integer", weight: 40, target: 8, required: true },
-  { key: "quiz", name: "Quiz", type: "integer", weight: 20, target: 10, required: false },
+  { key: "attendance", name: "Attendance", type: "boolean", weight: 40, target: null, required: true },
+  { key: "assignment", name: "Assignment", type: "boolean", weight: 40, target: null, required: true },
+  { key: "quiz", name: "Quiz", type: "boolean", weight: 20, target: null, required: false },
 ] as const;
 
 /* -------------------------------------------------------------------------
@@ -390,7 +390,7 @@ export async function seed(
       metricId: metricId("assignment"),
       membershipId: memberRows[i].id,
       meetingId: null,
-      value: Math.round((player.asn / 100) * 8),
+      value: player.asn >= 85 ? 1 : 0,
       status: "approved",
       source: "coach",
       recordedBy: coachRows[player.team].id,
@@ -404,7 +404,7 @@ export async function seed(
       metricId: metricId("quiz"),
       membershipId: memberRows[i].id,
       meetingId: null,
-      value: Math.round((player.quiz / 100) * 10),
+      value: player.quiz >= 85 ? 1 : 0,
       status: "approved",
       source: "coach",
       recordedBy: coachRows[player.team].id,
@@ -451,9 +451,9 @@ export async function seed(
   await db.insert(memberBadges).values(awards);
 
   // --- Weekly snapshots -------------------------------------------------
-  // Synthetic history: assignment and quiz totals are pro-rated across the
-  // weeks so earlier standings differ from today's and the delta arrows have
-  // something real to compare against.
+  // Synthetic history: yes/no completions unlock over the season so earlier
+  // standings differ from today's and the delta arrows have something real to
+  // compare against.
   const currentWeek = Math.max(1, Math.ceil(heldCount / 3));
   const metricDefs: Metric[] = metricRows.map((row) => {
     const def = METRICS.find((m) => m.key === row.key)!;
@@ -482,17 +482,16 @@ export async function seed(
           status: "approved",
         });
       }
-      const share = week / currentWeek;
       entries.push({
         metricId: metricId("assignment"),
         meetingId: null,
-        value: Math.round((player.asn / 100) * 8 * share),
+        value: player.asn >= 85 && week >= 2 ? 1 : 0,
         status: "approved",
       });
       entries.push({
         metricId: metricId("quiz"),
         meetingId: null,
-        value: Math.round((player.quiz / 100) * 10 * share),
+        value: player.quiz >= 85 && week >= 3 ? 1 : 0,
         status: "approved",
       });
 

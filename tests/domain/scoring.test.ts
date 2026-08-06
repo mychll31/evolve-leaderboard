@@ -84,6 +84,25 @@ describe("aggregate", () => {
     ];
     expect(aggregate(m, entries, 6)).toBe(3);
   });
+
+  it("averages session-bound yes/no metrics across held meetings", () => {
+    const m = metric({ type: "boolean" });
+    const entries = [
+      entry({ meetingId: "a", value: 1 }),
+      entry({ meetingId: "b", value: 0 }),
+      entry({ meetingId: "c", value: 1 }),
+    ];
+    expect(aggregate(m, entries, 4)).toBe(0.5);
+  });
+
+  it("takes the latest value for season-level yes/no metrics", () => {
+    const m = metric({ type: "boolean" });
+    const entries = [
+      entry({ meetingId: null, value: 0 }),
+      entry({ meetingId: null, value: 1 }),
+    ];
+    expect(aggregate(m, entries, 6)).toBe(1);
+  });
 });
 
 describe("normalize", () => {
@@ -115,6 +134,11 @@ describe("normalize", () => {
     const m = metric({ type: "boolean" });
     expect(normalize(m, 1)).toBe(100);
     expect(normalize(m, 0)).toBe(0);
+  });
+
+  it("maps fractional yes/no rates to percentages", () => {
+    const m = metric({ type: "boolean" });
+    expect(normalize(m, 0.75)).toBe(75);
   });
 
   it("scales a 1-10 manual score to 0-100", () => {
