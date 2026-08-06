@@ -46,7 +46,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
         allowDangerousEmailAccountLinking: true,
       }),
     ],
-    pages: { signIn: "/signin" },
+    // Without `error`, a rejected sign-in lands on Auth.js's built-in
+    // /api/auth/error, which renders an unstyled page saying only "Error".
+    // AccessDenied is the expected outcome for anyone not yet on the roster,
+    // so it needs to explain itself.
+    pages: { signIn: "/signin", error: "/auth/error" },
     callbacks: {
       /**
        * The allowlist. There is no public signup: an address with no

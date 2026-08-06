@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db/client";
 import { users } from "@/db/schema";
@@ -11,6 +12,28 @@ export type SessionUser = Actor & {
   image?: string | null;
 };
 
+const DEV_SIGNED_OUT_COOKIE = "core-plus-dev-signed-out";
+
+export function hasDevelopmentAuthBypass(): boolean {
+  return (
+    process.env.NODE_ENV !== "production" && Boolean(process.env.AUTH_DEV_EMAIL)
+  );
+}
+
+async function isDevelopmentAuthSignedOut(): Promise<boolean> {
+  if (!hasDevelopmentAuthBypass()) return false;
+  return (await cookies()).get(DEV_SIGNED_OUT_COOKIE)?.value === "1";
+}
+
+export async function suppressDevelopmentAuth(): Promise<void> {
+  if (!hasDevelopmentAuthBypass()) return;
+  (await cookies()).set(DEV_SIGNED_OUT_COOKIE, "1", {
+    httpOnly: true,
+    path: "/",
+    sameSite: "lax",
+  });
+}
+
 /**
  * Local development escape hatch, so the app can be run without configuring
  * Google OAuth first.
@@ -21,7 +44,9 @@ export type SessionUser = Actor & {
  * out of any production build by the NODE_ENV check.
  */
 async function developmentUser(): Promise<SessionUser | null> {
-  if (process.env.NODE_ENV === "production") return null;
+  if (!hasDevelopmentAuthBypass()) return null;
+  if (await isDevelopmentAuthSignedOut()) return null;
+
   const email = process.env.AUTH_DEV_EMAIL;
   if (!email) return null;
 

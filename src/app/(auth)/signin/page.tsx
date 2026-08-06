@@ -55,7 +55,7 @@ export default async function SignInPage(props: {
             className="mx-auto h-8 w-auto"
           />
           <div className="font-display mt-7 text-[76px] leading-[0.9] font-extrabold tracking-tight text-white">
-            CORE+
+            Leaderboard
           </div>
           <p className="text-shell-ink mt-3 text-[13px] font-semibold tracking-[0.22em] uppercase">
             Season 1 · Accountability
@@ -114,12 +114,12 @@ export default async function SignInPage(props: {
                   d="M9 3.58c1.32 0 2.5.46 3.44 1.35l2.58-2.58C13.46.9 11.43 0 9 0A9 9 0 0 0 .96 4.94l3.02 2.34C4.68 5.16 6.66 3.58 9 3.58Z"
                 />
               </svg>
-              Continue with Google
+              Sign in with Google
             </button>
           </form>
 
           <p className="text-shell-ink-2 mt-5 text-center text-[12px] leading-relaxed">
-            Core+ is invite-only. Your admin adds you to a team before you can
+            Core+ is invite-only. Your admin adds your email before you can
             sign in.
           </p>
         </div>

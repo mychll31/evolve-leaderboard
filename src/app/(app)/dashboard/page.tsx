@@ -79,7 +79,7 @@ export default async function DashboardPage() {
                 {standings.season.endsOn}
               </div>
               <DisplayNumber className="mt-2 text-[56px] text-white sm:text-[76px]">
-                CORE+
+                Leaderboard
               </DisplayNumber>
               <p className="mt-2.5 text-[13.5px] font-semibold text-white/90">
                 {standings.daysLeft} days left · {standings.memberCount} members

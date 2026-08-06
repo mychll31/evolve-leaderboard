@@ -1,6 +1,7 @@
 "use server";
 
 import { signOut } from "@/lib/auth/config";
+import { suppressDevelopmentAuth } from "@/lib/auth/guards";
 
 /**
  * Sign out via a Server Action rather than posting a form straight at
@@ -12,5 +13,6 @@ import { signOut } from "@/lib/auth/config";
  * provider config.
  */
 export async function signOutAction(): Promise<void> {
+  await suppressDevelopmentAuth();
   await signOut({ redirectTo: "/signin" });
 }

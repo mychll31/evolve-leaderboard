@@ -38,8 +38,9 @@ plain `file:./local.db`, so `TURSO_DATABASE_URL="file:./local.db"` works out of 
 
 ### Signing in locally
 
-Core+ is invite-only — there is no public signup, and Google OAuth needs credentials. To
-click through the app before setting that up, put a seeded address in `.env`:
+Core+ is invite-only — there is no public signup, and Google OAuth needs
+credentials. To click through the app before setting that up, put a seeded
+address in `.env`:
 
 ```
 AUTH_DEV_EMAIL="admin@core.example"
@@ -50,12 +51,17 @@ This bypass is double-guarded: it does nothing unless the build is a development
 database. It is inert in any production build.
 
 To use real Google sign-in, create OAuth credentials with redirect URI
-`http://localhost:3000/api/auth/callback/google`, then set `AUTH_SECRET` (`npx auth secret`),
-`AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`, and clear `AUTH_DEV_EMAIL`.
+`http://localhost:3000/api/auth/callback/google`, then set `AUTH_SECRET`
+(`npx auth secret`), `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`, and clear
+`AUTH_DEV_EMAIL`.
 
-The seeded fixture makes `admin@core.example` both the super admin and the member "Michael".
-To see a populated notifications page, sign in as a member who won something —
-`AUTH_DEV_EMAIL="john@core.example"` after running a rollup.
+Seeded sample users for `AUTH_DEV_EMAIL`:
+
+| Role | Email | Notes |
+|---|---|---|
+| Super admin + member | `admin@core.example` | Michael on Founders |
+| Coach | `john.doe@core.example` | Founders coach |
+| Member | `john@core.example` | John on Titans |
 
 ### Scripts
 
