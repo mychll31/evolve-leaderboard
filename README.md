@@ -6,16 +6,19 @@ metrics** — attendance and assignments are simply the first two.
 
 Built from the Claude Design files in `design/`.
 
-## Status — Build 1 of 3
+## Status — Builds 1 and 2 of 3
 
 | Build | Contents | State |
 |---|---|---|
 | **1** | Schema, Google OAuth + RBAC, seed data, all seven screens on real data, attendance write path | **Done** |
-| 2 | Admin CRUD (seasons, teams, users, metrics), assignment/quiz entry, CSV import | Not started |
+| **2** | Season lifecycle, session calendar, team/people/metric CRUD, per-member score entry, CSV import & export | **Done** |
 | 3 | Badge/MVP award engines, Hall of Fame history, Analytics, notifications | Not started |
 
-Design spec: `docs/superpowers/specs/2026-08-06-core-plus-build-1-design.md`
-Implementation plan: `docs/superpowers/plans/2026-08-06-core-plus-build-1.md`
+Core+ no longer depends on seed data: an admin can open a season, define its calendar, build
+its teams, add its people, configure its metrics and record every result from the UI.
+
+Specs: `docs/superpowers/specs/2026-08-06-core-plus-build-{1,2}-design.md`
+Plan: `docs/superpowers/plans/2026-08-06-core-plus-build-1.md`
 
 ## Stack
 
@@ -59,7 +62,7 @@ To use real Google sign-in, create OAuth credentials with redirect URI
 |---|---|
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
-| `npm test` | Vitest suite (105 tests) |
+| `npm test` | Vitest suite (184 tests) |
 | `npm run db:generate` | Generate a migration from schema changes |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Load the fixture |
@@ -107,6 +110,26 @@ Two behaviours worth knowing:
   A late member is present but flagged, and the grace period can change retroactively.
 - **A pending check-in neither counts nor breaks a streak.** Pending means the coach has not
   decided yet; a member should not lose a thirty-session streak because approval was late.
+
+### Administration
+
+The admin area (`/admin`) is super-admin only and covers seasons, the session calendar, teams,
+people, metrics and CSV import. A few rules are enforced in the mutation layer rather than the
+UI, so they hold however they are reached:
+
+- **Locking a season is a write barrier, not a visibility change.** Locked and archived
+  seasons stay fully readable; every mutation refuses them. Activating a season locks whichever
+  was active, so there is always exactly one.
+- **Cloning copies structure, never results** — teams, metrics and coach assignments carry
+  over; members, entries, snapshots and badges do not.
+- **New metrics start at weight 0**, so creating one cannot drop every score at once before a
+  single value exists behind it. Under `points` or `average` — which ignore weights — the
+  builder warns instead, because there the problem is real.
+- **A metric's type freezes once it has entries.** `value` is a bare `REAL` whose meaning comes
+  from the type, so a change would silently reinterpret history. `target` stays editable.
+- **Metrics soft-delete.** A row delete would cascade their entries away.
+- **CSV import previews before it writes**, and refuses the whole file if any row is invalid —
+  a half-applied import is worse than a refused one.
 
 ## Deploying
 

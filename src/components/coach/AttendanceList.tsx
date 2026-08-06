@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import clsx from "clsx";
 import { Card, Eyebrow, SectionTitle } from "@/components/ui";
 import {
@@ -98,9 +99,12 @@ export function AttendanceList({ desk }: { desk: CoachDesk }) {
                 {row.initials}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-ink truncate text-[14.5px] font-bold">
+                <Link
+                  href={`/members/${row.membershipId}`}
+                  className="text-ink hover:text-primary block truncate text-[14.5px] font-bold"
+                >
                   {row.name}
-                </div>
+                </Link>
                 <div
                   className={clsx(
                     "truncate text-[11.5px] font-semibold",

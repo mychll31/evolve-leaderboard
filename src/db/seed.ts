@@ -336,6 +336,8 @@ export async function seed(
 
       const isLate = present[k] && rand() < 0.12;
       const startsAt = new Date(`${meeting.meetsOn}T09:00:00.000Z`).getTime();
+      const selfRecorded = rand() < 0.8;
+      const teamCoachId = coachRows[player.team].id;
       entryValues.push({
         seasonId: season.id,
         metricId: attendanceId,
@@ -343,11 +345,14 @@ export async function seed(
         meetingId: meeting.id,
         value: present[k] ? 1 : 0,
         status: "approved",
-        source: rand() < 0.8 ? "self" : "coach",
-        recordedBy: playerRows[i].id,
+        source: selfRecorded ? "self" : "coach",
+        recordedBy: selfRecorded ? playerRows[i].id : teamCoachId,
         // Late members checked in after the 5-minute grace window; lateness is
         // read back off this timestamp rather than stored as a flag.
         recordedAt: new Date(startsAt + (isLate ? 9 : -3) * 60_000),
+        // The coach who approved it — without this the audit trail shows a
+        // decision with nobody attached to it.
+        decidedBy: teamCoachId,
         decidedAt: new Date(startsAt + 30 * 60_000),
       });
     });
@@ -360,7 +365,9 @@ export async function seed(
       value: Math.round((player.asn / 100) * 8),
       status: "approved",
       source: "coach",
+      recordedBy: coachRows[player.team].id,
       recordedAt: new Date(today.getTime() - DAY_MS),
+      decidedBy: coachRows[player.team].id,
       decidedAt: new Date(today.getTime() - DAY_MS),
     });
 
@@ -372,7 +379,9 @@ export async function seed(
       value: Math.round((player.quiz / 100) * 10),
       status: "approved",
       source: "coach",
+      recordedBy: coachRows[player.team].id,
       recordedAt: new Date(today.getTime() - DAY_MS),
+      decidedBy: coachRows[player.team].id,
       decidedAt: new Date(today.getTime() - DAY_MS),
     });
   });
