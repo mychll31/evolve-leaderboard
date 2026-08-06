@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/*
+ * Palette and type taken from the Claude Design files
+ * (`design/Core+ Web App.dc.html`), which supersede the brief's dark
+ * NBA palette. Light surfaces, teal primary, orange accent.
+ */
+@theme {
+  --color-surface: #f4f7fa;
+  --color-surface-2: #f8fafc;
+  --color-card: #ffffff;
+  --color-line: #e2e8ef;
+  --color-line-2: #eef2f6;
+
+  --color-ink: #0f1720;
+  --color-ink-2: #5b6b7c;
+  --color-ink-3: #93a1b0;
+  --color-ink-4: #b3becb;
+
+  --color-primary: #12b5cb;
+  --color-primary-dark: #0b7f92;
+  --color-primary-light: #5fd3e0;
+  --color-primary-tint: #eaf9fc;
+
+  --color-accent: #f97316;
+  --color-accent-dark: #ea580c;
+  --color-accent-light: #fb923c;
+  --color-accent-tint: #fff6ee;
+  --color-accent-line: #fbdcc3;
+
+  --color-positive: #16a34a;
+  --color-positive-tint: #edfaf1;
+  --color-positive-line: #c6ebd4;
+
+  --color-negative: #dc2626;
+  --color-negative-tint: #fdf0f0;
+  --color-negative-line: #f3cfcf;
+
+  --color-shell: #0f1720;
+  --color-shell-2: #1b2836;
+  --color-shell-line: #1d2833;
+  --color-shell-ink: #8fa0b0;
+  --color-shell-ink-2: #5e7385;
+
+  --font-display: var(--font-barlow), "Barlow Condensed", sans-serif;
+  --font-body: var(--font-manrope), Manrope, system-ui, sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-surface);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Animations lifted verbatim from the design files. */
+@keyframes fall {
+  0% {
+    transform: translateY(-60px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(820px) rotate(540deg);
+    opacity: 0;
+  }
+}
+
+@keyframes popin {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(18, 181, 203, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 14px rgba(18, 181, 203, 0);
+  }
+}
+
+@keyframes sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(240%);
+  }
+}
+
+@keyframes flicker {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.16);
+  }
+}
+
+@utility animate-sweep {
+  animation: sweep 3.6s ease-in-out infinite;
+}
+
+@utility animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+@utility animate-flicker {
+  animation: flicker 1.6s ease-in-out infinite;
+}
+
+@utility animate-popin {
+  animation: popin 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+/* Respect users who have asked the OS for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
