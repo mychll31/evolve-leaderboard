@@ -1,12 +1,13 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AttendanceList, DeskCounters } from "@/components/coach/AttendanceList";
+import { CoachChoice } from "@/components/coach/CoachChoice";
 import { Card, DisplayNumber, Eyebrow } from "@/components/ui";
 import { getDb } from "@/db/client";
 import { getCoachDesk } from "@/db/queries/coach";
 import { getAppContext } from "@/db/queries/context";
-import { teams } from "@/db/schema";
+import { teams, weeklyAwards } from "@/db/schema";
 import { coachTeamIds } from "@/lib/auth/scoping";
 
 export default async function CoachPage(props: {
@@ -39,6 +40,34 @@ export default async function CoachPage(props: {
   const desk = await getCoachDesk(db, ctx.standings, activeTeam.id);
   if (!desk) notFound();
 
+  // This week's coach's-choice nomination for this team, if one exists.
+  const [choiceRow] = await db
+    .select({
+      membershipId: weeklyAwards.membershipId,
+      note: weeklyAwards.note,
+    })
+    .from(weeklyAwards)
+    .where(
+      and(
+        eq(weeklyAwards.seasonId, ctx.standings.season.id),
+        eq(weeklyAwards.weekNo, ctx.standings.weekNo),
+        eq(weeklyAwards.category, "coach_choice"),
+        eq(weeklyAwards.teamId, activeTeam.id),
+      ),
+    )
+    .limit(1);
+
+  const choice = choiceRow
+    ? {
+        membershipId: choiceRow.membershipId,
+        name:
+          ctx.standings.members.find(
+            (m) => m.membershipId === choiceRow.membershipId,
+          )?.name ?? "Unknown",
+        note: choiceRow.note,
+      }
+    : null;
+
   return (
     <div className="flex flex-col gap-5">
       {allowed.length > 1 && (
@@ -70,6 +99,15 @@ export default async function CoachPage(props: {
         </div>
 
         <div className="flex flex-col gap-4">
+          <CoachChoice
+            seasonId={ctx.standings.season.id}
+            weekNo={ctx.standings.weekNo}
+            roster={ctx.standings.members.filter(
+              (m) => m.teamId === activeTeam.id,
+            )}
+            current={choice}
+          />
+
           <Card>
             <Eyebrow className="text-positive">Top performers</Eyebrow>
             <ul className="mt-3.5 flex flex-col gap-3">

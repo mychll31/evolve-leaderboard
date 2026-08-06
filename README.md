@@ -6,18 +6,15 @@ metrics** — attendance and assignments are simply the first two.
 
 Built from the Claude Design files in `design/`.
 
-## Status — Builds 1 and 2 of 3
+## Status — complete
 
 | Build | Contents | State |
 |---|---|---|
-| **1** | Schema, Google OAuth + RBAC, seed data, all seven screens on real data, attendance write path | **Done** |
+| **1** | Schema, Google OAuth + RBAC, seed data, all screens on real data, attendance write path | **Done** |
 | **2** | Season lifecycle, session calendar, team/people/metric CRUD, per-member score entry, CSV import & export | **Done** |
-| 3 | Badge/MVP award engines, Hall of Fame history, Analytics, notifications | Not started |
+| **3** | Badge engine, weekly MVPs, idempotent rollup, cross-season Hall of Fame, analytics, notifications | **Done** |
 
-Core+ no longer depends on seed data: an admin can open a season, define its calendar, build
-its teams, add its people, configure its metrics and record every result from the UI.
-
-Specs: `docs/superpowers/specs/2026-08-06-core-plus-build-{1,2}-design.md`
+Specs: `docs/superpowers/specs/2026-08-06-core-plus-build-{1,2,3}-design.md`
 Plan: `docs/superpowers/plans/2026-08-06-core-plus-build-1.md`
 
 ## Stack
@@ -56,13 +53,17 @@ To use real Google sign-in, create OAuth credentials with redirect URI
 `http://localhost:3000/api/auth/callback/google`, then set `AUTH_SECRET` (`npx auth secret`),
 `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`, and clear `AUTH_DEV_EMAIL`.
 
+The seeded fixture makes `admin@core.example` both the super admin and the member "Michael".
+To see a populated notifications page, sign in as a member who won something —
+`AUTH_DEV_EMAIL="john@core.example"` after running a rollup.
+
 ### Scripts
 
 | Command | Purpose |
 |---|---|
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
-| `npm test` | Vitest suite (184 tests) |
+| `npm test` | Vitest suite (231 tests) |
 | `npm run db:generate` | Generate a migration from schema changes |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Load the fixture |
@@ -111,6 +112,33 @@ Two behaviours worth knowing:
 - **A pending check-in neither counts nor breaks a streak.** Pending means the coach has not
   decided yet; a member should not lose a thirty-session streak because approval was late.
 
+### Gamification
+
+Badges, weekly MVPs and notifications are produced by one routine — `runWeeklyRollup` — which
+snapshots the standings, awards badges, picks MVPs and raises notifications.
+
+**It is idempotent by construction.** Snapshots and awards upsert, badge grants skip anything
+already held, and notifications carry a dedupe key. A duplicated cron, a manual re-run or a
+retry after failure all converge on the same state — which matters more than atomicity, since
+Turso is libSQL over HTTP.
+
+Two entry points:
+
+- **"Run weekly rollup"** on `/admin/badges` — the manual lever, and how you backfill.
+- **`GET /api/cron/rollup`**, guarded by a `CRON_SECRET` bearer token, scheduled weekly in
+  `vercel.json`. **Without the secret set the route refuses outright** rather than running
+  unauthenticated: an unprotected endpoint that rewrites every score is worse than a cron that
+  never fires, because the failure is silent.
+
+**Badge rules** are parameterised, stored in `badges.ruleJson`, and editable at
+`/admin/badges` — streak reaches N, a metric reaches N%, every metric reaches N%, finish in the
+top N, biggest rank gain, first value recorded. A badge with no rule (or an unparseable one) is
+never awarded automatically; it stays displayable and grantable by hand. Awards are permanent:
+`member_badges` is an achievement log, not a live view.
+
+**A pending check-in still neither counts nor breaks a streak**, so a slow approval never costs
+someone a badge.
+
 ### Administration
 
 The admin area (`/admin`) is super-admin only and covers seasons, the session calendar, teams,
@@ -139,7 +167,7 @@ UI, so they hold however they are reached:
    turso db tokens create core-plus
    ```
 2. On Vercel set `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`,
-   `AUTH_GOOGLE_SECRET`. Do **not** set `AUTH_DEV_EMAIL`.
+   `AUTH_GOOGLE_SECRET` and `CRON_SECRET`. Do **not** set `AUTH_DEV_EMAIL`.
 3. Apply migrations against Turso: `TURSO_DATABASE_URL=… TURSO_AUTH_TOKEN=… npm run db:migrate`
 4. Add `https://<your-domain>/api/auth/callback/google` as an authorised redirect URI.
 

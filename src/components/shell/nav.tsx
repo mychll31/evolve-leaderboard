@@ -59,6 +59,18 @@ const icons = {
       <path d="M4.5 20c0-3.6 3.4-6.2 7.5-6.2s7.5 2.6 7.5 6.2" />
     </>
   ),
+  stats: (
+    <>
+      <path d="M3 3v18h18" />
+      <path d="M7 15l4-5 3 3 5-7" />
+    </>
+  ),
+  bell: (
+    <>
+      <path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7" />
+      <path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" />
+    </>
+  ),
   fame: (
     <>
       <path d="M8 21h8" />
@@ -108,7 +120,9 @@ export function buildNav({
 
   items.push(
     { href: "/me", label: "My Card", short: "Me", title: "My Card", name: "me", icon: null, phone: true },
+    { href: "/analytics", label: "Analytics", short: "Stats", title: "Season Analytics", name: "stats", icon: null, phone: false },
     { href: "/hall-of-fame", label: "Hall of Fame", short: "Fame", title: "Hall of Fame", name: "fame", icon: null, phone: false },
+    { href: "/notifications", label: "Notifications", short: "Alerts", title: "Notifications", name: "bell", icon: null, phone: false },
   );
 
   return items;

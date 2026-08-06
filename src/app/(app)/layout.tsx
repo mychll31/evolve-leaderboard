@@ -1,7 +1,9 @@
 import { BottomNav } from "@/components/shell/BottomNav";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { TopBar } from "@/components/shell/TopBar";
+import { getDb } from "@/db/client";
 import { getAppContext } from "@/db/queries/context";
+import { countUnread } from "@/db/queries/gamification";
 
 export default async function AppLayout({
   children,
@@ -9,6 +11,7 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const ctx = await getAppContext();
+  const unreadCount = await countUnread(getDb(), ctx.user.id);
   const own = ctx.membershipId
     ? ctx.standings.members.find((m) => m.membershipId === ctx.membershipId)
     : undefined;
@@ -37,6 +40,7 @@ export default async function AppLayout({
           week={ctx.standings.weekNo}
           isCoach={ctx.isCoach}
           isAdmin={ctx.isAdmin}
+          unreadCount={unreadCount}
         />
         <main className="flex-1 px-4 pt-5 pb-28 sm:px-8 sm:pt-7 lg:pb-11">
           {children}
