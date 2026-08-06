@@ -174,9 +174,12 @@ UI, so they hold however they are reached:
 `better-sqlite3` is not an option here: Vercel's filesystem is ephemeral, so a file-backed
 database would lose every write on the next cold start.
 
-## Known assumption
+## How wins are counted
 
-**"15W" on the team cards is interpreted as the number of weeks a team finished top of the
-standings.** The prototype hardcodes it and the brief only says "Record: 15 Wins". If wins
-mean something else in your program, `winsByTeam` in `src/db/queries/teams.ts` is the one
-place to change.
+**"15W" on the team cards is the number of weeks a team finished top of the standings** —
+confirmed with the product owner, 2026-08-06. The prototype hardcoded the number and the brief
+only said "Record: 15 Wins".
+
+A week is won by whichever team has the highest total member score in that week's snapshot,
+which is the same basis as the team points shown on the standings screen — so the two figures
+always agree. `winsByTeam` in `src/db/queries/teams.ts` is the single place it is computed.

@@ -33,11 +33,12 @@ function mean(values: number[]): number {
 }
 
 /**
- * Counts weeks each team finished first.
+ * Counts weeks each team finished first — confirmed with the product owner as
+ * the meaning of "15W" on the team cards, which the prototype hardcoded.
  *
- * "15W" is hardcoded in the prototype and the brief only says "Record: 15
- * Wins", so this is an interpretation: a win is a week in which the team had
- * the highest total member score. Flagged as an open assumption in the spec.
+ * A week is won by the team with the highest total member score in that week's
+ * snapshot. That is deliberately the same basis as `points` below, so a team's
+ * win count and its displayed total can never tell different stories.
  */
 async function winsByTeam(
   db: Database,

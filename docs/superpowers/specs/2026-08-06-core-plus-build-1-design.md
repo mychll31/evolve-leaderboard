@@ -293,9 +293,12 @@ has realistic data from first run.
 
 The E-VOLVE logo moves from `design/uploads/` to `public/` and is optimised (currently 274 KB).
 
-## 10. Open assumption
+## 10. Resolved: how wins are counted
 
-**"15W" on the team cards is defined as the number of completed weeks in which the team
-finished first in the weekly team standings.** The prototype hardcodes it and the brief only
-says "Record: 15 Wins". This number appears on every team card, so if wins mean something else
-in your program, it should be corrected before implementation.
+**"15W" on the team cards is the number of completed weeks in which the team finished first in
+the weekly team standings.** The prototype hardcodes the number and the brief only says
+"Record: 15 Wins", so this was raised as an open assumption — **confirmed correct by the
+product owner on 2026-08-06**.
+
+A week is won by the team with the highest total member score in that week's snapshot, matching
+how team points are computed on the standings screen so the two never disagree.
