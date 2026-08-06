@@ -14,6 +14,7 @@ export function Sidebar({
   initials,
   isCoach,
   isAdmin,
+  signOut,
 }: {
   seasonName: string;
   userName: string;
@@ -22,6 +23,11 @@ export function Sidebar({
   initials: string;
   isCoach: boolean;
   isAdmin: boolean;
+  /**
+   * Rendered by the server layout: this is a client component, so it cannot
+   * host the sign-out Server Action itself.
+   */
+  signOut: React.ReactNode;
 }) {
   const pathname = usePathname();
   const items = buildNav({ isCoach, isAdmin });
@@ -88,14 +94,7 @@ export function Sidebar({
           </div>
         </div>
 
-        <form action="/api/auth/signout" method="post" className="mt-3">
-          <button
-            type="submit"
-            className="text-shell-ink-2 hover:text-shell-ink w-full cursor-pointer rounded-[10px] px-1 py-2 text-left text-[11px] font-extrabold tracking-[0.12em] uppercase transition-colors"
-          >
-            Sign out
-          </button>
-        </form>
+        <div className="mt-3">{signOut}</div>
       </div>
     </aside>
   );

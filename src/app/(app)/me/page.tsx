@@ -8,6 +8,7 @@ import {
   fmt,
 } from "@/components/ui";
 import { FlipCard, type LogRow } from "@/components/me/FlipCard";
+import { SignOutButton } from "@/components/shell/SignOutButton";
 import { getDb } from "@/db/client";
 import { getBadges } from "@/db/queries/badges";
 import { getAppContext } from "@/db/queries/context";
@@ -24,15 +25,21 @@ export default async function MePage() {
 
   if (!member) {
     return (
-      <Card className="mx-auto max-w-lg text-center">
-        <div className="text-[36px]">🧢</div>
-        <SectionTitle className="mt-2">NO PLAYER CARD</SectionTitle>
-        <p className="text-ink-2 mt-3 text-[14px] leading-relaxed">
-          {ctx.coachedTeams.length > 0
-            ? `You coach ${ctx.coachedTeams.map((t) => t.name).join(", ")} this season. Coaches are not scored, so there is no player card — head to the Coach Desk instead.`
-            : "You are not on a team for this season yet. Ask an admin to add you."}
-        </p>
-      </Card>
+      <div className="mx-auto flex max-w-lg flex-col gap-4">
+        <Card className="text-center">
+          <div className="text-[36px]">🧢</div>
+          <SectionTitle className="mt-2">NO PLAYER CARD</SectionTitle>
+          <p className="text-ink-2 mt-3 text-[14px] leading-relaxed">
+            {ctx.coachedTeams.length > 0
+              ? `You coach ${ctx.coachedTeams.map((t) => t.name).join(", ")} this season. Coaches are not scored, so there is no player card — head to the Coach Desk instead.`
+              : "You are not on a team for this season yet. Ask an admin to add you."}
+          </p>
+        </Card>
+        <AccountCard
+          name={ctx.user.name ?? ctx.user.email ?? "Member"}
+          email={ctx.user.email ?? ""}
+        />
+      </div>
     );
   }
 
@@ -146,7 +153,29 @@ export default async function MePage() {
             ))}
           </div>
         </Card>
+
+        <AccountCard
+          name={member.name}
+          email={ctx.user.email ?? ""}
+        />
       </div>
     </div>
+  );
+}
+
+/**
+ * Account controls live here because the sidebar — which also carries sign-out
+ * — is `lg:` and above only. Without this, phone users had no way to sign out.
+ */
+function AccountCard({ name, email }: { name: string; email: string }) {
+  return (
+    <Card>
+      <Eyebrow>Account</Eyebrow>
+      <div className="text-ink mt-2 text-[14px] font-extrabold">{name}</div>
+      {email && (
+        <div className="text-ink-3 text-[12.5px] font-semibold">{email}</div>
+      )}
+      <SignOutButton variant="panel" className="mt-4" />
+    </Card>
   );
 }

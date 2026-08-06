@@ -5,10 +5,28 @@ import Google from "next-auth/providers/google";
 import { getDb } from "@/db/client";
 import { accounts, sessions, users, verificationTokens } from "@/db/schema";
 
+/**
+ * Auth.js refuses to run without a secret, and logs `MissingSecret` on every
+ * single request rather than failing once — which is easy to miss behind a
+ * working dev bypass, and would mean sign-in was broken in production.
+ *
+ * In development we supply a fixed placeholder so a fresh clone works and the
+ * log stays readable. In production there is deliberately no fallback: a
+ * missing secret must be loud, because a guessable one would let anyone forge
+ * a session cookie.
+ */
+function resolveSecret(): string | undefined {
+  const secret = process.env.AUTH_SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") return undefined;
+  return "core-plus-development-secret-not-for-production";
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth(() => {
   const db = getDb();
 
   return {
+    secret: resolveSecret(),
     adapter: DrizzleAdapter(db, {
       usersTable: users,
       accountsTable: accounts,

@@ -1,5 +1,6 @@
 import { BottomNav } from "@/components/shell/BottomNav";
 import { Sidebar } from "@/components/shell/Sidebar";
+import { SignOutButton } from "@/components/shell/SignOutButton";
 import { TopBar } from "@/components/shell/TopBar";
 import { getDb } from "@/db/client";
 import { getAppContext } from "@/db/queries/context";
@@ -33,6 +34,7 @@ export default async function AppLayout({
         initials={name.slice(0, 2).toUpperCase()}
         isCoach={ctx.isCoach}
         isAdmin={ctx.isAdmin}
+        signOut={<SignOutButton />}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
