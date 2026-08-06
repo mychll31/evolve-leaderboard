@@ -84,19 +84,18 @@ describe("seed", () => {
           eq(metricEntries.status, "approved"),
         ),
       );
-    // Two Founders are deliberately unsettled at the latest session: one
-    // pending and one with no entry at all.
-    expect(approved).toHaveLength(14 * result.heldMeetings - 2);
+    // One Founder is deliberately left unrecorded at the latest session, so
+    // the Coach Desk always opens with something to act on.
+    expect(approved).toHaveLength(14 * result.heldMeetings - 1);
   });
 
-  it("leaves the latest session unsettled so the Coach Desk has real work", async () => {
+  it("leaves the latest session unrecorded for one member, so the Coach Desk has work", async () => {
+    // Check-ins count immediately, so nothing is ever left pending.
     const pending = await t.db
       .select()
       .from(metricEntries)
       .where(eq(metricEntries.status, "pending"));
-
-    expect(pending).toHaveLength(1);
-    expect(pending[0].source).toBe("self");
+    expect(pending).toHaveLength(0);
 
     // Anchored to the most recent held session, not to today's date, so this
     // holds whatever weekday the seed runs on.
@@ -105,7 +104,12 @@ describe("seed", () => {
       .from(meetings)
       .where(eq(meetings.status, "held"));
     const latest = held.sort((a, b) => b.meetsOn.localeCompare(a.meetsOn))[0];
-    expect(pending[0].meetingId).toBe(latest.id);
+
+    const atLatest = await t.db
+      .select()
+      .from(metricEntries)
+      .where(eq(metricEntries.meetingId, latest.id));
+    expect(atLatest).toHaveLength(13);
   });
 
   it("marks past meetings held and future meetings scheduled", async () => {

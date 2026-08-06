@@ -44,8 +44,13 @@ async function requireOpenMeeting(db: Database, meetingId: string) {
 }
 
 /**
- * A member checking themselves in. Creates a *pending* entry — it does not
- * count toward any score until a coach approves it.
+ * A member checking themselves in. Counts immediately — there is no approval
+ * step.
+ *
+ * A coach can still override afterwards via `recordForMember`, and that
+ * override wins: a self check-in never overwrites a decision a coach has
+ * already made, which is what keeps "marked missing" from being undone by
+ * tapping the button again.
  *
  * Upserts rather than inserts, so tapping twice corrects the record instead of
  * failing on the unique index.
@@ -75,7 +80,10 @@ export async function checkIn(
   const metricId = await attendanceMetricId(db, meeting.seasonId);
 
   const [existing] = await db
-    .select({ id: metricEntries.id, status: metricEntries.status })
+    .select({
+      id: metricEntries.id,
+      source: metricEntries.source,
+    })
     .from(metricEntries)
     .where(
       and(
@@ -87,11 +95,12 @@ export async function checkIn(
     .limit(1);
 
   if (existing) {
-    // A member may not overwrite a coach's decision.
-    if (existing.status !== "pending") return;
+    // A coach or admin has already ruled on this session. Their decision
+    // stands — otherwise "marked missing" could be undone by tapping again.
+    if (existing.source !== "self") return;
     await db
       .update(metricEntries)
-      .set({ value: 1, recordedAt: now, source: "self" })
+      .set({ value: 1, status: "approved", recordedAt: now, decidedAt: now })
       .where(eq(metricEntries.id, existing.id));
     return;
   }
@@ -102,10 +111,13 @@ export async function checkIn(
     membershipId,
     meetingId,
     value: 1,
-    status: "pending",
+    status: "approved",
     source: "self",
     recordedBy: actor.id,
     recordedAt: now,
+    // Self-decided: the member's own tap is the decision.
+    decidedBy: actor.id,
+    decidedAt: now,
   });
 }
 

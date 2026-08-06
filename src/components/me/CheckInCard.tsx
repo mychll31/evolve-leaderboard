@@ -17,9 +17,8 @@ function timeOf(date: Date): string {
 /**
  * The member's own attendance control — the one thing a member can write.
  *
- * A check-in lands as *pending*: it does not move any score until their coach
- * approves it. Saying so on the button matters, because otherwise a member
- * taps it, sees their score unchanged, and assumes it failed.
+ * A check-in counts immediately; there is no approval step. A coach can still
+ * override it afterwards from the Coach Desk, and their decision wins.
  */
 export function CheckInCard({
   membershipId,
@@ -46,21 +45,22 @@ export function CheckInCard({
   }
 
   const settled = {
+    // Only reachable for entries created before check-ins counted immediately.
     pending: {
       tone: "border-accent-line bg-accent-tint",
-      label: "Awaiting approval",
+      label: "Awaiting review",
       icon: "⏳",
       detail: checkIn.recordedAt
-        ? `You checked in at ${timeOf(checkIn.recordedAt)}${checkIn.isLate ? " · late" : ""}. Your coach still needs to approve it, so it is not counted yet.`
-        : "Your coach still needs to approve it.",
+        ? `Checked in at ${timeOf(checkIn.recordedAt)}${checkIn.isLate ? " · late" : ""}. Your coach still needs to confirm this one.`
+        : "Your coach still needs to confirm this one.",
     },
     present: {
       tone: "border-positive-line bg-positive-tint",
       label: checkIn.isLate ? "Present · late" : "Present",
       icon: "✓",
       detail: checkIn.recordedAt
-        ? `Approved. Checked in at ${timeOf(checkIn.recordedAt)}.`
-        : "Approved by your coach.",
+        ? `Checked in at ${timeOf(checkIn.recordedAt)}. This counts toward your score.`
+        : "Recorded for this session.",
     },
     missing: {
       tone: "border-negative-line bg-negative-tint",
@@ -125,7 +125,7 @@ export function CheckInCard({
       </button>
 
       <p className="text-ink-3 mt-2.5 text-[11.5px] leading-relaxed font-semibold">
-        Your coach approves check-ins. Your score moves once they do.
+        Counts as soon as you tap. Your coach can correct it afterwards.
       </p>
     </Card>
   );

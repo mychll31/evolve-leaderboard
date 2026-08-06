@@ -34,8 +34,8 @@ export default async function DashboardPage() {
         ) / standings.members.length;
 
   // The attendance trend and session heatmap used to sit here too. They are
-  // on /analytics, which charts them from stored weekly snapshots rather than
-  // recomputing — so this was a duplicate that could disagree with itself.
+  // on /admin/analytics, which charts them from stored weekly snapshots rather
+  // than recomputing — so this was a duplicate that could disagree with itself.
   const topFive = standings.members.slice(0, 5);
   const maxTeamPoints = Math.max(1, ...teams.map((t) => t.points));
 
@@ -245,7 +245,7 @@ export default async function DashboardPage() {
               </span>
             </div>
             <Link
-              href="/hall-of-fame"
+              href="/leaderboard#hall-of-fame"
               className="text-accent-dark mt-4 inline-block text-[11.5px] font-extrabold tracking-[0.08em]"
             >
               SEE BADGE CABINET ›

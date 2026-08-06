@@ -15,7 +15,7 @@ const STATE_STYLE: Record<
   ApprovalRow["state"],
   { border: string; label: string; tone: string }
 > = {
-  pending: { border: "border-line", label: "PENDING", tone: "text-ink-3" },
+  pending: { border: "border-accent-line", label: "AWAITING REVIEW", tone: "text-accent" },
   present: { border: "border-positive-line", label: "✓ PRESENT", tone: "text-positive" },
   missing: { border: "border-negative-line", label: "✕ MISSING", tone: "text-negative" },
   unrecorded: { border: "border-line", label: "NOT RECORDED", tone: "text-ink-4" },
@@ -183,14 +183,9 @@ export function AttendanceList({ desk }: { desk: CoachDesk }) {
 }
 
 export function DeskCounters({ desk }: { desk: CoachDesk }) {
+  // Check-ins count immediately, so there is no approval queue. What a coach
+  // needs to see is who is still unaccounted for.
   const tiles = [
-    {
-      label: "Pending",
-      value: desk.pendingCount,
-      className: "border-accent-line bg-accent-tint",
-      text: "text-accent",
-      eyebrow: "text-[#A97A4E]",
-    },
     {
       label: "Present",
       value: desk.presentCount,
@@ -204,6 +199,13 @@ export function DeskCounters({ desk }: { desk: CoachDesk }) {
       className: "border-negative-line bg-negative-tint",
       text: "text-negative",
       eyebrow: "text-[#9E5757]",
+    },
+    {
+      label: "Not recorded",
+      value: desk.unrecordedCount + desk.pendingCount,
+      className: "border-accent-line bg-accent-tint",
+      text: "text-accent",
+      eyebrow: "text-[#A97A4E]",
     },
   ];
 

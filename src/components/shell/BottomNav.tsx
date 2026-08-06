@@ -4,11 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { buildNav, NavIcon } from "./nav";
 
-/**
- * Phone navigation, from the Core+ Season App design. Hall of Fame is excluded
- * so the bar never exceeds five columns on a 390px screen; it stays reachable
- * from the dashboard's streak card.
- */
+/** Phone navigation, from the Core+ Season App design. */
 export function BottomNav({
   isCoach,
   isAdmin,

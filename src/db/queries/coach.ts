@@ -38,9 +38,16 @@ export type CoachDesk = {
     isToday: boolean;
   } | null;
   rows: ApprovalRow[];
-  pendingCount: number;
   presentCount: number;
+  /** Explicitly marked absent by a coach. */
   missingCount: number;
+  /** Nobody has said either way yet. */
+  unrecordedCount: number;
+  /**
+   * Legacy approval queue. Self check-ins count immediately, so this is only
+   * ever non-zero for entries created before that change.
+   */
+  pendingCount: number;
   topPerformers: MemberStanding[];
   bottomPerformers: MemberStanding[];
 };
@@ -194,11 +201,12 @@ export async function getCoachDesk(
         }
       : null,
     rows,
-    pendingCount: rows.filter((r) => r.state === "pending").length,
+    // Check-ins count immediately, so there is no pending queue to report.
+    // What a coach needs instead is who has not been accounted for at all.
     presentCount: rows.filter((r) => r.state === "present").length,
-    missingCount: rows.filter(
-      (r) => r.state === "missing" || r.state === "unrecorded",
-    ).length,
+    missingCount: rows.filter((r) => r.state === "missing").length,
+    unrecordedCount: rows.filter((r) => r.state === "unrecorded").length,
+    pendingCount: rows.filter((r) => r.state === "pending").length,
     topPerformers: teamMembers.slice(0, 3),
     bottomPerformers: teamMembers.slice(-3).reverse(),
   };

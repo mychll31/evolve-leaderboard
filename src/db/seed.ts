@@ -355,26 +355,12 @@ export async function seed(
     heldMeetings.forEach((meeting, k) => {
       const isLastHeld = k === heldCount - 1;
 
-      // Leave the most recent session unsettled for Founders so the Coach Desk
-      // always opens with real work: one member awaiting approval and one who
-      // never checked in. Anchoring this to the latest session rather than to
-      // "today" means it holds whatever weekday the seed is run on.
-      if (isLastHeld && player.team === 0) {
-        if (player.name === "Noah") return; // no entry at all -> "unrecorded"
-        const startsAt = new Date(`${meeting.meetsOn}T09:00:00.000Z`).getTime();
-        entryValues.push({
-          seasonId: season.id,
-          metricId: attendanceId,
-          membershipId: memberRows[i].id,
-          meetingId: meeting.id,
-          value: 1,
-          status: "pending",
-          source: "self",
-          recordedBy: playerRows[i].id,
-          recordedAt: new Date(startsAt + 7 * 60_000), // late: past the grace window
-        });
-        return;
-      }
+      // Leave the most recent session unrecorded for one Founder so the Coach
+      // Desk always opens with real work. Check-ins count immediately now, so
+      // "unaccounted for" is the only outstanding state a coach can act on.
+      // Anchored to the latest session rather than to "today", so it holds
+      // whatever weekday the seed runs on.
+      if (isLastHeld && player.name === "Noah") return;
 
       const isLate = present[k] && rand() < 0.12;
       const startsAt = new Date(`${meeting.meetsOn}T09:00:00.000Z`).getTime();

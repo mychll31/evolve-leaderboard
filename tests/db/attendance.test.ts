@@ -85,6 +85,23 @@ describe("attendance write path", () => {
     await t.cleanup();
   });
 
+  /** Legacy pending row, for the approval paths that still handle them. */
+  const makePending = async (membershipId: string, meetingId: string) => {
+    const [row] = await t.db
+      .insert(metricEntries)
+      .values({
+        seasonId,
+        metricId: attendanceMetric,
+        membershipId,
+        meetingId,
+        value: 1,
+        status: "pending",
+        source: "self",
+      })
+      .returning({ id: metricEntries.id });
+    return row.id;
+  };
+
   const entryFor = async (membershipId: string, meetingId: string) => {
     const [row] = await t.db
       .select()
@@ -100,33 +117,17 @@ describe("attendance write path", () => {
   };
 
   describe("checkIn", () => {
-    it("creates a pending self entry", async () => {
+    it("records an approved self entry that counts immediately", async () => {
       const actor: Actor = { id: michael.userId, role: "user" };
       await checkIn(t.db, actor, michael.membershipId, openMeeting);
 
       const entry = await entryFor(michael.membershipId, openMeeting);
-      expect(entry.status).toBe("pending");
+      expect(entry.status).toBe("approved");
       expect(entry.source).toBe("self");
       expect(entry.value).toBe(1);
-    });
-
-    it("does not count toward the score until approved", async () => {
-      const actor: Actor = { id: michael.userId, role: "user" };
-      const season = await getActiveSeason(t.db);
-
-      const before = await getStandings(t.db, season!, TODAY);
-      const beforeScore = before.members.find(
-        (m) => m.membershipId === michael.membershipId,
-      )!.score;
-
-      await checkIn(t.db, actor, michael.membershipId, openMeeting);
-
-      const after = await getStandings(t.db, season!, TODAY);
-      const afterScore = after.members.find(
-        (m) => m.membershipId === michael.membershipId,
-      )!.score;
-
-      expect(afterScore).toBeCloseTo(beforeScore, 6);
+      // Self-decided: the member's own tap is the decision.
+      expect(entry.decidedBy).toBe(michael.userId);
+      expect(entry.decidedAt).not.toBeNull();
     });
 
     it("updates rather than duplicating on a second check-in", async () => {
@@ -144,6 +145,36 @@ describe("attendance write path", () => {
           ),
         );
       expect(rows).toHaveLength(1);
+    });
+
+    it("counts toward attendance as soon as the session is held", async () => {
+      const season = await getActiveSeason(t.db);
+      const before = await getStandings(t.db, season!, TODAY);
+      const beforeAtt = before.members.find(
+        (m) => m.membershipId === michael.membershipId,
+      )!.breakdown.find((b) => b.key === "attendance")!.value;
+
+      // Check in, then hold the session so it enters the denominator.
+      await checkIn(
+        t.db,
+        { id: michael.userId, role: "user" },
+        michael.membershipId,
+        openMeeting,
+      );
+      await t.db
+        .update(meetings)
+        .set({ status: "held" })
+        .where(eq(meetings.id, openMeeting));
+
+      const after = await getStandings(t.db, season!, TODAY);
+      const afterAtt = after.members.find(
+        (m) => m.membershipId === michael.membershipId,
+      )!.breakdown.find((b) => b.key === "attendance")!.value;
+
+      // The denominator grew by one held session. If the check-in had needed
+      // approval to count, attendance would have dropped instead of holding.
+      expect(beforeAtt).toBeCloseTo(100, 6);
+      expect(afterAtt).toBeCloseTo(100, 6);
     });
 
     it("cannot overwrite a decision a coach has already made", async () => {
@@ -249,16 +280,12 @@ describe("attendance write path", () => {
     });
 
     it("stops a coach deciding on another team's member", async () => {
-      await checkIn(
-        t.db,
-        { id: michael.userId, role: "user" },
-        michael.membershipId,
-        openMeeting,
-      );
-      const entry = await entryFor(michael.membershipId, openMeeting);
+      // Check-ins no longer create pending rows, so build one directly to keep
+      // covering the legacy approval path for pre-existing entries.
+      const entryId = await makePending(michael.membershipId, openMeeting);
 
       await expect(
-        decideEntry(t.db, titansCoach, entry.id, "approved"),
+        decideEntry(t.db, titansCoach, entryId, "approved"),
       ).rejects.toThrow(AuthorizationError);
 
       const untouched = await entryFor(michael.membershipId, openMeeting);
@@ -357,17 +384,9 @@ describe("attendance write path", () => {
         .filter((m) => m.teamId === founders.id && m.role === "member")
         .map((m) => m.id);
 
+      // Legacy pending rows: check-ins no longer create them.
       for (const membershipId of roster) {
-        const [row] = await t.db
-          .select({ userId: memberships.userId })
-          .from(memberships)
-          .where(eq(memberships.id, membershipId));
-        await checkIn(
-          t.db,
-          { id: row.userId, role: "user" },
-          membershipId,
-          openMeeting,
-        );
+        await makePending(membershipId, openMeeting);
       }
 
       const count = await approveAllPending(

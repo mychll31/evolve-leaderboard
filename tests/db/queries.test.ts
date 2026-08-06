@@ -103,19 +103,22 @@ describe("query layer", () => {
       expect(michael.streak).toBeLessThanOrEqual(standings.heldCount);
     });
 
-    it("keeps a streak alive when the latest session is still awaiting approval", () => {
-      // Regression: the entry query used to filter to `approved` in SQL, so the
-      // streak counter could not tell a pending check-in from a no-show and
-      // reset the member to zero the moment a coach fell behind.
+    it("counts a self check-in immediately, with no approval step", () => {
+      // Michael is present at every held session and none of them wait on a
+      // coach, so his streak runs the whole season.
       const michael = standings.members.find((m) => m.name === "Michael")!;
-      expect(michael.streak).toBe(standings.heldCount - 1);
+      expect(michael.streak).toBe(standings.heldCount);
+
+      const attendance = michael.breakdown.find((b) => b.key === "attendance")!;
+      expect(attendance.value).toBeCloseTo(100, 4);
     });
 
-    it("still excludes unapproved entries from the score", () => {
-      const michael = standings.members.find((m) => m.name === "Michael")!;
-      const attendance = michael.breakdown.find((b) => b.key === "attendance")!;
-      // 14 of 15 approved: the pending session must not count as present.
-      expect(attendance.value).toBeCloseTo((14 / 15) * 100, 4);
+    it("still ignores an entry that a coach has rejected", () => {
+      // Noah has no entry for the latest session, so it counts against him —
+      // auto-approval applies to check-ins, not to absences.
+      const noah = standings.members.find((m) => m.name === "Noah")!;
+      const attendance = noah.breakdown.find((b) => b.key === "attendance")!;
+      expect(attendance.value).toBeLessThan(100);
     });
   });
 
@@ -199,8 +202,21 @@ describe("query layer", () => {
         .where(eq(teams.name, "Founders"));
       const desk = await getCoachDesk(t.db, standings, founders.id, TODAY);
       expect(
-        desk!.pendingCount + desk!.presentCount + desk!.missingCount,
+        desk!.presentCount +
+          desk!.missingCount +
+          desk!.unrecordedCount +
+          desk!.pendingCount,
       ).toBe(desk!.rows.length);
+    });
+
+    it("reports nobody pending, since check-ins no longer queue", async () => {
+      const [founders] = await t.db
+        .select()
+        .from(teams)
+        .where(eq(teams.name, "Founders"));
+      const desk = await getCoachDesk(t.db, standings, founders.id, TODAY);
+      expect(desk!.pendingCount).toBe(0);
+      expect(desk!.unrecordedCount).toBe(1);
     });
 
     it("returns null for a team that does not exist", async () => {

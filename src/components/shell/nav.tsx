@@ -107,7 +107,7 @@ export function buildNav({
 }): (NavItem & { name: NavName })[] {
   const items: (NavItem & { name: NavName })[] = [
     { href: "/dashboard", label: "Dashboard", short: "Home", title: "Season Dashboard", name: "home", icon: null, phone: true },
-    { href: "/leaderboard", label: "Leaderboard", short: "Ranks", title: "Player Leaderboard", name: "ranks", icon: null, phone: true },
+    { href: "/leaderboard", label: "Leaderboard", short: "Ranks", title: "Leaderboard & Hall of Fame", name: "ranks", icon: null, phone: true },
     { href: "/teams", label: "Teams", short: "Teams", title: "Team Standings", name: "teams", icon: null, phone: true },
   ];
 
@@ -123,8 +123,6 @@ export function buildNav({
 
   items.push(
     { href: "/me", label: "My Card", short: "Me", title: "My Card", name: "me", icon: null, phone: true },
-    { href: "/analytics", label: "Analytics", short: "Stats", title: "Season Analytics", name: "stats", icon: null, phone: false },
-    { href: "/hall-of-fame", label: "Hall of Fame", short: "Fame", title: "Hall of Fame", name: "fame", icon: null, phone: false },
     { href: "/notifications", label: "Notifications", short: "Alerts", title: "Notifications", name: "bell", icon: null, phone: false },
   );
 
@@ -137,6 +135,7 @@ const SUB_TITLES: Record<string, string> = {
   "/admin/calendar": "Session Calendar",
   "/admin/teams": "Manage Teams",
   "/admin/people": "People",
+  "/admin/analytics": "Season Analytics",
   "/admin/badges": "Badges & Rollup",
   "/admin/import": "Import & Export",
   "/admin": "Metric Builder",
