@@ -115,7 +115,10 @@ export function buildNav({
     items.push({ href: "/coach", label: "Coach Desk", short: "Desk", title: "Coach Desk", name: "desk", icon: null, phone: true });
   }
   if (isAdmin) {
-    items.push({ href: "/admin", label: "Metric Builder", short: "Admin", title: "Metric Builder", name: "admin", icon: null, phone: true });
+    // Labelled "Admin", not "Metric Builder": this is the entrance to seasons,
+    // the calendar, teams, people, badges and import as well. Naming it after
+    // one of its seven tabs hid user management completely.
+    items.push({ href: "/admin", label: "Admin", short: "Admin", title: "Admin", name: "admin", icon: null, phone: true });
   }
 
   items.push(
@@ -128,9 +131,42 @@ export function buildNav({
   return items;
 }
 
-export function titleFor(pathname: string, isAdmin: boolean, isCoach: boolean): string {
-  const match = buildNav({ isCoach, isAdmin }).find((item) =>
-    pathname.startsWith(item.href),
-  );
-  return match?.title ?? "Leaderboard";
+/** Routes that live under a nav entry but deserve their own heading. */
+const SUB_TITLES: Record<string, string> = {
+  "/admin/seasons": "Seasons",
+  "/admin/calendar": "Session Calendar",
+  "/admin/teams": "Manage Teams",
+  "/admin/people": "People",
+  "/admin/badges": "Badges & Rollup",
+  "/admin/import": "Import & Export",
+  "/admin": "Metric Builder",
+  "/members": "Player",
+};
+
+/**
+ * Resolves the top-bar heading.
+ *
+ * Matching is on segment boundaries and longest-prefix-first. A plain
+ * `startsWith` got two cases wrong: `/members/abc` matched `/me` and showed
+ * "My Card", and every admin sub-page matched `/admin` and showed whatever the
+ * admin entry was called.
+ */
+export function titleFor(
+  pathname: string,
+  isAdmin: boolean,
+  isCoach: boolean,
+): string {
+  const matches = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
+
+  const sub = Object.keys(SUB_TITLES)
+    .filter(matches)
+    .sort((a, b) => b.length - a.length)[0];
+  if (sub) return SUB_TITLES[sub];
+
+  const nav = buildNav({ isCoach, isAdmin })
+    .filter((item) => matches(item.href))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+
+  return nav?.title ?? "Leaderboard";
 }
