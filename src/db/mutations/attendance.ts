@@ -1,7 +1,12 @@
 import { and, eq } from "drizzle-orm";
 import type { Database } from "@/db/client";
-import { meetings, metricEntries, metrics } from "@/db/schema";
-import { assertCanManageMembership, type Actor } from "@/lib/auth/scoping";
+import { meetings, memberships, metricEntries, metrics } from "@/db/schema";
+import {
+  AuthorizationError,
+  assertCanManageMembership,
+  type Actor,
+} from "@/lib/auth/scoping";
+import { NotFoundError } from "./guards";
 
 /**
  * Attendance writes, kept free of `next/*` imports so they can be tested
@@ -52,6 +57,20 @@ export async function checkIn(
   meetingId: string,
   now: Date = new Date(),
 ): Promise<void> {
+  // Self check-in means *self*. Without this the membership id is attacker
+  // controlled, and any signed-in member could mark another person present.
+  // A coach recording for someone else goes through `recordForMember`, which
+  // authorises against their team and tags the entry as coach-sourced.
+  const [membership] = await db
+    .select({ userId: memberships.userId })
+    .from(memberships)
+    .where(eq(memberships.id, membershipId))
+    .limit(1);
+  if (!membership) throw new NotFoundError("Membership");
+  if (membership.userId !== actor.id) {
+    throw new AuthorizationError("You can only check yourself in");
+  }
+
   const meeting = await requireOpenMeeting(db, meetingId);
   const metricId = await attendanceMetricId(db, meeting.seasonId);
 

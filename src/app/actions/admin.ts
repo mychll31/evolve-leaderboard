@@ -36,6 +36,7 @@ import {
 import {
   cloneSeason,
   createSeason,
+  deleteSeason,
   setSeasonStatus,
   updateSeason,
   type SeasonInput,
@@ -108,6 +109,14 @@ export async function createSeasonAction(input: SeasonInput) {
 export async function updateSeasonAction(id: string, input: SeasonInput) {
   const user = await requireUser();
   return run(() => updateSeason(getDb(), user, id, input), [
+    ...ADMIN_PATHS,
+    ...SCORE_PATHS,
+  ]);
+}
+
+export async function deleteSeasonAction(id: string) {
+  const user = await requireUser();
+  return run(() => deleteSeason(getDb(), user, id), [
     ...ADMIN_PATHS,
     ...SCORE_PATHS,
   ]);

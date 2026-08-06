@@ -5,6 +5,7 @@ import { Card, DisplayNumber, Eyebrow, SectionTitle } from "@/components/ui";
 import {
   cloneSeasonAction,
   createSeasonAction,
+  deleteSeasonAction,
   setSeasonStatusAction,
   updateSeasonAction,
 } from "@/app/actions/admin";
@@ -74,125 +75,165 @@ export function SeasonsManager({ seasons }: { seasons: SeasonSummary[] }) {
   return (
     <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="flex flex-col gap-4">
-        {seasons.map((season) => (
-          <Card key={season.id}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <SectionTitle className="tracking-normal">
-                    {season.name}
-                  </SectionTitle>
-                  <StatusPill status={season.status} />
+        {seasons.map((season) => {
+          const canRemove =
+            season.status === "draft" || season.status === "archived";
+          const removeTitle =
+            season.status === "active"
+              ? "Lock and archive this season before removing it"
+              : season.status === "locked"
+                ? "Archive this season before removing it"
+                : undefined;
+          const removeMessage =
+            season.status === "archived"
+              ? `Remove ${season.name}? This permanently deletes its history.`
+              : `Remove ${season.name}? This permanently deletes its setup.`;
+
+          return (
+            <Card key={season.id}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <SectionTitle className="tracking-normal">
+                      {season.name}
+                    </SectionTitle>
+                    <StatusPill status={season.status} />
+                  </div>
+                  <div className="text-ink-3 mt-1.5 text-[12px] font-semibold">
+                    {season.startsOn} → {season.endsOn} · {season.formula}
+                  </div>
                 </div>
-                <div className="text-ink-3 mt-1.5 text-[12px] font-semibold">
-                  {season.startsOn} → {season.endsOn} · {season.formula}
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {season.status === "draft" && (
-                  <Button
-                    disabled={pending}
-                    onClick={() =>
-                      act(() => setSeasonStatusAction(season.id, "active"), {
-                        successMessage: `${season.name} is now the active season`,
-                      })
-                    }
-                  >
-                    Activate
-                  </Button>
-                )}
-                {season.status === "active" && (
-                  <Button
-                    variant="ghost"
-                    disabled={pending}
-                    onClick={() =>
-                      act(() => setSeasonStatusAction(season.id, "locked"), {
-                        successMessage: `${season.name} locked — still readable, no longer editable`,
-                      })
-                    }
-                  >
-                    Lock
-                  </Button>
-                )}
-                {season.status === "locked" && (
-                  <>
+                <div className="flex flex-wrap gap-2">
+                  {season.status === "draft" && (
                     <Button
-                      variant="ghost"
                       disabled={pending}
                       onClick={() =>
                         act(() => setSeasonStatusAction(season.id, "active"), {
-                          successMessage: `${season.name} reopened`,
+                          successMessage: `${season.name} is now the active season`,
                         })
                       }
                     >
-                      Unlock
+                      Activate
                     </Button>
+                  )}
+                  {season.status === "active" && (
                     <Button
                       variant="ghost"
                       disabled={pending}
                       onClick={() =>
-                        act(() => setSeasonStatusAction(season.id, "archived"), {
-                          successMessage: `${season.name} archived`,
+                        act(() => setSeasonStatusAction(season.id, "locked"), {
+                          successMessage: `${season.name} locked — still readable, no longer editable`,
                         })
                       }
                     >
-                      Archive
+                      Lock
                     </Button>
-                  </>
-                )}
-                <Button
-                  variant="ghost"
-                  disabled={pending}
-                  onClick={() => {
-                    setCloneFrom(season.id);
-                    setEditing(null);
-                    setDraft({
-                      name: `${season.name} (copy)`,
-                      startsOn: "",
-                      endsOn: "",
-                      formula: season.formula,
-                    });
-                  }}
-                >
-                  Clone
-                </Button>
-                {season.status !== "archived" && season.status !== "locked" && (
+                  )}
+                  {season.status === "locked" && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        disabled={pending}
+                        onClick={() =>
+                          act(() => setSeasonStatusAction(season.id, "active"), {
+                            successMessage: `${season.name} reopened`,
+                          })
+                        }
+                      >
+                        Unlock
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        disabled={pending}
+                        onClick={() =>
+                          act(() => setSeasonStatusAction(season.id, "archived"), {
+                            successMessage: `${season.name} archived`,
+                          })
+                        }
+                      >
+                        Archive
+                      </Button>
+                    </>
+                  )}
                   <Button
                     variant="ghost"
                     disabled={pending}
                     onClick={() => {
-                      setEditing(season.id);
-                      setCloneFrom(null);
+                      setCloneFrom(season.id);
+                      setEditing(null);
                       setDraft({
-                        name: season.name,
-                        startsOn: season.startsOn,
-                        endsOn: season.endsOn,
+                        name: `${season.name} (copy)`,
+                        startsOn: "",
+                        endsOn: "",
                         formula: season.formula,
                       });
                     }}
                   >
-                    Edit
+                    Clone
                   </Button>
-                )}
-              </div>
-            </div>
+                  {season.status !== "archived" && season.status !== "locked" && (
+                    <Button
+                      variant="ghost"
+                      disabled={pending}
+                      onClick={() => {
+                        setEditing(season.id);
+                        setCloneFrom(null);
+                        setDraft({
+                          name: season.name,
+                          startsOn: season.startsOn,
+                          endsOn: season.endsOn,
+                          formula: season.formula,
+                        });
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  <Button
+                    variant="danger"
+                    disabled={pending || !canRemove}
+                    title={removeTitle}
+                    onClick={() => {
+                      const confirmed = window.confirm(removeMessage);
+                      if (!confirmed) return;
 
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              {[
-                { label: "Teams", value: season.teamCount },
-                { label: "Members", value: season.memberCount },
-                { label: "Sessions", value: season.meetingCount },
-              ].map((stat) => (
-                <div key={stat.label} className="bg-surface-2 rounded-xl px-3.5 py-2.5">
-                  <Eyebrow>{stat.label}</Eyebrow>
-                  <DisplayNumber className="text-ink mt-0.5 text-[23px]">
-                    {stat.value}
-                  </DisplayNumber>
+                      act(() => deleteSeasonAction(season.id), {
+                        successMessage: `${season.name} removed`,
+                        onDone: () => {
+                          if (editing === season.id || cloneFrom === season.id) {
+                            setEditing(null);
+                            setCloneFrom(null);
+                            setDraft(EMPTY);
+                          }
+                        },
+                      });
+                    }}
+                  >
+                    Remove
+                  </Button>
                 </div>
-              ))}
-            </div>
-          </Card>
-        ))}
+              </div>
+
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {[
+                  { label: "Teams", value: season.teamCount },
+                  { label: "Members", value: season.memberCount },
+                  { label: "Sessions", value: season.meetingCount },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="bg-surface-2 rounded-xl px-3.5 py-2.5"
+                  >
+                    <Eyebrow>{stat.label}</Eyebrow>
+                    <DisplayNumber className="text-ink mt-0.5 text-[23px]">
+                      {stat.value}
+                    </DisplayNumber>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          );
+        })}
       </div>
 
       <Card>

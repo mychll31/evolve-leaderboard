@@ -5,6 +5,7 @@ import {
   memberships,
   metricEntries,
   metrics,
+  scoreSnapshots,
   seasons,
   teams,
   users,
@@ -36,6 +37,7 @@ import {
 import {
   cloneSeason,
   createSeason,
+  deleteSeason,
   setSeasonStatus,
   updateSeason,
 } from "@/db/mutations/seasons";
@@ -216,6 +218,116 @@ describe("admin mutations", () => {
       expect(clonedMemberships.every((m) => m.role === "coach")).toBe(true);
       expect(clonedMemberships).toHaveLength(10);
       expect(clonedEntries).toHaveLength(0);
+    });
+
+    it("deletes draft season setup", async () => {
+      const draftId = await createSeason(t.db, admin, {
+        name: "Mistake",
+        startsOn: "2026-10-01",
+        endsOn: "2026-11-30",
+      });
+      const teamId = await createTeam(t.db, admin, draftId, {
+        name: "Comets",
+        abbr: "CMT",
+        color: "#12B5CB",
+      });
+      await createMetric(t.db, admin, draftId, {
+        name: "Practice",
+        type: "integer",
+        target: 10,
+      });
+
+      await deleteSeason(t.db, admin, draftId);
+
+      const [season] = await t.db
+        .select()
+        .from(seasons)
+        .where(eq(seasons.id, draftId));
+      const [team] = await t.db
+        .select()
+        .from(teams)
+        .where(eq(teams.id, teamId));
+
+      expect(season).toBeUndefined();
+      expect(team).toBeUndefined();
+    });
+
+    it("refuses to delete a season that went live", async () => {
+      await expect(deleteSeason(t.db, admin, seasonId)).rejects.toThrow(
+        ConflictError,
+      );
+    });
+
+    it("deletes archived seasons and their history", async () => {
+      const [archived] = await t.db
+        .select()
+        .from(seasons)
+        .where(eq(seasons.status, "archived"))
+        .limit(1);
+      expect(archived).toBeDefined();
+
+      const [snapshotBefore] = await t.db
+        .select({ id: scoreSnapshots.id })
+        .from(scoreSnapshots)
+        .where(eq(scoreSnapshots.seasonId, archived!.id))
+        .limit(1);
+      expect(snapshotBefore).toBeDefined();
+
+      await deleteSeason(t.db, admin, archived!.id);
+
+      const [season] = await t.db
+        .select()
+        .from(seasons)
+        .where(eq(seasons.id, archived!.id));
+      const snapshots = await t.db
+        .select()
+        .from(scoreSnapshots)
+        .where(eq(scoreSnapshots.seasonId, archived!.id));
+
+      expect(season).toBeUndefined();
+      expect(snapshots).toHaveLength(0);
+    });
+
+    it("deletes draft seasons with accidental results", async () => {
+      const draftId = await createSeason(t.db, admin, {
+        name: "Started Draft",
+        startsOn: "2026-10-01",
+        endsOn: "2026-11-30",
+      });
+      const teamId = await createTeam(t.db, admin, draftId, {
+        name: "Comets",
+        abbr: "CMT",
+        color: "#12B5CB",
+      });
+      const userId = await createUser(t.db, admin, {
+        name: "Draft Member",
+        email: "draft.member@example.com",
+      });
+      const membershipId = await upsertMembership(t.db, admin, {
+        seasonId: draftId,
+        teamId,
+        userId,
+        role: "member",
+        position: "PG",
+      });
+      const metricId = await createMetric(t.db, admin, draftId, {
+        name: "Practice",
+        type: "integer",
+        target: 10,
+      });
+      await setEntryValue(t.db, admin, {
+        membershipId,
+        metricId,
+        value: 7,
+      });
+
+      await deleteSeason(t.db, admin, draftId);
+
+      const entries = await t.db
+        .select()
+        .from(metricEntries)
+        .where(eq(metricEntries.seasonId, draftId));
+      expect(entries).toHaveLength(0);
     });
   });
 

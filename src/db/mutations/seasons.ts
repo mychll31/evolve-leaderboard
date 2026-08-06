@@ -75,6 +75,41 @@ export async function updateSeason(
 }
 
 /**
+ * Permanently removes a season and all of its season-scoped data.
+ *
+ * Active and locked seasons must go through the lifecycle first. That keeps
+ * admins from deleting the live leaderboard by accident or bypassing the
+ * explicit archive step for frozen results.
+ */
+export async function deleteSeason(
+  db: Database,
+  actor: Actor,
+  seasonId: string,
+): Promise<void> {
+  assertAdmin(actor);
+
+  const [season] = await db
+    .select()
+    .from(seasons)
+    .where(eq(seasons.id, seasonId))
+    .limit(1);
+  if (!season) throw new NotFoundError("Season");
+
+  if (season.status === "active") {
+    throw new ConflictError(
+      "The active season cannot be deleted. Lock and archive it first.",
+    );
+  }
+  if (season.status === "locked") {
+    throw new ConflictError(
+      "Locked seasons must be archived before they can be deleted.",
+    );
+  }
+
+  await db.delete(seasons).where(eq(seasons.id, seasonId));
+}
+
+/**
  * Moves a season through its lifecycle.
  *
  * Exactly one season may be active, so activating one locks whichever was

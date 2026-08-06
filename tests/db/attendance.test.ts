@@ -167,6 +167,38 @@ describe("attendance write path", () => {
       expect(entry.source).toBe("coach");
     });
 
+    it("refuses to check in on someone else's behalf", async () => {
+      // Regression: checkIn took an attacker-controlled membershipId and never
+      // verified it belonged to the caller, so any signed-in member could mark
+      // another person present.
+      const all = await t.db.select().from(memberships);
+      const victim = all.find(
+        (m) => m.role === "member" && m.id !== michael.membershipId,
+      )!;
+
+      await expect(
+        checkIn(
+          t.db,
+          { id: michael.userId, role: "user" },
+          victim.id,
+          openMeeting,
+        ),
+      ).rejects.toThrow(AuthorizationError);
+
+      expect(await entryFor(victim.id, openMeeting)).toBeUndefined();
+    });
+
+    it("refuses a membership that does not exist", async () => {
+      await expect(
+        checkIn(
+          t.db,
+          { id: michael.userId, role: "user" },
+          "no-such-membership",
+          openMeeting,
+        ),
+      ).rejects.toThrow(/not found/i);
+    });
+
     it("refuses a cancelled session", async () => {
       await t.db
         .update(meetings)

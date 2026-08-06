@@ -7,10 +7,12 @@ import {
   SectionTitle,
   fmt,
 } from "@/components/ui";
+import { CheckInCard } from "@/components/me/CheckInCard";
 import { FlipCard, type LogRow } from "@/components/me/FlipCard";
 import { SignOutButton } from "@/components/shell/SignOutButton";
 import { getDb } from "@/db/client";
 import { getBadges } from "@/db/queries/badges";
+import { getCheckIn } from "@/db/queries/checkin";
 import { getAppContext } from "@/db/queries/context";
 import { metricEntries, metrics } from "@/db/schema";
 import { scoreSnapshots } from "@/db/schema";
@@ -54,7 +56,7 @@ export default async function MePage() {
     )
     .limit(1);
 
-  const [badges, attended, history] = await Promise.all([
+  const [badges, attended, history, checkIn] = await Promise.all([
     getBadges(db, member.membershipId),
     attendanceMetric
       ? db
@@ -72,6 +74,7 @@ export default async function MePage() {
       .select()
       .from(scoreSnapshots)
       .where(eq(scoreSnapshots.membershipId, member.membershipId)),
+    getCheckIn(db, ctx.standings.season.id, member.membershipId),
   ]);
 
   const presentCount = attended.filter((a) => a.value > 0).length;
@@ -102,6 +105,8 @@ export default async function MePage() {
       </div>
 
       <div className="flex flex-col gap-4">
+        <CheckInCard membershipId={member.membershipId} checkIn={checkIn} />
+
         {/* The transparency counterpart to the admin metric builder: if admins
             can reweight the formula, members must see why their number moved. */}
         <Card>
