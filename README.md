@@ -81,6 +81,8 @@ To use real Google sign-in, create OAuth credentials with redirect URI
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Load the fixture |
 | `npm run db:reset` | Drop, migrate and reseed |
+| `npm run admin:add -- <email> [name]` | Grant super admin, creating the account if needed |
+| `npm run auth:check` | Validate the sign-in configuration |
 
 ## How it fits together
 
@@ -186,6 +188,37 @@ UI, so they hold however they are reached:
 
 `better-sqlite3` is not an option here: Vercel's filesystem is ephemeral, so a file-backed
 database would lose every write on the next cold start.
+
+## Adding people
+
+Leaderboard is invite-only: an email address must exist in the database before
+that Google account can sign in. There is no public signup.
+
+**One person** — sign in as a super admin, go to `/admin/people`, use the **Add
+person** card, then set their **Team** in the table. Until they have a team they
+can sign in but will not appear in standings or have a player card, because
+scores hang off the membership rather than the user.
+
+**A roster** — `/admin/import`, paste CSV:
+
+```csv
+name,email,team,position,role
+Ada Lovelace,ada@example.com,Founders,PG,member
+Grace Hopper,grace@example.com,Titans,,coach
+```
+
+It previews before writing and refuses the whole file if any row is invalid.
+`team` must already exist; `position` and `role` are optional.
+
+**The first admin on a fresh database** — the console cannot bootstrap itself,
+since `/admin/people` requires you to already be a super admin. Use:
+
+```bash
+npm run admin:add -- you@example.com "Your Name"
+```
+
+Idempotent: it promotes an existing account rather than failing. Against
+production, point `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` at Turso first.
 
 ## How wins are counted
 
