@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; padding:0; background:#EDF1F5; }
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  a { color:#F97316; text-decoration:none; }
+  a:hover { color:#EA580C; }
+  @keyframes fall { 0% { transform: translateY(-60px) rotate(0deg); opacity:1 } 100% { transform: translateY(820px) rotate(540deg); opacity:0 } }
+  @keyframes popin { 0% { transform: scale(.7); opacity:0 } 60% { transform: scale(1.04); opacity:1 } 100% { transform: scale(1); opacity:1 } }
+  @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(18,181,203,.45) } 50% { box-shadow: 0 0 0 14px rgba(18,181,203,0) } }
+  @keyframes sweep { 0% { transform: translateX(-120%) } 100% { transform: translateX(240%) } }
+  @keyframes flicker { 0%,100% { transform: scale(1) } 50% { transform: scale(1.16) } }
+</style>
+</helmet>
+
+<div style="width:1440px;min-height:900px;display:flex;background:#F4F7FA;font-family:Manrope,system-ui,sans-serif;position:relative;overflow:hidden">
+
+  <!-- ============ SIDEBAR ============ -->
+  <div style="width:248px;flex:0 0 248px;background:#0F1720;display:flex;flex-direction:column;padding:24px 16px">
+    <div style="padding:0 8px 4px">
+      <img src="uploads/EVOLVE%20LOGO%20SINGLE.png" alt="E-VOLVE" style="height:28px;width:auto;display:block">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.2em;color:#5E7385;font-weight:700;margin-top:10px">CORE+ SEASON 1</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:3px;margin-top:26px">
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="7">
+        <div onClick="{{ n.go }}" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;cursor:pointer;transition:background .15s;font-size:13.5px;font-weight:700;color: {{ n.color }};background: {{ n.bg }}">
+          <div style="width:6px;height:6px;border-radius:99px;background: {{ n.dot }}"></div>
+          <div>{{ n.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="flex:1"></div>
+
+    <div style="border-top:1px solid #1D2833;padding-top:16px">
+      <div style="font-size:10px;letter-spacing:.18em;color:#5E7385;font-weight:800;padding:0 4px">VIEWING AS</div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-top:10px">
+        <div onClick="{{ setMember }}" style="padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;color: {{ roleMemberColor }};background: {{ roleMemberBg }}">Member</div>
+        <div onClick="{{ setCoach }}" style="padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;color: {{ roleCoachColor }};background: {{ roleCoachBg }}">Coach</div>
+        <div onClick="{{ setAdmin }}" style="padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:700;cursor:pointer;color: {{ roleAdminColor }};background: {{ roleAdminBg }}">Super Admin</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:18px;padding:0 4px">
+        <div style="width:34px;height:34px;border-radius:11px;background:#12B5CB;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:#fff">MI</div>
+        <div>
+          <div style="font-size:12.5px;font-weight:700;color:#E7EDF3">Michael</div>
+          <div style="font-size:10.5px;font-weight:600;color:#5E7385">{{ roleLabel }} · Founders</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+
+    <div style="height:74px;flex:0 0 74px;border-bottom:1px solid #E2E8EF;background:#FFFFFF;display:flex;align-items:center;padding:0 32px;gap:20px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;letter-spacing:.02em;color:#0F1720">{{ pageTitle }}</div>
+      <div style="padding:5px 11px;border-radius:999px;background:#EAF9FC;color:#0B7F92;font-size:11px;font-weight:800;letter-spacing:.08em">WEEK {{ week }}</div>
+      <div style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:9px;background:#F4F7FA;border:1px solid #E2E8EF;border-radius:10px;padding:9px 14px;width:280px">
+        <div style="font-size:13px;color:#A9B4C2">⌕</div>
+        <div style="font-size:13px;color:#A9B4C2;font-weight:600">Search players, teams…</div>
+      </div>
+      <div onClick="{{ simulateWeek }}" style="cursor:pointer;padding:11px 20px;border-radius:10px;background:#12B5CB;color:#fff;font-size:12.5px;font-weight:800;letter-spacing:.08em;animation:pulseGlow 3s ease-in-out infinite">▶ RUN GAME WEEK</div>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:28px 32px 44px">
+
+      <!-- ---------- DASHBOARD ---------- -->
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:1fr 372px;gap:20px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:20px">
+
+          <div style="position:relative;overflow:hidden;border-radius:22px;padding:30px 32px;background:linear-gradient(112deg,#12B5CB 0%,#4ACBD9 44%,#F97316 122%)">
+            <div style="position:absolute;inset:0;background:radial-gradient(420px 220px at 84% 0%, rgba(255,255,255,.4), transparent 72%)"></div>
+            <div style="position:relative;display:flex;justify-content:space-between;align-items:flex-end">
+              <div>
+                <div style="font-size:11px;letter-spacing:.24em;color:rgba(255,255,255,.85);font-weight:800">SEASON 1 · AUG 1 — SEP 30</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:76px;line-height:.9;font-weight:800;color:#fff;margin-top:8px">CORE+</div>
+                <div style="font-size:13.5px;color:rgba(255,255,255,.92);font-weight:600;margin-top:10px">34 days left · 124 members across 10 teams</div>
+              </div>
+              <div style="display:flex;gap:10px">
+                <div style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:12px 18px;min-width:104px">
+                  <div style="font-size:10px;letter-spacing:.16em;color:rgba(255,255,255,.85);font-weight:800">AVG ATT</div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:#fff;line-height:1.1">93%</div>
+                </div>
+                <div style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:12px 18px;min-width:104px">
+                  <div style="font-size:10px;letter-spacing:.16em;color:rgba(255,255,255,.85);font-weight:800">AVG ASN</div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:#fff;line-height:1.1">89%</div>
+                </div>
+                <div style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:12px 18px;min-width:104px">
+                  <div style="font-size:10px;letter-spacing:.16em;color:rgba(255,255,255,.85);font-weight:800">ACTIVE</div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:#fff;line-height:1.1">118</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E2E8EF;padding:22px 24px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:.12em;color:#0F1720">TOP 5 PLAYERS</div>
+              <div onClick="{{ goRanks }}" style="cursor:pointer;font-size:11.5px;font-weight:800;letter-spacing:.08em;color:#F97316">FULL LEADERBOARD ›</div>
+            </div>
+            <div style="display:flex;flex-direction:column;margin-top:14px">
+              <sc-for list="{{ topFive }}" as="p" hint-placeholder-count="5">
+                <div onClick="{{ p.open }}" style="cursor:pointer;display:flex;align-items:center;gap:16px;padding:12px 4px;border-bottom:1px solid #EEF2F6">
+                  <div style="width:26px;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color: {{ p.rankColor }}">{{ p.rank }}</div>
+                  <div style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:#fff;background: {{ p.teamColor }}">{{ p.initials }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;font-weight:800;color:#0F1720">{{ p.name }}</div>
+                    <div style="font-size:11.5px;font-weight:600;color:#93A1B0">{{ p.teamName }} · {{ p.pos }}</div>
+                  </div>
+                  <div style="font-size:12px;font-weight:800;color: {{ p.deltaColor }};width:34px">{{ p.deltaLabel }}</div>
+                  <div style="width:70px;text-align:right"><div style="font-size:9.5px;letter-spacing:.12em;color:#B3BECB;font-weight:800">ATT</div><div style="font-size:14px;font-weight:700;color:#5B6B7C">{{ p.att }}%</div></div>
+                  <div style="width:70px;text-align:right"><div style="font-size:9.5px;letter-spacing:.12em;color:#B3BECB;font-weight:800">STREAK</div><div style="font-size:14px;font-weight:800;color:#F97316">🔥{{ p.streak }}</div></div>
+                  <div style="width:72px;text-align:right"><div style="font-size:9.5px;letter-spacing:.12em;color:#B3BECB;font-weight:800">PTS</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:#0F1720;line-height:1">{{ p.pts }}</div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E2E8EF;padding:22px 24px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div style="font-size:10.5px;letter-spacing:.16em;color:#93A1B0;font-weight:800">ATTENDANCE TREND</div>
+                <div style="font-size:11.5px;font-weight:800;color:#16A34A">▲ 4.2%</div>
+              </div>
+              <div style="display:flex;align-items:flex-end;gap:10px;height:150px;margin-top:18px">
+                <sc-for list="{{ trend }}" as="t" hint-placeholder-count="6">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;justify-content:flex-end">
+                    <div style="font-size:11px;font-weight:800;color:#5B6B7C">{{ t.value }}</div>
+                    <div style="width:100%;border-radius:7px 7px 0 0;transition:height .5s ease;background:linear-gradient(180deg,#5FD3E0,#12B5CB);height: {{ t.h }}"></div>
+                    <div style="font-size:10px;font-weight:700;color:#B3BECB">{{ t.label }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E2E8EF;padding:22px 24px">
+              <div style="font-size:10.5px;letter-spacing:.16em;color:#93A1B0;font-weight:800">DAILY ACTIVITY</div>
+              <div style="display:grid;grid-template-columns:repeat(14,1fr);gap:6px;margin-top:18px">
+                <sc-for list="{{ heat }}" as="c" hint-placeholder-count="28">
+                  <div style="aspect-ratio:1;border-radius:5px;background: {{ c.bg }}"></div>
+                </sc-for>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:#B3BECB;margin-top:10px"><div>4 WEEKS AGO</div><div>TODAY</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div onClick="{{ openMvp }}" style="position:relative;overflow:hidden;cursor:pointer;border-radius:22px;padding:24px;background:linear-gradient(135deg,#FB923C 0%,#EA580C 100%);box-shadow:0 20px 34px -20px rgba(234,88,12,.75)">
+            <div style="position:absolute;top:0;bottom:0;width:80px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);animation:sweep 3.6s ease-in-out infinite"></div>
+            <div style="position:relative;font-size:10.5px;letter-spacing:.22em;font-weight:800;color:rgba(255,255,255,.85)">WEEK {{ week }} MVP</div>
+            <div style="position:relative;display:flex;gap:16px;align-items:center;margin-top:16px">
+              <div style="width:70px;height:70px;border-radius:20px;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#EA580C">{{ mvp.initials }}</div>
+              <div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:800;color:#fff;line-height:1">{{ mvp.name }}</div>
+                <div style="font-size:11.5px;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.82);margin-top:4px">{{ mvp.teamName }} · {{ mvp.pos }}</div>
+              </div>
+            </div>
+            <div style="position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px">
+              <div style="background:rgba(255,255,255,.2);border-radius:12px;padding:10px 12px"><div style="font-size:9.5px;letter-spacing:.12em;color:rgba(255,255,255,.8);font-weight:800">PTS</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:#fff;line-height:1.1">{{ mvp.pts }}</div></div>
+              <div style="background:rgba(255,255,255,.2);border-radius:12px;padding:10px 12px"><div style="font-size:9.5px;letter-spacing:.12em;color:rgba(255,255,255,.8);font-weight:800">ATT</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:#fff;line-height:1.1">{{ mvp.att }}%</div></div>
+              <div style="background:rgba(255,255,255,.2);border-radius:12px;padding:10px 12px"><div style="font-size:9.5px;letter-spacing:.12em;color:rgba(255,255,255,.8);font-weight:800">STRK</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:#fff;line-height:1.1">🔥{{ mvp.streak }}</div></div>
+            </div>
+          </div>
+
+          <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E2E8EF;padding:22px 24px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-size:10.5px;letter-spacing:.16em;color:#93A1B0;font-weight:800">TEAM STANDINGS</div>
+              <div onClick="{{ goTeams }}" style="cursor:pointer;font-size:11px;font-weight:800;color:#F97316">ALL ›</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
+              <sc-for list="{{ topTeams }}" as="t" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:18px;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color: {{ t.rankColor }}">{{ t.rank }}</div>
+                  <div style="width:10px;height:10px;border-radius:3px;background: {{ t.color }}"></div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:700;color:#0F1720">{{ t.name }}</div>
+                    <div style="height:5px;border-radius:99px;background:#EEF2F6;margin-top:6px;overflow:hidden"><div style="height:100%;border-radius:99px;transition:width .6s ease;background: {{ t.color }};width: {{ t.barW }}"></div></div>
+                  </div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#0F1720">{{ t.pts }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="border-radius:20px;background:#FFF6EE;border:1px solid #FBDCC3;padding:22px 24px">
+            <div style="font-size:10.5px;letter-spacing:.16em;color:#A97A4E;font-weight:800">YOUR STREAK</div>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-top:10px">
+              <div style="font-size:30px;animation:flicker 1.6s ease-in-out infinite">🔥</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:800;color:#F97316;line-height:1">{{ me.streak }}</div>
+              <div style="font-size:12.5px;font-weight:700;color:#8A7566">days perfect</div>
+            </div>
+            <div onClick="{{ goFame }}" style="cursor:pointer;margin-top:16px;font-size:11.5px;font-weight:800;letter-spacing:.08em;color:#EA580C">SEE BADGE CABINET ›</div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ---------- LEADERBOARD ---------- -->
+      <sc-if value="{{ isRanks }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div style="display:flex;gap:4px;background:#FFFFFF;border:1px solid #E2E8EF;padding:4px;border-radius:12px">
+            <div onClick="{{ setLayoutA }}" style="padding:9px 20px;border-radius:9px;font-size:11.5px;font-weight:800;letter-spacing:.08em;cursor:pointer;color: {{ layoutAColor }};background: {{ layoutABg }}">BROADCAST</div>
+            <div onClick="{{ setLayoutB }}" style="padding:9px 20px;border-radius:9px;font-size:11.5px;font-weight:800;letter-spacing:.08em;cursor:pointer;color: {{ layoutBColor }};background: {{ layoutBBg }}">PODIUM</div>
+            <div onClick="{{ setLayoutC }}" style="padding:9px 20px;border-radius:9px;font-size:11.5px;font-weight:800;letter-spacing:.08em;cursor:pointer;color: {{ layoutCColor }};background: {{ layoutCBg }}">STAT SHEET</div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="display:flex;gap:7px;align-items:center">
+            <div style="font-size:10px;letter-spacing:.16em;color:#93A1B0;font-weight:800">SORT</div>
+            <sc-for list="{{ sortChips }}" as="s" hint-placeholder-count="4">
+              <div onClick="{{ s.select }}" style="padding:7px 14px;border-radius:9px;font-size:11.5px;font-weight:800;letter-spacing:.06em;cursor:pointer;color: {{ s.color }};background: {{ s.bg }}">{{ s.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+          <sc-for list="{{ teamChips }}" as="chip" hint-placeholder-count="6">
+            <div onClick="{{ chip.select }}" style="padding:8px 15px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;border:1px solid {{ chip.border }};color: {{ chip.color }};background: {{ chip.bg }}">{{ chip.label }}</div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ isLayoutA }}" hint-placeholder-val="{{ true }}">
+          <div style="position:relative;margin-top:20px;height: {{ listHeight }}">
+            <sc-for list="{{ ranked }}" as="p" hint-placeholder-count="10">
+              <div onClick="{{ p.open }}" style="position:absolute;left:0;right:0;top:0;height:76px;cursor:pointer;transition:transform .65s cubic-bezier(.2,.85,.25,1);transform: {{ p.ty }}">
+                <div style="height:66px;border-radius:16px;background:#FFFFFF;border:1px solid #E2E8EF;display:flex;align-items:center;overflow:hidden;padding-right:24px">
+                  <div style="width:7px;height:100%;background: {{ p.teamColor }}"></div>
+                  <div style="width:64px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;color: {{ p.rankColor }}">{{ p.rank }}</div>
+                  <div style="width:34px;font-size:12px;font-weight:800;color: {{ p.deltaColor }}">{{ p.deltaLabel }}</div>
+                  <div style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:#fff;background: {{ p.teamColor }};margin-right:16px">{{ p.initials }}</div>
+                  <div style="width:240px;min-width:0">
+                    <div style="font-size:16px;font-weight:800;color:#0F1720">{{ p.name }}</div>
+                    <div style="font-size:11.5px;font-weight:700;color:#93A1B0;letter-spacing:.04em">{{ p.teamName }} · {{ p.pos }}</div>
+                  </div>
+                  <div style="flex:1;padding:0 24px">
+                    <div style="height:8px;border-radius:99px;background:#EEF2F6;overflow:hidden"><div style="height:100%;border-radius:99px;transition:width .5s ease;background:linear-gradient(90deg,#12B5CB,#5FD3E0);width: {{ p.scoreW }}"></div></div>
+                  </div>
+                  <div style="width:88px;text-align:right"><div style="font-size:9.5px;letter-spacing:.12em;color:#B3BECB;font-weight:800">ATT</div><div style="font-size:15px;font-weight:700;color:#5B6B7C">{{ p.att }}%</div></div>
+                  <div style="width:88px;text-align:right"><div style="font-size:9.5px;letter-spacing:.12em;color:#B3BECB;font-weight:800">ASN</div><div style="font-size:15px;font-weight:700;color:#5B6B7C">{{ p.asn }}%</div></div>
+                  <div style="width:88px;text-align:right"><div style="font-size:9.5px;letter-spacing:.12em;color:#B3BECB;font-weight:800">STREAK</div><div style="font-size:15px;font-weight:800;color:#F97316">🔥{{ p.streak }}</div></div>
+                  <div style="width:92px;text-align:right"><div style="font-size:9.5px;letter-spacing:.12em;color:#B3BECB;font-weight:800">PTS</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;color:#0F1720;line-height:1">{{ p.pts }}</div></div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isLayoutB }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:end">
+            <sc-for list="{{ podium }}" as="p" hint-placeholder-count="3">
+              <div onClick="{{ p.open }}" style="cursor:pointer;border-radius:22px;padding:26px 22px;text-align:center;background: {{ p.podiumBg }};border:1px solid {{ p.podiumBorder }};margin-top: {{ p.podiumOffset }}">
+                <div style="font-size:30px;line-height:1">{{ p.medal }}</div>
+                <div style="width:74px;height:74px;margin:14px auto 0;border-radius:22px;background: {{ p.podiumTile }};display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;color: {{ p.podiumTileText }}">{{ p.initials }}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;color: {{ p.podiumText }};margin-top:12px;line-height:1">{{ p.name }}</div>
+                <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color: {{ p.podiumSub }};margin-top:6px">{{ p.teamName }} · {{ p.pos }}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:800;color: {{ p.podiumText }};line-height:1.05;margin-top:12px">{{ p.pts }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <sc-for list="{{ rest }}" as="p" hint-placeholder-count="8">
+              <div onClick="{{ p.open }}" style="cursor:pointer;display:flex;align-items:center;gap:14px;background:#FFFFFF;border:1px solid #E2E8EF;border-radius:14px;padding:14px 18px">
+                <div style="width:26px;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#93A1B0">{{ p.rank }}</div>
+                <div style="width:10px;height:10px;border-radius:3px;background: {{ p.teamColor }}"></div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:700;color:#0F1720">{{ p.name }}</div>
+                  <div style="font-size:11px;font-weight:700;color:#93A1B0">{{ p.teamName }}</div>
+                </div>
+                <div style="font-size:12px;font-weight:800;color: {{ p.deltaColor }}">{{ p.deltaLabel }}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:#0F1720">{{ p.pts }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isLayoutC }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:20px;border-radius:18px;background:#FFFFFF;border:1px solid #E2E8EF;overflow:hidden">
+            <div style="display:flex;padding:14px 24px;font-size:10px;letter-spacing:.14em;color:#93A1B0;font-weight:800;background:#F8FAFC;border-bottom:1px solid #E2E8EF">
+              <div style="width:56px">RANK</div>
+              <div style="width:34px"></div>
+              <div style="flex:1">PLAYER</div>
+              <div style="width:150px">TEAM</div>
+              <div style="width:80px;text-align:right">PTS</div>
+              <div style="width:80px;text-align:right">ATT</div>
+              <div style="width:80px;text-align:right">ASN</div>
+              <div style="width:80px;text-align:right">QUIZ</div>
+              <div style="width:90px;text-align:right">STREAK</div>
+            </div>
+            <sc-for list="{{ ranked }}" as="p" hint-placeholder-count="12">
+              <div onClick="{{ p.open }}" style="cursor:pointer;display:flex;align-items:center;padding:13px 24px;border-bottom:1px solid #EEF2F6;background: {{ p.zebra }}">
+                <div style="width:56px;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color: {{ p.rankColor }}">{{ p.rank }}</div>
+                <div style="width:34px;font-size:11.5px;font-weight:800;color: {{ p.deltaColor }}">{{ p.deltaLabel }}</div>
+                <div style="flex:1;font-size:14px;font-weight:700;color:#0F1720">{{ p.name }}</div>
+                <div style="width:150px;display:flex;align-items:center;gap:8px">
+                  <div style="width:8px;height:8px;border-radius:3px;background: {{ p.teamColor }}"></div>
+                  <div style="font-size:12.5px;font-weight:600;color:#5B6B7C">{{ p.teamName }}</div>
+                </div>
+                <div style="width:80px;text-align:right;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#0F1720">{{ p.pts }}</div>
+                <div style="width:80px;text-align:right;font-size:13px;font-weight:700;color:#5B6B7C">{{ p.att }}%</div>
+                <div style="width:80px;text-align:right;font-size:13px;font-weight:700;color:#5B6B7C">{{ p.asn }}%</div>
+                <div style="width:80px;text-align:right;font-size:13px;font-weight:700;color:#5B6B7C">{{ p.quiz }}%</div>
+                <div style="width:90px;text-align:right;font-size:13px;font-weight:800;color:#F97316">🔥{{ p.streak }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- ---------- TEAMS ---------- -->
+      <sc-if value="{{ isTeams }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
+        <sc-for list="{{ standings }}" as="t" hint-placeholder-count="10">
+          <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E2E8EF;padding:22px 24px">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="width:30px;font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color: {{ t.rankColor }}">{{ t.rank }}</div>
+              <div style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff;background: {{ t.color }}">{{ t.abbr }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:27px;font-weight:700;letter-spacing:.03em;color:#0F1720;line-height:1.05">{{ t.name }}</div>
+                <div style="font-size:11.5px;font-weight:600;color:#93A1B0;margin-top:3px">Coach {{ t.coach }} · {{ t.members }} members · {{ t.wins }}W</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;color:#0F1720;line-height:1">{{ t.pts }}</div>
+                <div style="font-size:9.5px;letter-spacing:.12em;color:#B3BECB;font-weight:800">POINTS</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px">
+              <div style="background:#F8FAFC;border-radius:12px;padding:11px 14px"><div style="font-size:9.5px;letter-spacing:.12em;color:#93A1B0;font-weight:800">AVG ATT</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:23px;font-weight:800;color:#0F1720;line-height:1.1">{{ t.avgAtt }}%</div></div>
+              <div style="background:#F8FAFC;border-radius:12px;padding:11px 14px"><div style="font-size:9.5px;letter-spacing:.12em;color:#93A1B0;font-weight:800">AVG ASN</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:23px;font-weight:800;color:#0F1720;line-height:1.1">{{ t.avgAsn }}%</div></div>
+              <div style="background:#F8FAFC;border-radius:12px;padding:11px 14px"><div style="font-size:9.5px;letter-spacing:.12em;color:#93A1B0;font-weight:800">TOP PLAYER</div><div style="font-size:14px;font-weight:800;color:#0F1720;margin-top:5px">{{ t.top }}</div></div>
+            </div>
+            <div style="height:6px;border-radius:99px;background:#EEF2F6;margin-top:16px;overflow:hidden"><div style="height:100%;border-radius:99px;transition:width .6s ease;background: {{ t.color }};width: {{ t.barW }}"></div></div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ---------- COACH ---------- -->
+      <sc-if value="{{ isCoach }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:1fr 372px;gap:20px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+            <div style="border-radius:18px;background:#FFF6EE;border:1px solid #FBDCC3;padding:20px 22px"><div style="font-size:10px;letter-spacing:.14em;color:#A97A4E;font-weight:800">PENDING</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:46px;font-weight:800;color:#F97316;line-height:1.05">{{ pendingCount }}</div></div>
+            <div style="border-radius:18px;background:#EDFAF1;border:1px solid #C6EBD4;padding:20px 22px"><div style="font-size:10px;letter-spacing:.14em;color:#4A8460;font-weight:800">PRESENT</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:46px;font-weight:800;color:#16A34A;line-height:1.05">{{ approvedCount }}</div></div>
+            <div style="border-radius:18px;background:#FDF0F0;border:1px solid #F3CFCF;padding:20px 22px"><div style="font-size:10px;letter-spacing:.14em;color:#9E5757;font-weight:800">MISSING</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:46px;font-weight:800;color:#DC2626;line-height:1.05">{{ rejectedCount }}</div></div>
+          </div>
+
+          <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E2E8EF;padding:22px 24px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:.12em;color:#0F1720">TODAY'S ATTENDANCE · FOUNDERS</div>
+              <div onClick="{{ approveAll }}" style="cursor:pointer;padding:9px 16px;border-radius:9px;background:#EAF9FC;color:#0B7F92;font-size:11.5px;font-weight:800;letter-spacing:.06em">APPROVE ALL</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+              <sc-for list="{{ approvals }}" as="a" hint-placeholder-count="6">
+                <div style="border-radius:14px;background:#FFFFFF;border:1px solid {{ a.border }};padding:14px 18px;display:flex;align-items:center;gap:16px;transition:border-color .3s">
+                  <div style="width:40px;height:40px;border-radius:12px;background:#F1F5F8;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:#5B6B7C">{{ a.initials }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14.5px;font-weight:700;color:#0F1720">{{ a.name }}</div>
+                    <div style="font-size:11.5px;font-weight:600;color: {{ a.noteColor }}">{{ a.note }}</div>
+                  </div>
+                  <sc-if value="{{ a.pending }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;gap:8px">
+                      <div onClick="{{ a.reject }}" style="cursor:pointer;padding:9px 18px;border-radius:9px;background:#F1F5F8;color:#5B6B7C;font-size:11.5px;font-weight:800;letter-spacing:.06em">MARK MISSING</div>
+                      <div onClick="{{ a.approve }}" style="cursor:pointer;padding:9px 20px;border-radius:9px;background:#12B5CB;color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.06em">APPROVE</div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ a.done }}" hint-placeholder-val="{{ true }}">
+                    <div style="font-size:11.5px;font-weight:800;letter-spacing:.08em;color: {{ a.statusColor }}">{{ a.statusLabel }}</div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E2E8EF;padding:22px 24px">
+            <div style="font-size:10.5px;letter-spacing:.14em;color:#16A34A;font-weight:800">TOP PERFORMERS</div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">
+              <sc-for list="{{ topPerformers }}" as="p" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13.5px;font-weight:700;color:#37475A">{{ p.name }}</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#0F1720">{{ p.pts }}</div></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E2E8EF;padding:22px 24px">
+            <div style="font-size:10.5px;letter-spacing:.14em;color:#DC2626;font-weight:800">NEEDS ATTENTION</div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">
+              <sc-for list="{{ bottomPerformers }}" as="p" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13.5px;font-weight:700;color:#37475A">{{ p.name }}</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#5B6B7C">{{ p.pts }}</div></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="border-radius:20px;background:#F8FAFC;border:1px solid #E2E8EF;padding:22px 24px">
+            <div style="font-size:10.5px;letter-spacing:.14em;color:#93A1B0;font-weight:800">QUICK ACTIONS</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+              <div style="padding:12px 16px;border-radius:11px;background:#FFFFFF;border:1px solid #E2E8EF;font-size:13px;font-weight:700;color:#37475A">Remind missing assignments</div>
+              <div style="padding:12px 16px;border-radius:11px;background:#FFFFFF;border:1px solid #E2E8EF;font-size:13px;font-weight:700;color:#37475A">Award power play (2 left)</div>
+              <div style="padding:12px 16px;border-radius:11px;background:#FFFFFF;border:1px solid #E2E8EF;font-size:13px;font-weight:700;color:#37475A">Nominate coach's choice MVP</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ---------- ADMIN ---------- -->
+      <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:1fr 372px;gap:20px;align-items:start">
+        <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E2E8EF;padding:24px">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:.12em;color:#0F1720">FORMULA</div>
+            <div style="display:flex;gap:4px;background:#F4F7FA;border:1px solid #E2E8EF;padding:4px;border-radius:12px">
+              <sc-for list="{{ formulaModes }}" as="f" hint-placeholder-count="3">
+                <div onClick="{{ f.select }}" style="padding:8px 18px;border-radius:9px;font-size:11.5px;font-weight:800;letter-spacing:.08em;cursor:pointer;color: {{ f.color }};background: {{ f.bg }}">{{ f.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px;margin-top:20px">
+            <sc-for list="{{ metrics }}" as="m" hint-placeholder-count="3">
+              <div style="border-radius:16px;background:#F8FAFC;border:1px solid #E9EEF4;padding:20px 22px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                  <div>
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-size:27px;font-weight:700;letter-spacing:.03em;color:#0F1720;line-height:1">{{ m.name }}</div>
+                    <div style="font-size:11.5px;font-weight:700;color:#93A1B0;letter-spacing:.06em;margin-top:5px">{{ m.type }} · {{ m.requiredLabel }}</div>
+                  </div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:800;color:#F97316;line-height:1">{{ m.weight }}%</div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:center;margin-top:16px">
+                  <div onClick="{{ m.dec }}" style="cursor:pointer;width:38px;height:38px;border-radius:11px;background:#FFFFFF;border:1px solid #E2E8EF;color:#5B6B7C;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800">−</div>
+                  <div style="flex:1;height:10px;border-radius:99px;background:#E9EEF4;overflow:hidden"><div style="height:100%;border-radius:99px;transition:width .3s ease;background:linear-gradient(90deg,#F97316,#FBA85E);width: {{ m.barW }}"></div></div>
+                  <div onClick="{{ m.inc }}" style="cursor:pointer;width:38px;height:38px;border-radius:11px;background:#FFFFFF;border:1px solid #E2E8EF;color:#5B6B7C;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800">+</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:16px;border-radius:14px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;background: {{ totalBg }};border:1px solid {{ totalBorder }}">
+            <div style="font-size:12px;font-weight:800;letter-spacing:.1em;color:#37475A">TOTAL WEIGHT</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;color: {{ totalColor }};line-height:1">{{ totalWeight }}%</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E2E8EF;padding:22px 24px">
+            <div style="font-size:10.5px;letter-spacing:.14em;color:#93A1B0;font-weight:800">LIVE PREVIEW · TOP 5</div>
+            <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px">
+              <sc-for list="{{ topFive }}" as="p" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:18px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color: {{ p.rankColor }}">{{ p.rank }}</div>
+                  <div style="flex:1;font-size:13px;font-weight:700;color:#37475A">{{ p.name }}</div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#0F1720">{{ p.pts }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E2E8EF;padding:22px 24px">
+            <div style="font-size:10.5px;letter-spacing:.14em;color:#93A1B0;font-weight:800">SEASON CONTROL</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+              <div style="padding:12px 16px;border-radius:11px;background:#F8FAFC;border:1px solid #E9EEF4;font-size:13px;font-weight:700;color:#37475A">Lock season</div>
+              <div style="padding:12px 16px;border-radius:11px;background:#F8FAFC;border:1px solid #E9EEF4;font-size:13px;font-weight:700;color:#37475A">Clone previous season</div>
+              <div style="padding:12px 16px;border-radius:11px;background:#F8FAFC;border:1px solid #E9EEF4;font-size:13px;font-weight:700;color:#37475A">Import members (CSV)</div>
+              <div style="padding:12px 16px;border-radius:11px;background:#FDF0F0;border:1px solid #F3CFCF;font-size:13px;font-weight:700;color:#DC2626">Reset season</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ---------- HALL OF FAME ---------- -->
+      <sc-if value="{{ isFame }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:.12em;color:#0F1720">LEGENDS</div>
+          <sc-for list="{{ legends }}" as="l" hint-placeholder-count="3">
+            <div style="border-radius:18px;padding:20px 24px;display:flex;align-items:center;gap:18px;background:linear-gradient(110deg,#FFF3E8 0%,#FFFFFF 62%);border:1px solid #FBDCC3">
+              <div style="font-size:32px">{{ l.icon }}</div>
+              <div style="flex:1">
+                <div style="font-size:10.5px;letter-spacing:.16em;font-weight:800;color:#F97316">{{ l.season }}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;color:#0F1720;line-height:1.05">{{ l.name }}</div>
+                <div style="font-size:12px;font-weight:600;color:#93A1B0;margin-top:2px">{{ l.detail }}</div>
+              </div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:#0F1720">{{ l.pts }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:.12em;color:#0F1720">BADGE CABINET</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <sc-for list="{{ badges }}" as="b" hint-placeholder-count="6">
+              <div style="border-radius:18px;padding:20px;background: {{ b.bg }};border:1px solid {{ b.border }};opacity: {{ b.opacity }}">
+                <div style="font-size:30px">{{ b.icon }}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:23px;font-weight:700;letter-spacing:.03em;color:#0F1720;margin-top:10px;line-height:1.1">{{ b.name }}</div>
+                <div style="font-size:11.5px;font-weight:600;color:#93A1B0;margin-top:5px">{{ b.req }}</div>
+                <div style="font-size:10px;font-weight:800;letter-spacing:.12em;margin-top:10px;color: {{ b.statusColor }}">{{ b.status }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <!-- ---------- PLAYER MODAL ---------- -->
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeModal }}" style="position:absolute;inset:0;background:rgba(15,23,32,.45);backdrop-filter:blur(6px);z-index:20;display:flex;align-items:center;justify-content:center">
+      <div style="width:520px;animation:popin .35s cubic-bezier(.2,.9,.3,1) both">
+        <div style="border-radius:24px;overflow:hidden;background:linear-gradient(155deg, {{ sel.teamColor }} -20%, #0F1720 130%);padding:30px;box-shadow:0 40px 70px -30px rgba(15,23,32,.8)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="font-size:10.5px;letter-spacing:.2em;font-weight:800;color:rgba(255,255,255,.7)">PLAYER CARD · SEASON 1</div>
+            <div style="font-size:10.5px;letter-spacing:.14em;font-weight:800;color:#FFE2CC">RANK #{{ sel.rank }}</div>
+          </div>
+          <div style="display:flex;gap:18px;align-items:center;margin-top:20px">
+            <div style="width:88px;height:88px;border-radius:24px;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:800;color: {{ sel.teamColor }}">{{ sel.initials }}</div>
+            <div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:46px;font-weight:800;color:#fff;line-height:1">{{ sel.name }}</div>
+              <div style="font-size:12px;font-weight:800;letter-spacing:.12em;color:rgba(255,255,255,.75);margin-top:6px">{{ sel.teamName }} · {{ sel.pos }}</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:24px">
+            <div style="background:rgba(255,255,255,.16);border-radius:13px;padding:12px 14px"><div style="font-size:9.5px;letter-spacing:.12em;color:rgba(255,255,255,.7);font-weight:800">PTS</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:27px;font-weight:800;color:#fff;line-height:1.1">{{ sel.pts }}</div></div>
+            <div style="background:rgba(255,255,255,.16);border-radius:13px;padding:12px 14px"><div style="font-size:9.5px;letter-spacing:.12em;color:rgba(255,255,255,.7);font-weight:800">ATT</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:27px;font-weight:800;color:#fff;line-height:1.1">{{ sel.att }}</div></div>
+            <div style="background:rgba(255,255,255,.16);border-radius:13px;padding:12px 14px"><div style="font-size:9.5px;letter-spacing:.12em;color:rgba(255,255,255,.7);font-weight:800">ASN</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:27px;font-weight:800;color:#fff;line-height:1.1">{{ sel.asn }}</div></div>
+            <div style="background:rgba(255,255,255,.16);border-radius:13px;padding:12px 14px"><div style="font-size:9.5px;letter-spacing:.12em;color:rgba(255,255,255,.7);font-weight:800">STRK</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:27px;font-weight:800;color:#FFE2CC;line-height:1.1">{{ sel.streak }}</div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap">
+            <sc-for list="{{ sel.badges }}" as="b" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:7px 14px">
+                <div style="font-size:14px">{{ b.icon }}</div><div style="font-size:11px;font-weight:800;color:#fff">{{ b.name }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);margin-top:22px">CLICK ANYWHERE TO CLOSE</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ---------- BADGE UNLOCK ---------- -->
+  <sc-if value="{{ unlockOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeUnlock }}" style="position:absolute;inset:0;background:rgba(255,255,255,.95);z-index:30;display:flex;align-items:center;justify-content:center;overflow:hidden">
+      <sc-for list="{{ confetti }}" as="c" hint-placeholder-count="0">
+        <div style="position:absolute;top:0;width:10px;height:16px;border-radius:2px;left: {{ c.left }};background: {{ c.color }};animation: fall 2.1s linear {{ c.delay }} forwards"></div>
+      </sc-for>
+      <div style="position:relative;text-align:center;animation:popin .5s cubic-bezier(.2,.9,.3,1) both">
+        <div style="font-size:12px;letter-spacing:.26em;font-weight:800;color:#F97316">BADGE UNLOCKED</div>
+        <div style="width:164px;height:164px;margin:22px auto 0;border-radius:46px;background:linear-gradient(140deg,#12B5CB,#F97316);display:flex;align-items:center;justify-content:center;font-size:76px;box-shadow:0 30px 54px -22px rgba(249,115,22,.8);animation:pulseGlow 2s ease-in-out infinite">{{ unlock.icon }}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:58px;font-weight:800;color:#0F1720;line-height:1;margin-top:24px">{{ unlock.name }}</div>
+        <div style="font-size:14px;font-weight:600;color:#5B6B7C;margin-top:10px">{{ unlock.req }}</div>
+        <div style="font-size:13px;font-weight:800;color:#F97316;margin-top:16px">{{ unlock.who }}</div>
+        <div style="margin-top:30px;display:inline-block;padding:14px 34px;border-radius:999px;background:#12B5CB;color:#fff;font-size:13px;font-weight:800;letter-spacing:.1em">CONTINUE</div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+const TEAMS = [
+  { id: 1, name: "Founders", abbr: "FDR", color: "#12B5CB", coach: "John Doe", wins: 15, members: 14, top: "Michael" },
+  { id: 2, name: "Builders", abbr: "BLD", color: "#F97316", coach: "Sarah Kim", wins: 14, members: 13, top: "Amara" },
+  { id: 3, name: "Trailblazers", abbr: "TBZ", color: "#E11D48", coach: "Marcus Lee", wins: 12, members: 12, top: "Grace" },
+  { id: 4, name: "Mavericks", abbr: "MAV", color: "#7C3AED", coach: "Ana Reyes", wins: 12, members: 13, top: "Diego" },
+  { id: 5, name: "Titans", abbr: "TTN", color: "#475569", coach: "David Cruz", wins: 11, members: 12, top: "John" },
+  { id: 6, name: "Pioneers", abbr: "PNR", color: "#16A34A", coach: "Grace Obi", wins: 10, members: 11, top: "Leila" },
+  { id: 7, name: "Visionaries", abbr: "VSN", color: "#D97706", coach: "Leo Tan", wins: 9, members: 12, top: "Samuel" },
+  { id: 8, name: "Catalysts", abbr: "CTL", color: "#0EA5E9", coach: "Priya Nair", wins: 8, members: 12, top: "Yara" },
+  { id: 9, name: "Nomads", abbr: "NMD", color: "#DB2777", coach: "Tomás Vela", wins: 7, members: 12, top: "Elena" },
+  { id: 10, name: "Guardians", abbr: "GRD", color: "#0D9488", coach: "Hannah Yoo", wins: 6, members: 13, top: "Tobias" }
+];
+
+const PLAYERS = [
+  { id: 1, name: "Michael", team: 1, pos: "PG", att: 99, asn: 96, quiz: 94, streak: 12 },
+  { id: 2, name: "John", team: 5, pos: "SG", att: 95, asn: 94, quiz: 96, streak: 9 },
+  { id: 3, name: "Amara", team: 2, pos: "SF", att: 97, asn: 91, quiz: 89, streak: 11 },
+  { id: 4, name: "Diego", team: 4, pos: "PF", att: 92, asn: 95, quiz: 90, streak: 7 },
+  { id: 5, name: "Grace", team: 3, pos: "C", att: 94, asn: 88, quiz: 93, streak: 6 },
+  { id: 6, name: "Noah", team: 1, pos: "SG", att: 90, asn: 92, quiz: 87, streak: 8 },
+  { id: 7, name: "Leila", team: 6, pos: "PG", att: 93, asn: 86, quiz: 91, streak: 5 },
+  { id: 8, name: "Samuel", team: 7, pos: "SF", att: 88, asn: 90, quiz: 85, streak: 4 },
+  { id: 9, name: "Yara", team: 8, pos: "C", att: 91, asn: 84, quiz: 88, streak: 6 },
+  { id: 10, name: "Kwame", team: 2, pos: "PF", att: 86, asn: 89, quiz: 83, streak: 3 },
+  { id: 11, name: "Elena", team: 9, pos: "SG", att: 89, asn: 82, quiz: 86, streak: 5 },
+  { id: 12, name: "Tobias", team: 10, pos: "PG", att: 84, asn: 87, quiz: 80, streak: 2 },
+  { id: 13, name: "Priya", team: 3, pos: "SF", att: 87, asn: 80, quiz: 84, streak: 4 },
+  { id: 14, name: "Marcus", team: 5, pos: "C", att: 82, asn: 85, quiz: 78, streak: 3 }
+];
+
+const BADGES = [
+  { icon: "🔥", name: "On Fire", req: "5 day streak", owned: true },
+  { icon: "🏀", name: "Triple Double", req: "100% att · asn · quiz", owned: true },
+  { icon: "💎", name: "Iron Man", req: "30 days perfect attendance", owned: false },
+  { icon: "🚀", name: "Rookie", req: "First assignment submitted", owned: true },
+  { icon: "👑", name: "MVP", req: "Highest overall score", owned: false },
+  { icon: "🛡", name: "Defensive Player", req: "Most improved this week", owned: false }
+];
+
+const CONF = ["#F97316", "#12B5CB", "#16A34A", "#E11D48", "#0EA5E9", "#7C3AED"];
+
+class Component extends DCLogic {
+  state = {
+    role: "member", screen: "home", layout: 0, sort: "pts", filter: 0, week: 6,
+    selId: null, unlock: null, formula: "weighted",
+    metrics: [
+      { name: "Attendance", type: "Percentage", weight: 40, required: true, key: "att" },
+      { name: "Assignment", type: "Number", weight: 40, required: true, key: "asn" },
+      { name: "Quiz", type: "Number", weight: 20, required: false, key: "quiz" }
+    ],
+    players: PLAYERS.map(p => ({ ...p, prev: 0 })),
+    approvals: [
+      { id: 1, name: "Michael", note: "Checked in 8:58 AM", status: "pending" },
+      { id: 2, name: "Noah", note: "Checked in 9:04 AM · late", status: "pending" },
+      { id: 3, name: "Amara", note: "Checked in 8:51 AM", status: "pending" },
+      { id: 4, name: "Kwame", note: "No check-in recorded", status: "pending" },
+      { id: 5, name: "Grace", note: "Checked in 8:47 AM", status: "pending" },
+      { id: 6, name: "Diego", note: "Checked in 9:12 AM · late", status: "pending" }
+    ]
+  };
+
+  score(p) {
+    const m = this.state.metrics;
+    const total = m.reduce((s, x) => s + x.weight, 0) || 1;
+    if (this.state.formula === "average") return Math.round(((p.att + p.asn + p.quiz) / 3) * 10) / 10;
+    if (this.state.formula === "points") return Math.round(p.att + p.asn + p.quiz);
+    return Math.round((m.reduce((s, x) => s + p[x.key] * x.weight, 0) / total) * 10) / 10;
+  }
+
+  rankedList() {
+    const list = this.state.players.map(p => ({ ...p, score: this.score(p) }));
+    list.sort((a, b) => b.score - a.score);
+    return list.map((p, i) => ({ ...p, rank: i + 1 }));
+  }
+
+  teamOf(id) { return TEAMS.find(t => t.id === id) || TEAMS[0]; }
+
+  decorate(p, max) {
+    const t = this.teamOf(p.team);
+    const delta = p.prev ? p.prev - p.rank : 0;
+    return {
+      ...p,
+      pts: p.score.toFixed(1),
+      scoreW: Math.round((p.score / (max || 100)) * 100) + "%",
+      initials: p.name.slice(0, 2).toUpperCase(),
+      teamName: t.name,
+      teamColor: t.color,
+      rankColor: p.rank === 1 ? "#F97316" : p.rank <= 3 ? "#12B5CB" : "#93A1B0",
+      deltaLabel: delta > 0 ? "▲" + delta : delta < 0 ? "▼" + Math.abs(delta) : "–",
+      deltaColor: delta > 0 ? "#16A34A" : delta < 0 ? "#DC2626" : "#C7D0DA",
+      badges: BADGES.filter(b => b.owned).slice(0, p.rank <= 3 ? 3 : 2),
+      open: () => this.setState({ selId: p.id })
+    };
+  }
+
+  simulateWeek = () => {
+    const prevMap = {};
+    this.rankedList().forEach(p => { prevMap[p.id] = p.rank; });
+    const players = this.state.players.map(p => {
+      const j = k => Math.max(58, Math.min(100, p[k] + Math.round((Math.random() - 0.45) * 14)));
+      return { ...p, att: j("att"), asn: j("asn"), quiz: j("quiz"), streak: Math.max(0, p.streak + (Math.random() > .35 ? 1 : -2)), prev: prevMap[p.id] };
+    });
+    this.setState({ players, week: this.state.week + 1, screen: "ranks" });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => {
+      const top = this.rankedList()[0];
+      const b = BADGES[Math.floor(Math.random() * 4)];
+      this.setState({ unlock: { ...b, who: top.name + " · " + this.teamOf(top.team).name } });
+    }, 1400);
+  };
+
+  componentWillUnmount() { clearTimeout(this._t); }
+
+  bump(i, d) {
+    this.setState({ metrics: this.state.metrics.map((m, k) => k === i ? { ...m, weight: Math.max(0, Math.min(100, m.weight + d)) } : m) });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const go = k => () => this.setState({ screen: k });
+    const pillBg = on => on ? "#12B5CB" : "transparent";
+    const pillC = on => on ? "#fff" : "#5B6B7C";
+
+    const raw = this.rankedList();
+    const max = raw[0] ? raw[0].score : 100;
+    const all = raw.map(p => this.decorate(p, max));
+    const meRaw = all.find(p => p.name === "Michael");
+    const filtered = s.filter ? all.filter(p => p.team === s.filter) : all;
+    const sorted = [...filtered].sort((a, b) => {
+      if (s.sort === "att") return b.att - a.att;
+      if (s.sort === "asn") return b.asn - a.asn;
+      if (s.sort === "streak") return b.streak - a.streak;
+      return a.rank - b.rank;
+    }).map((p, i) => ({ ...p, ty: "translateY(" + i * 76 + "px)", zebra: i % 2 ? "#FBFCFE" : "#FFFFFF" }));
+
+    const teamPts = {};
+    const teamAtt = {};
+    const teamAsn = {};
+    const teamN = {};
+    all.forEach(p => {
+      teamPts[p.team] = (teamPts[p.team] || 0) + p.score * 21;
+      teamAtt[p.team] = (teamAtt[p.team] || 0) + p.att;
+      teamAsn[p.team] = (teamAsn[p.team] || 0) + p.asn;
+      teamN[p.team] = (teamN[p.team] || 0) + 1;
+    });
+    const standings = TEAMS.map(t => ({
+      ...t,
+      total: Math.round(teamPts[t.id] || t.wins * 120),
+      avgAtt: Math.round((teamAtt[t.id] || 90 * (teamN[t.id] || 1)) / (teamN[t.id] || 1)),
+      avgAsn: Math.round((teamAsn[t.id] || 87 * (teamN[t.id] || 1)) / (teamN[t.id] || 1))
+    })).sort((a, b) => b.total - a.total).map((t, i) => ({
+      ...t, rank: i + 1, pts: t.total.toLocaleString(),
+      rankColor: i === 0 ? "#F97316" : i <= 2 ? "#12B5CB" : "#93A1B0",
+      barW: Math.round(58 + (t.total % 420) / 10) + "%"
+    }));
+
+    const titles = { home: "Season Dashboard", ranks: "Player Leaderboard", teams: "Team Standings", coach: "Coach Desk", admin: "Metric Builder", fame: "Hall of Fame" };
+    const navDefs = [["home", "Dashboard"], ["ranks", "Leaderboard"], ["teams", "Teams"]]
+      .concat(s.role === "coach" ? [["coach", "Coach Desk"]] : [])
+      .concat(s.role === "admin" ? [["admin", "Metric Builder"], ["coach", "Coach Desk"]] : [])
+      .concat([["fame", "Hall of Fame"]]);
+
+    const metricSum = s.metrics.reduce((a, m) => a + m.weight, 0);
+    const sel = s.selId ? all.find(p => p.id === s.selId) : null;
+
+    return {
+      week: s.week,
+      pageTitle: titles[s.screen] || "Core+",
+      roleLabel: s.role === "coach" ? "Coach" : s.role === "admin" ? "Super Admin" : "Member",
+      navItems: navDefs.map(([k, label]) => ({
+        label, go: go(k),
+        bg: s.screen === k ? "#1B2836" : "transparent",
+        color: s.screen === k ? "#FFFFFF" : "#8FA0B0",
+        dot: s.screen === k ? "#F97316" : "#2C3A48"
+      })),
+      isHome: s.screen === "home", isRanks: s.screen === "ranks", isTeams: s.screen === "teams",
+      isCoach: s.screen === "coach", isAdmin: s.screen === "admin", isFame: s.screen === "fame",
+      goRanks: go("ranks"), goTeams: go("teams"), goFame: go("fame"),
+      roleMemberBg: s.role === "member" ? "#12B5CB" : "transparent",
+      roleMemberColor: s.role === "member" ? "#fff" : "#8FA0B0",
+      roleCoachBg: s.role === "coach" ? "#12B5CB" : "transparent",
+      roleCoachColor: s.role === "coach" ? "#fff" : "#8FA0B0",
+      roleAdminBg: s.role === "admin" ? "#12B5CB" : "transparent",
+      roleAdminColor: s.role === "admin" ? "#fff" : "#8FA0B0",
+      setMember: () => this.setState({ role: "member", screen: "home" }),
+      setCoach: () => this.setState({ role: "coach", screen: "coach" }),
+      setAdmin: () => this.setState({ role: "admin", screen: "admin" }),
+
+      mvp: all[0],
+      me: meRaw,
+      topFive: all.slice(0, 5),
+      topTeams: standings.slice(0, 5),
+      standings,
+      openMvp: () => this.setState({ selId: all[0].id }),
+      simulateWeek: this.simulateWeek,
+
+      isLayoutA: s.layout === 0, isLayoutB: s.layout === 1, isLayoutC: s.layout === 2,
+      setLayoutA: () => this.setState({ layout: 0 }), setLayoutB: () => this.setState({ layout: 1 }), setLayoutC: () => this.setState({ layout: 2 }),
+      layoutABg: pillBg(s.layout === 0), layoutAColor: pillC(s.layout === 0),
+      layoutBBg: pillBg(s.layout === 1), layoutBColor: pillC(s.layout === 1),
+      layoutCBg: pillBg(s.layout === 2), layoutCColor: pillC(s.layout === 2),
+      teamChips: [{ id: 0, name: "All teams", color: "#12B5CB" }].concat(TEAMS).map(t => ({
+        label: t.name,
+        bg: s.filter === t.id ? t.color : "#FFFFFF",
+        color: s.filter === t.id ? "#FFFFFF" : "#5B6B7C",
+        border: s.filter === t.id ? t.color : "#E2E8EF",
+        select: () => this.setState({ filter: t.id })
+      })),
+      sortChips: [["pts", "PTS"], ["att", "ATT"], ["asn", "ASN"], ["streak", "STREAK"]].map(([k, l]) => ({
+        label: l, bg: s.sort === k ? "#12B5CB" : "#FFFFFF", color: pillC(s.sort === k), select: () => this.setState({ sort: k })
+      })),
+      ranked: sorted,
+      listHeight: sorted.length * 76 + "px",
+      podium: sorted.slice(0, 3).map((p, i) => ({
+        ...p,
+        medal: ["🥇", "🥈", "🥉"][i],
+        podiumOffset: [0, 26, 40][i] + "px",
+        podiumBg: i === 0 ? "linear-gradient(160deg,#FB923C,#EA580C)" : "#FFFFFF",
+        podiumBorder: i === 0 ? "#EA580C" : "#E2E8EF",
+        podiumText: i === 0 ? "#FFFFFF" : "#0F1720",
+        podiumSub: i === 0 ? "rgba(255,255,255,.85)" : p.teamColor,
+        podiumTile: i === 0 ? "rgba(255,255,255,.95)" : "#F1F5F8",
+        podiumTileText: i === 0 ? "#EA580C" : "#5B6B7C"
+      })),
+      rest: sorted.slice(3),
+
+      approvals: s.approvals.map(a => ({
+        ...a,
+        initials: a.name.slice(0, 2).toUpperCase(),
+        pending: a.status === "pending",
+        done: a.status !== "pending",
+        border: a.status === "approved" ? "#C6EBD4" : a.status === "rejected" ? "#F3CFCF" : "#E2E8EF",
+        noteColor: a.note.indexOf("late") > -1 || a.note.indexOf("No ") > -1 ? "#C2410C" : "#93A1B0",
+        statusLabel: a.status === "approved" ? "✓ PRESENT" : "✕ MISSING",
+        statusColor: a.status === "approved" ? "#16A34A" : "#DC2626",
+        approve: () => this.setState({ approvals: s.approvals.map(x => x.id === a.id ? { ...x, status: "approved" } : x) }),
+        reject: () => this.setState({ approvals: s.approvals.map(x => x.id === a.id ? { ...x, status: "rejected" } : x) })
+      })),
+      pendingCount: s.approvals.filter(a => a.status === "pending").length,
+      approvedCount: s.approvals.filter(a => a.status === "approved").length,
+      rejectedCount: s.approvals.filter(a => a.status === "rejected").length,
+      approveAll: () => this.setState({ approvals: s.approvals.map(x => x.status === "pending" ? { ...x, status: "approved" } : x) }),
+      topPerformers: all.filter(p => p.team === 1).slice(0, 3),
+      bottomPerformers: all.filter(p => p.team === 1).slice(-3).reverse(),
+
+      formulaModes: [["weighted", "WEIGHTED"], ["points", "POINTS"], ["average", "AVERAGE"]].map(([k, l]) => ({
+        label: l, bg: pillBg(s.formula === k), color: pillC(s.formula === k), select: () => this.setState({ formula: k })
+      })),
+      metrics: s.metrics.map((m, i) => ({
+        ...m, requiredLabel: m.required ? "Required" : "Optional", barW: m.weight + "%",
+        inc: () => this.bump(i, 5), dec: () => this.bump(i, -5)
+      })),
+      totalWeight: metricSum,
+      totalColor: metricSum === 100 ? "#16A34A" : "#F97316",
+      totalBg: metricSum === 100 ? "#EDFAF1" : "#FFF6EE",
+      totalBorder: metricSum === 100 ? "#C6EBD4" : "#FBDCC3",
+
+      legends: [
+        { icon: "👑", season: "SEASON 1", name: "Michael", detail: "Founders · 3× weekly MVP", pts: "97.4" },
+        { icon: "🏀", season: "PRESEASON", name: "John", detail: "Titans · perfect attendance", pts: "95.1" },
+        { icon: "💎", season: "PILOT", name: "Amara", detail: "Builders · 41 day streak", pts: "94.8" }
+      ],
+      badges: BADGES.map(b => ({
+        ...b,
+        bg: b.owned ? "#FFF6EE" : "#FFFFFF",
+        border: b.owned ? "#FBDCC3" : "#E2E8EF",
+        opacity: b.owned ? "1" : ".55",
+        status: b.owned ? "UNLOCKED" : "LOCKED",
+        statusColor: b.owned ? "#F97316" : "#B3BECB"
+      })),
+
+      trend: [88, 90, 87, 92, 91, 95].map((v, i) => ({ value: v + "%", label: "WEEK " + (i + 1), h: Math.round(v * 1.1) + "px" })),
+      heat: Array.from({ length: 28 }, (_, i) => {
+        const v = (Math.sin(i * 1.7) + 1) / 2;
+        return { bg: "rgba(18,181,203," + (0.1 + v * 0.85).toFixed(2) + ")" };
+      }),
+
+      modalOpen: !!sel,
+      sel: sel || all[0],
+      closeModal: () => this.setState({ selId: null }),
+      unlockOpen: !!s.unlock,
+      unlock: s.unlock || { icon: "", name: "", req: "", who: "" },
+      closeUnlock: () => this.setState({ unlock: null }),
+      confetti: s.unlock ? Array.from({ length: 56 }, (_, i) => ({
+        left: Math.round((i * 37) % 100) + "%",
+        color: CONF[i % CONF.length],
+        delay: ((i % 11) * 0.12).toFixed(2) + "s"
+      })) : []
+    };
+  }
+}
+
+</script>
+</body>
+</html>
