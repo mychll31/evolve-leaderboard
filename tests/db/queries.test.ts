@@ -32,7 +32,7 @@ describe("query layer", () => {
 
   describe("getStandings", () => {
     it("finds the active season", () => {
-      expect(standings.season.name).toBe("Core+ Season 1");
+      expect(standings.season.name).toBe("Leaderboard Season 1");
       expect(standings.season.status).toBe("active");
     });
 

@@ -7,7 +7,7 @@ export default function NoSeasonPage() {
           NO ACTIVE SEASON
         </h1>
         <p className="text-ink-2 mt-3 text-[14px] leading-relaxed">
-          Core+ needs an active season before the leaderboard can be shown. A
+          Leaderboard needs an active season before the leaderboard can be shown. A
           Super Admin can open one from the admin console.
         </p>
       </div>

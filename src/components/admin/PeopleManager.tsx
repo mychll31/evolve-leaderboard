@@ -269,7 +269,7 @@ export function PeopleManager({
       <Card>
         <SectionTitle>ADD PERSON</SectionTitle>
         <p className="text-ink-3 mt-2 text-[12px] font-semibold">
-          Core+ is invite-only: an address must exist here before that Google
+          Leaderboard is invite-only: an address must exist here before that Google
           account can sign in.
         </p>
         <div className="mt-4 flex flex-col gap-3.5">

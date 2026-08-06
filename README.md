@@ -1,6 +1,6 @@
-# Core+ Season 1
+# Leaderboard Season 1
 
-An accountability platform for the E-VOLVE Core+ program, themed as a basketball season.
+An accountability platform for the E-VOLVE Leaderboard program, themed as a basketball season.
 Members belong to teams, teams have coaches, and everyone is scored on **admin-configured
 metrics** — attendance and assignments are simply the first two.
 
@@ -38,7 +38,7 @@ plain `file:./local.db`, so `TURSO_DATABASE_URL="file:./local.db"` works out of 
 
 ### Signing in locally
 
-Core+ is invite-only — there is no public signup, and Google OAuth needs
+Leaderboard is invite-only — there is no public signup, and Google OAuth needs
 credentials. To click through the app before setting that up, put a seeded
 address in `.env`:
 

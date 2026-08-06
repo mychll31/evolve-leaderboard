@@ -10,7 +10,7 @@ import { getSessionUser } from "@/lib/auth/guards";
  */
 const ERRORS: Record<string, string> = {
   AccessDenied:
-    "That Google account is not on the Core+ roster. Ask your coach or an admin to add your email, then try again.",
+    "That Google account is not on the Leaderboard roster. Ask your coach or an admin to add your email, then try again.",
   Configuration:
     "Sign-in is not configured correctly. Please contact an administrator.",
   Verification: "That sign-in link has expired. Please try again.",
@@ -116,7 +116,7 @@ export default async function SignInPage(props: {
           </form>
 
           <p className="text-shell-ink-2 mt-5 text-center text-[12px] leading-relaxed">
-            Core+ is invite-only. Your admin adds your email before you can
+            Leaderboard is invite-only. Your admin adds your email before you can
             sign in.
           </p>
         </div>

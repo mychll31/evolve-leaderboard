@@ -192,7 +192,7 @@ export async function seed(
   const [season] = await db
     .insert(seasons)
     .values({
-      name: "Core+ Season 1",
+      name: "Leaderboard Season 1",
       startsOn: toIso(startsOn),
       endsOn: toIso(endsOn),
       status: "active",
@@ -609,7 +609,7 @@ async function seedPreviousSeason(
   const [season] = await db
     .insert(seasons)
     .values({
-      name: "Core+ Preseason",
+      name: "Leaderboard Preseason",
       startsOn,
       endsOn,
       status: "archived",

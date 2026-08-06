@@ -34,7 +34,7 @@ describe("admin + member queries", () => {
     expect(active.meetingCount).toBeGreaterThan(15);
 
     const archived = rows.find((r) => r.status === "archived")!;
-    expect(archived.name).toBe("Core+ Preseason");
+    expect(archived.name).toBe("Leaderboard Preseason");
     expect(archived.meetingCount).toBe(0);
   });
 

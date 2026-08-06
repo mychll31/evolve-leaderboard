@@ -1,8 +1,8 @@
-# Core+ Season 1 — Build 1 Implementation Plan
+# Leaderboard Season 1 — Build 1 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship a deployable Core+ app where a member checks in, their coach approves, and the leaderboard moves — with every screen rendering real data from Turso.
+**Goal:** Ship a deployable Leaderboard app where a member checks in, their coach approves, and the leaderboard moves — with every screen rendering real data from Turso.
 
 **Architecture:** A pure, I/O-free `domain/` layer (scoring, ranking, streaks) that is unit-tested without a database, sitting under a `db/queries/` read layer that returns view models already shaped for each screen. Server Components read; Server Actions write. Only the leaderboard is a client component, because its animated rank transitions need local state.
 
@@ -162,7 +162,7 @@ coachTeamIds(userId, seasonId): Promise<string[]>
 The shell is the responsive contract for every screen: `Sidebar` at `lg:` and above, `BottomNav` below. Nav items are role-filtered from the session — Coach Desk only for coaches, Admin only for super admins — so an unauthorised link is never rendered *and* never reachable (Task 7 guards the route itself).
 
 - [ ] **Step 1:** UI primitives, each taking explicit props, no data access.
-- [ ] **Step 2:** Sidebar per the desktop design (dark `#0F1720`, logo, `CORE+ SEASON 1`, dot indicators).
+- [ ] **Step 2:** Sidebar per the desktop design (dark `#0F1720`, logo, season name, dot indicators).
 - [ ] **Step 3:** BottomNav per the phone design, with its inline SVG icons; drop the device frame.
 - [ ] **Step 4:** `AppShell` composing them + `TopBar` (page title, week pill, search, super-admin "View as").
 - [ ] **Step 5:** Verify at 390 px, 768 px, 1440 px. **Step 6:** Commit.

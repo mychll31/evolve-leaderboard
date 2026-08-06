@@ -62,7 +62,7 @@ const dbUrl = process.env.TURSO_DATABASE_URL;
 check(Boolean(dbUrl), "TURSO_DATABASE_URL", dbUrl ?? "missing");
 
 // --- Roster --------------------------------------------------------------
-// Core+ is invite-only, so an empty users table means OAuth succeeds and then
+// Leaderboard is invite-only, so an empty users table means OAuth succeeds and then
 // every sign-in is refused. That failure is indistinguishable from a
 // misconfigured client unless you check for it directly.
 let rosterDetail = "could not read the database";
@@ -91,7 +91,7 @@ if (devEmail) {
 }
 
 // --- Report --------------------------------------------------------------
-console.log("Core+ auth preflight\n");
+console.log("Leaderboard auth preflight\n");
 for (const c of checks) {
   const mark = c.ok ? "[32m✓[0m" : "[31m✗[0m";
   console.log(`  ${mark} ${c.label.padEnd(20)} ${c.detail}`);

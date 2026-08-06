@@ -211,7 +211,7 @@ export function SeasonsManager({ seasons }: { seasons: SeasonSummary[] }) {
               value={draft.name}
               disabled={pending}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              placeholder="Core+ Season 2"
+              placeholder="Leaderboard Season 2"
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">

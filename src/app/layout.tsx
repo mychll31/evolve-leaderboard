@@ -18,7 +18,7 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   title: "Leaderboard",
-  description: "E-VOLVE Core+ accountability season leaderboard",
+  description: "E-VOLVE Leaderboard accountability season leaderboard",
 };
 
 export default function RootLayout({

@@ -22,7 +22,7 @@ describe("schema", () => {
     [{ id: seasonId }] = await t.db
       .insert(seasons)
       .values({
-        name: "Core+ Season 1",
+        name: "Leaderboard Season 1",
         startsOn: "2026-08-01",
         endsOn: "2026-09-30",
         status: "active",

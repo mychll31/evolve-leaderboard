@@ -1,10 +1,10 @@
-# Core+ Season 1 — Build 3 Design
+# Leaderboard Season 1 — Build 3 Design
 
 - **Date:** 2026-08-06
 - **Status:** Approved scope, in implementation
 - **Scope:** Build 3 of 3 — the gamification layer becomes real
 
-Builds 1 and 2 made Core+ operable. Build 3 makes it *motivating*: badges are earned rather
+Builds 1 and 2 made Leaderboard operable. Build 3 makes it *motivating*: badges are earned rather
 than seeded, weekly MVPs are chosen, history accumulates across seasons, and people are told
 when something happens to them.
 
@@ -113,7 +113,7 @@ the current week.
 ## 7. Seed
 
 The Hall of Fame is meaningless with one season, so the seed gains a **completed, archived
-"Core+ Preseason"** — its own teams, members, final snapshots, MVP awards and badges. That
+"Leaderboard Preseason"** — its own teams, members, final snapshots, MVP awards and badges. That
 gives cross-season history something real to show and gives the queries something to be tested
 against.
 

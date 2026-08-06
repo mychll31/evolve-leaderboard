@@ -1,11 +1,11 @@
-# Core+ Season 1 — Build 2 Design
+# Leaderboard Season 1 — Build 2 Design
 
 - **Date:** 2026-08-06
 - **Status:** Approved scope, in implementation
 - **Scope:** Build 2 of 3 — the app stops depending on seed data
 
 Build 1 delivered a working read path plus attendance. Everything else still comes from
-`seed.ts`. Build 2 makes Core+ operable: an admin can open a season, define its calendar,
+`seed.ts`. Build 2 makes Leaderboard operable: an admin can open a season, define its calendar,
 build its teams, add its people, configure its metrics, and record every metric — without
 touching a script.
 

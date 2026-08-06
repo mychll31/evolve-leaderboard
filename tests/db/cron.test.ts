@@ -18,7 +18,7 @@ vi.mock("@/db/client", () => ({
   getDb: () => ({
     select: () => ({
       from: () => ({
-        where: async () => [{ id: "season-1", name: "Core+ Season 1" }],
+        where: async () => [{ id: "season-1", name: "Leaderboard Season 1" }],
       }),
     }),
   }),
@@ -93,7 +93,7 @@ describe("GET /api/cron/rollup", () => {
       results: { season: string; badgesAwarded: number }[];
     };
     expect(body.ran).toBe(1);
-    expect(body.results[0].season).toBe("Core+ Season 1");
+    expect(body.results[0].season).toBe("Leaderboard Season 1");
     expect(body.results[0].badgesAwarded).toBe(2);
   });
 });

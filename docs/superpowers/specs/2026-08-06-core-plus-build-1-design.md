@@ -1,4 +1,4 @@
-# Core+ Season 1 — Build 1 Design
+# Leaderboard Season 1 — Build 1 Design
 
 - **Date:** 2026-08-06
 - **Status:** Approved design, pending implementation plan
@@ -6,7 +6,7 @@
 
 ## 1. Context
 
-Core+ is an accountability platform for the E-VOLVE program, themed as a basketball season.
+Leaderboard is an accountability platform for the E-VOLVE program, themed as a basketball season.
 Members belong to teams, teams have coaches, and everyone is scored on admin-configured
 metrics. The scoreboard — not the admin panel — is the centre of the product.
 

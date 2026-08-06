@@ -46,7 +46,7 @@ export default async function HallOfFamePage() {
           <div>
             <SectionTitle>LEGENDS</SectionTitle>
             <p className="text-ink-3 mt-1 text-[12px] font-semibold">
-              Champions of every season Core+ has run.
+              Champions of every season Leaderboard has run.
             </p>
           </div>
 
