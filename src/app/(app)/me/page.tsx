@@ -135,30 +135,6 @@ export default async function MePage() {
           </div>
         </Card>
 
-        <Card>
-          <Eyebrow>Badge cabinet</Eyebrow>
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {badges.map((badge) => (
-              <div
-                key={badge.id}
-                className={`rounded-2xl border p-4 ${
-                  badge.owned
-                    ? "border-accent-line bg-accent-tint"
-                    : "border-line bg-card opacity-55"
-                }`}
-              >
-                <div className="text-[24px]">{badge.icon}</div>
-                <div className="font-display text-ink mt-2 text-[19px] leading-tight font-bold">
-                  {badge.name}
-                </div>
-                <div className="text-ink-3 mt-1 text-[11px] font-semibold">
-                  {badge.requirementText}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
         <AccountCard
           name={member.name}
           email={ctx.user.email ?? ""}
