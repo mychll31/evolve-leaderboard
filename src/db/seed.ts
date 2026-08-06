@@ -311,6 +311,29 @@ export async function seed(
     attendanceByMember[i] = present;
 
     heldMeetings.forEach((meeting, k) => {
+      const isLastHeld = k === heldCount - 1;
+
+      // Leave the most recent session unsettled for Founders so the Coach Desk
+      // always opens with real work: one member awaiting approval and one who
+      // never checked in. Anchoring this to the latest session rather than to
+      // "today" means it holds whatever weekday the seed is run on.
+      if (isLastHeld && player.team === 0) {
+        if (player.name === "Noah") return; // no entry at all -> "unrecorded"
+        const startsAt = new Date(`${meeting.meetsOn}T09:00:00.000Z`).getTime();
+        entryValues.push({
+          seasonId: season.id,
+          metricId: attendanceId,
+          membershipId: memberRows[i].id,
+          meetingId: meeting.id,
+          value: 1,
+          status: "pending",
+          source: "self",
+          recordedBy: playerRows[i].id,
+          recordedAt: new Date(startsAt + 7 * 60_000), // late: past the grace window
+        });
+        return;
+      }
+
       const isLate = present[k] && rand() < 0.12;
       const startsAt = new Date(`${meeting.meetsOn}T09:00:00.000Z`).getTime();
       entryValues.push({
@@ -353,27 +376,6 @@ export async function seed(
       decidedAt: new Date(today.getTime() - DAY_MS),
     });
   });
-
-  // Leave today's meeting (if any) pending, so the Coach Desk has real work.
-  const todayMeeting = meetingRows.find((m) => m.meetsOn === toIso(today));
-  if (todayMeeting) {
-    const founders = PLAYERS.map((p, i) => ({ p, i })).filter(
-      ({ p }) => p.team === 0,
-    );
-    founders.forEach(({ i }) => {
-      entryValues.push({
-        seasonId: season.id,
-        metricId: attendanceId,
-        membershipId: memberRows[i].id,
-        meetingId: todayMeeting.id,
-        value: 1,
-        status: "pending",
-        source: "self",
-        recordedBy: playerRows[i].id,
-        recordedAt: new Date(today.getTime() + (9 * 60 + (i % 3) * 6) * 60_000),
-      });
-    });
-  }
 
   for (let i = 0; i < entryValues.length; i += 200) {
     await db.insert(metricEntries).values(entryValues.slice(i, i + 200));

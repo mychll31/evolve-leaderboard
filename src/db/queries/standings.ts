@@ -148,12 +148,12 @@ export async function getStandings(
           status: metricEntries.status,
         })
         .from(metricEntries)
-        .where(
-          and(
-            eq(metricEntries.seasonId, season.id),
-            eq(metricEntries.status, "approved"),
-          ),
-        ),
+        // Deliberately NOT filtered to `approved` in SQL. Scoring ignores
+        // anything unapproved on its own, but the streak counter needs to see
+        // pending entries to tell "not judged yet" apart from "never checked
+        // in" — filtering here would silently break streaks the moment a coach
+        // fell behind on approvals.
+        .where(eq(metricEntries.seasonId, season.id)),
       db
         .select()
         .from(scoreSnapshots)
@@ -275,7 +275,7 @@ export async function getStandings(
   if (attendanceMetricId) {
     for (const row of entryRows) {
       if (row.metricId !== attendanceMetricId || !row.meetingId) continue;
-      if (row.value <= 0) continue;
+      if (row.status !== "approved" || row.value <= 0) continue;
       presentByMeeting.set(
         row.meetingId,
         (presentByMeeting.get(row.meetingId) ?? 0) + 1,

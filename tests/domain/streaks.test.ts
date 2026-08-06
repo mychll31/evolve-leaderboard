@@ -42,13 +42,22 @@ describe("currentStreak", () => {
     expect(currentStreak(week, [present("m1"), present("m3")])).toBe(1);
   });
 
-  it("does not count a pending entry as present", () => {
+  it("skips an undecided check-in instead of breaking the streak", () => {
+    // Pending means the coach has not judged it yet. Treating that as an
+    // absence would cost a member their streak purely because approval was
+    // late, so the session is skipped and the count continues behind it.
     const entries = [
       present("m1"),
       present("m2"),
       present("m3", { status: "pending" }),
     ];
-    expect(currentStreak(week, entries)).toBe(0);
+    expect(currentStreak(week, entries)).toBe(2);
+  });
+
+  it("does not let a pending entry add to the streak either", () => {
+    const entries = [present("m1", { status: "pending" }), present("m2"), present("m3")];
+    // m1 is skipped rather than counted, so only m2 and m3 contribute.
+    expect(currentStreak(week, entries)).toBe(2);
   });
 
   it("does not count a rejected entry as present", () => {

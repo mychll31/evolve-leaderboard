@@ -1,4 +1,7 @@
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { getDb } from "@/db/client";
+import { users } from "@/db/schema";
 import { auth } from "./config";
 import type { Actor } from "./scoping";
 
@@ -8,10 +11,34 @@ export type SessionUser = Actor & {
   image?: string | null;
 };
 
+/**
+ * Local development escape hatch, so the app can be run without configuring
+ * Google OAuth first.
+ *
+ * Deliberately double-guarded: it is unreachable unless the build is a
+ * development build AND `AUTH_DEV_EMAIL` is explicitly set, and even then it
+ * only impersonates a user who already exists in the database. It is compiled
+ * out of any production build by the NODE_ENV check.
+ */
+async function developmentUser(): Promise<SessionUser | null> {
+  if (process.env.NODE_ENV === "production") return null;
+  const email = process.env.AUTH_DEV_EMAIL;
+  if (!email) return null;
+
+  const [row] = await getDb()
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+  if (!row) return null;
+
+  return { id: row.id, role: row.role, name: row.name, email: row.email };
+}
+
 export async function getSessionUser(): Promise<SessionUser | null> {
   const session = await auth();
-  if (!session?.user?.id) return null;
-  return session.user as SessionUser;
+  if (session?.user?.id) return session.user as SessionUser;
+  return developmentUser();
 }
 
 /**

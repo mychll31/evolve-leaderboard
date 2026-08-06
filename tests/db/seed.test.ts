@@ -8,6 +8,7 @@ import {
   scoreSnapshots,
   seasons,
   teams,
+  users,
 } from "@/db/schema";
 import { seed, type SeedResult } from "@/db/seed";
 import { currentStreak } from "@/domain/streaks";
@@ -58,7 +59,7 @@ describe("seed", () => {
     expect(assignment?.target).toBe(8);
   });
 
-  it("records an attendance entry for every member at every held meeting", async () => {
+  it("records attendance for every member at every held meeting, bar the demo gap", async () => {
     const [attendance] = await t.db
       .select()
       .from(metrics)
@@ -72,21 +73,28 @@ describe("seed", () => {
           eq(metricEntries.status, "approved"),
         ),
       );
-    expect(approved).toHaveLength(14 * result.heldMeetings);
+    // Two Founders are deliberately unsettled at the latest session: one
+    // pending and one with no entry at all.
+    expect(approved).toHaveLength(14 * result.heldMeetings - 2);
   });
 
-  it("leaves pending entries only when today is a meeting day", async () => {
+  it("leaves the latest session unsettled so the Coach Desk has real work", async () => {
     const pending = await t.db
       .select()
       .from(metricEntries)
       .where(eq(metricEntries.status, "pending"));
-    const todays = await t.db
+
+    expect(pending).toHaveLength(1);
+    expect(pending[0].source).toBe("self");
+
+    // Anchored to the most recent held session, not to today's date, so this
+    // holds whatever weekday the seed runs on.
+    const held = await t.db
       .select()
       .from(meetings)
-      .where(eq(meetings.meetsOn, "2026-08-06"));
-    // 2026-08-06 is a Thursday, so no meeting and nothing pending.
-    expect(todays).toHaveLength(0);
-    expect(pending).toHaveLength(0);
+      .where(eq(meetings.status, "held"));
+    const latest = held.sort((a, b) => b.meetsOn.localeCompare(a.meetsOn))[0];
+    expect(pending[0].meetingId).toBe(latest.id);
   });
 
   it("marks past meetings held and future meetings scheduled", async () => {
@@ -100,12 +108,13 @@ describe("seed", () => {
   });
 
   it("generates attendance consistent with each member's streak", async () => {
-    // Michael's fixture streak is 12; the generated entries must actually
-    // produce it, otherwise the seed contradicts itself.
+    // The generated entries must actually produce a streak, otherwise the
+    // fixture's attendance and streak numbers contradict each other.
     const [michael] = await t.db
-      .select()
+      .select({ id: memberships.id })
       .from(memberships)
-      .where(eq(memberships.position, "PG"))
+      .innerJoin(users, eq(users.id, memberships.userId))
+      .where(eq(users.name, "Michael"))
       .limit(1);
     const heldRows = await t.db
       .select()

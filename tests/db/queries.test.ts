@@ -48,10 +48,10 @@ describe("query layer", () => {
       expect([...ranks].sort((a, b) => a - b)).toEqual(ranks);
     });
 
-    it("puts the strongest fixture player on top", () => {
-      // Michael leads on every metric in the fixture.
-      expect(standings.members[0].name).toBe("Michael");
-      expect(standings.members[0].teamName).toBe("Founders");
+    it("gives rank 1 to whoever actually has the highest score", () => {
+      const best = Math.max(...standings.members.map((m) => m.score));
+      expect(standings.members[0].rank).toBe(1);
+      expect(standings.members[0].score).toBeCloseTo(best, 6);
     });
 
     it("gives every member a breakdown covering all active metrics", () => {
@@ -98,9 +98,24 @@ describe("query layer", () => {
     });
 
     it("derives streaks from real entries", () => {
-      const michael = standings.members[0];
+      const michael = standings.members.find((m) => m.name === "Michael")!;
       expect(michael.streak).toBeGreaterThan(0);
       expect(michael.streak).toBeLessThanOrEqual(standings.heldCount);
+    });
+
+    it("keeps a streak alive when the latest session is still awaiting approval", () => {
+      // Regression: the entry query used to filter to `approved` in SQL, so the
+      // streak counter could not tell a pending check-in from a no-show and
+      // reset the member to zero the moment a coach fell behind.
+      const michael = standings.members.find((m) => m.name === "Michael")!;
+      expect(michael.streak).toBe(standings.heldCount - 1);
+    });
+
+    it("still excludes unapproved entries from the score", () => {
+      const michael = standings.members.find((m) => m.name === "Michael")!;
+      const attendance = michael.breakdown.find((b) => b.key === "attendance")!;
+      // 14 of 15 approved: the pending session must not count as present.
+      expect(attendance.value).toBeCloseTo((14 / 15) * 100, 4);
     });
   });
 
@@ -195,7 +210,7 @@ describe("query layer", () => {
 
   describe("getBadges", () => {
     it("flags which badges a member has earned", async () => {
-      const michael = standings.members[0];
+      const michael = standings.members.find((m) => m.name === "Michael")!;
       const rows = await getBadges(t.db, michael.membershipId);
       expect(rows).toHaveLength(6);
       expect(rows.filter((b) => b.owned).length).toBeGreaterThan(0);

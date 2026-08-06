@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { getDb } from "@/db/client";
 import { memberships, teams } from "@/db/schema";
 import { requireUser, type SessionUser } from "@/lib/auth/guards";
@@ -20,8 +21,12 @@ export type AppContext = {
  * Loads the signed-in user plus the whole season in one place, so screens do
  * not each re-derive it. Redirects to /signin when there is no session and to
  * a holding page when no season is active.
+ *
+ * Wrapped in React's request cache: the app layout and the page beneath it
+ * both need this, and without deduplication every render would run the full
+ * standings query twice.
  */
-export async function getAppContext(): Promise<AppContext> {
+export const getAppContext = cache(async function getAppContext(): Promise<AppContext> {
   const user = await requireUser();
   const db = getDb();
 
@@ -63,4 +68,4 @@ export async function getAppContext(): Promise<AppContext> {
     isCoach: coachRows.length > 0 || user.role === "super_admin",
     isAdmin: user.role === "super_admin",
   };
-}
+});
