@@ -34,10 +34,8 @@ const TEAMS = [
 ] as const;
 
 /**
- * `att`, `asn` and `quiz` are the *target percentages* from the prototype.
- * The seeder works backwards from them to generate yes/no entries that produce
- * roughly those figures, so the screens match the design without any of the
- * numbers being hardcoded into the app.
+ * `att`, `asn` and `quiz` are the sample 0-100 metric values from the
+ * prototype.
  */
 const PLAYERS = [
   { name: "Michael", team: 0, pos: "PG", att: 99, asn: 96, quiz: 94, streak: 12 },
@@ -106,9 +104,9 @@ const BADGES = [
 ] as const;
 
 const METRICS = [
-  { key: "attendance", name: "Attendance", type: "boolean", weight: 40, target: null, required: true },
-  { key: "assignment", name: "Assignment", type: "boolean", weight: 40, target: null, required: true },
-  { key: "quiz", name: "Quiz", type: "boolean", weight: 20, target: null, required: false },
+  { key: "attendance", name: "Attendance", type: "percentage", weight: 0, target: null, required: true },
+  { key: "assignment", name: "Assignment", type: "percentage", weight: 0, target: null, required: true },
+  { key: "quiz", name: "Quiz", type: "percentage", weight: 0, target: null, required: true },
 ] as const;
 
 /* -------------------------------------------------------------------------
@@ -355,7 +353,7 @@ export async function seed(
     heldMeetings.forEach((meeting, k) => {
       const isLastHeld = k === heldCount - 1;
 
-      // Leave the most recent session unrecorded for one Founder so the Coach
+      // Leave the most recent session unrecorded for one Founder so the Leader
       // Desk always opens with real work. Check-ins count immediately now, so
       // "unaccounted for" is the only outstanding state a coach can act on.
       // Anchored to the latest session rather than to "today", so it holds
@@ -387,10 +385,24 @@ export async function seed(
 
     entryValues.push({
       seasonId: season.id,
+      metricId: attendanceId,
+      membershipId: memberRows[i].id,
+      meetingId: null,
+      value: player.att,
+      status: "approved",
+      source: "coach",
+      recordedBy: coachRows[player.team].id,
+      recordedAt: new Date(today.getTime() - DAY_MS),
+      decidedBy: coachRows[player.team].id,
+      decidedAt: new Date(today.getTime() - DAY_MS),
+    });
+
+    entryValues.push({
+      seasonId: season.id,
       metricId: metricId("assignment"),
       membershipId: memberRows[i].id,
       meetingId: null,
-      value: player.asn >= 85 ? 1 : 0,
+      value: player.asn,
       status: "approved",
       source: "coach",
       recordedBy: coachRows[player.team].id,
@@ -404,7 +416,7 @@ export async function seed(
       metricId: metricId("quiz"),
       membershipId: memberRows[i].id,
       meetingId: null,
-      value: player.quiz >= 85 ? 1 : 0,
+      value: player.quiz,
       status: "approved",
       source: "coach",
       recordedBy: coachRows[player.team].id,
@@ -451,21 +463,15 @@ export async function seed(
   await db.insert(memberBadges).values(awards);
 
   // --- Weekly snapshots -------------------------------------------------
-  // Synthetic history: yes/no completions unlock over the season so earlier
+  // Synthetic history: values ramp over the season so earlier
   // standings differ from today's and the delta arrows have something real to
   // compare against.
   const currentWeek = Math.max(1, Math.ceil(heldCount / 3));
-  const metricDefs: Metric[] = metricRows.map((row) => {
-    const def = METRICS.find((m) => m.key === row.key)!;
-    return {
-      id: row.id,
-      key: def.key,
-      name: def.name,
-      type: def.type,
-      weight: def.weight,
-      target: def.target,
-    };
-  });
+  const metricDefs: Metric[] = metricRows.map((row) => ({
+    id: row.id,
+    key: row.key,
+    name: METRICS.find((m) => m.key === row.key)?.name ?? row.key,
+  }));
 
   const snapshotValues: (typeof scoreSnapshots.$inferInsert)[] = [];
   let previousRanks = new Map<string, number>();
@@ -474,33 +480,31 @@ export async function seed(
     const meetingsThisFar = Math.min(heldCount, week * 3);
     const rows = PLAYERS.map((player, i) => {
       const entries: Entry[] = [];
-      for (let k = 0; k < meetingsThisFar; k++) {
-        entries.push({
-          metricId: attendanceId,
-          meetingId: heldMeetings[k].id,
-          value: attendanceByMember[i][k] ? 1 : 0,
-          status: "approved",
-        });
-      }
-      entries.push({
-        metricId: metricId("assignment"),
-        meetingId: null,
-        value: player.asn >= 85 && week >= 2 ? 1 : 0,
-        status: "approved",
-      });
-      entries.push({
-        metricId: metricId("quiz"),
-        meetingId: null,
-        value: player.quiz >= 85 && week >= 3 ? 1 : 0,
-        status: "approved",
-      });
-
-      const score = scoreMember(metricDefs, entries, meetingsThisFar, "weighted");
       const attendance = meetingsThisFar
         ? (attendanceByMember[i].slice(0, meetingsThisFar).filter(Boolean).length /
             meetingsThisFar) *
           100
         : 0;
+      entries.push({
+        metricId: attendanceId,
+        meetingId: null,
+        value: attendance,
+        status: "approved",
+      });
+      entries.push({
+        metricId: metricId("assignment"),
+        meetingId: null,
+        value: week >= 2 ? player.asn : Math.max(0, player.asn - 18),
+        status: "approved",
+      });
+      entries.push({
+        metricId: metricId("quiz"),
+        meetingId: null,
+        value: week >= 3 ? player.quiz : Math.max(0, player.quiz - 22),
+        status: "approved",
+      });
+
+      const score = scoreMember(metricDefs, entries, meetingsThisFar);
       return {
         membershipId: memberRows[i].id,
         score,

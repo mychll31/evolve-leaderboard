@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Avatar } from "@/components/ui";
 import { NavIcon, titleFor } from "./nav";
 
 export function TopBar({
@@ -10,11 +12,21 @@ export function TopBar({
   isCoach,
   isAdmin,
   unreadCount,
+  userName,
+  initials,
+  subLabel,
+  signOut,
 }: {
   week: number;
   isCoach: boolean;
   isAdmin: boolean;
   unreadCount: number;
+  userName: string;
+  initials: string;
+  /** Team where there is one, otherwise the role. */
+  subLabel: string;
+  /** Rendered by the layout so this stays a presentational shell. */
+  signOut: React.ReactNode;
 }) {
   const pathname = usePathname();
   const title = titleFor(pathname, isAdmin, isCoach);
@@ -57,6 +69,104 @@ export function TopBar({
           </span>
         )}
       </Link>
+
+      <span aria-hidden className="bg-line hidden h-7 w-px sm:block" />
+
+      <AccountMenu
+        userName={userName}
+        initials={initials}
+        subLabel={subLabel}
+        signOut={signOut}
+      />
     </header>
+  );
+}
+
+/**
+ * The account control, and the only sign-out a phone has: the sidebar that
+ * carries the other one is `lg:` and above.
+ */
+function AccountMenu({
+  userName,
+  initials,
+  subLabel,
+  signOut,
+}: {
+  userName: string;
+  initials: string;
+  subLabel: string;
+  signOut: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapper = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!wrapper.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapper} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Account: ${userName}`}
+        className="hover:bg-surface-2 flex cursor-pointer items-center gap-2.5 rounded-full py-1 pr-1 pl-1 transition-colors sm:pr-2.5"
+      >
+        <Avatar initials={initials} color="var(--color-primary)" size={34} />
+        <span className="hidden min-w-0 text-left sm:block">
+          <span className="text-ink block truncate text-[13px] leading-tight font-extrabold">
+            {userName}
+          </span>
+          <span className="text-ink-3 block truncate text-[11px] leading-tight font-semibold">
+            {subLabel}
+          </span>
+        </span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--color-ink-3)"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+          className="hidden sm:block"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="border-line absolute top-[calc(100%+10px)] right-0 z-50 w-60 rounded-[18px] border bg-white p-4 shadow-[0_18px_40px_-20px_rgba(15,23,32,.45)]"
+        >
+          <div className="text-ink truncate text-[13.5px] font-extrabold">
+            {userName}
+          </div>
+          <div className="text-ink-3 truncate text-[11.5px] font-semibold">
+            {subLabel}
+          </div>
+          <div className="mt-3.5">{signOut}</div>
+        </div>
+      )}
+    </div>
   );
 }

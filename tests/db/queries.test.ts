@@ -66,10 +66,7 @@ describe("query layer", () => {
 
     it("produces a breakdown that recombines to the reported score", () => {
       for (const member of standings.members) {
-        const recombined = combine(
-          member.breakdown.map((b) => ({ weight: b.weight, value: b.value })),
-          "weighted",
-        );
+        const recombined = combine(member.breakdown.map((b) => ({ value: b.value })));
         expect(recombined).toBeCloseTo(member.score, 6);
       }
     });
@@ -103,17 +100,17 @@ describe("query layer", () => {
       expect(michael.streak).toBeLessThanOrEqual(standings.heldCount);
     });
 
-    it("counts a self check-in immediately, with no approval step", () => {
-      // Michael is present at every held session and none of them wait on a
-      // coach, so his streak runs the whole season.
+    it("keeps streak history while scoring from season-level attendance", () => {
+      // Michael is present at every held session in the legacy meeting rows,
+      // so his streak runs the whole season.
       const michael = standings.members.find((m) => m.name === "Michael")!;
       expect(michael.streak).toBe(standings.heldCount);
 
       const attendance = michael.breakdown.find((b) => b.key === "attendance")!;
-      expect(attendance.value).toBeCloseTo(100, 4);
+      expect(attendance.value).toBeCloseTo(99, 4);
     });
 
-    it("still ignores an entry that a coach has rejected", () => {
+    it("still uses the season-level attendance metric for scoring", () => {
       // Noah has no entry for the latest session, so it counts against him —
       // auto-approval applies to check-ins, not to absences.
       const noah = standings.members.find((m) => m.name === "Noah")!;

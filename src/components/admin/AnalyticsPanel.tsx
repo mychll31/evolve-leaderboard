@@ -21,7 +21,6 @@ export async function AnalyticsPanel({ standings }: { standings: Standings }) {
   }));
 
   const maxAverage = Math.max(100, ...analytics.weeks.map((w) => w.averageScore));
-  const heat = standings.attendanceByMeeting.slice(-28);
 
   const first = analytics.weeks[0];
   const last = analytics.weeks[analytics.weeks.length - 1];
@@ -89,8 +88,7 @@ export async function AnalyticsPanel({ standings }: { standings: Standings }) {
       <Card>
         <SectionTitle>METRIC TRENDS</SectionTitle>
         <p className="text-ink-3 mt-2 text-[12px] font-semibold">
-          Averages taken from each week&rsquo;s stored snapshot, so changing a
-          weight today does not rewrite last month&rsquo;s history.
+          Averages taken from each week&rsquo;s stored snapshot.
         </p>
 
         {analytics.weeks.length === 0 ? (
@@ -199,28 +197,6 @@ export async function AnalyticsPanel({ standings }: { standings: Standings }) {
         </Card>
       </div>
 
-      <Card>
-        <SectionTitle>SESSION ACTIVITY</SectionTitle>
-        <div className="mt-4 grid grid-cols-7 gap-1.5 sm:grid-cols-14">
-          {heat.map((cell) => {
-            const ratio = cell.total ? cell.present / cell.total : 0;
-            return (
-              <div
-                key={cell.meetingId}
-                title={`${cell.meetsOn}: ${cell.present}/${cell.total} present`}
-                className="aspect-square rounded-[5px]"
-                style={{
-                  background: `rgba(18,181,203,${(0.1 + ratio * 0.85).toFixed(2)})`,
-                }}
-              />
-            );
-          })}
-        </div>
-        <div className="text-ink-4 mt-2.5 flex justify-between text-[10px] font-bold">
-          <span>{heat[0]?.meetsOn ?? "—"}</span>
-          <span>{heat[heat.length - 1]?.meetsOn ?? "LATEST"}</span>
-        </div>
-      </Card>
     </div>
   );
 }

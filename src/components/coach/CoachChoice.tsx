@@ -7,7 +7,7 @@ import type { MemberStanding } from "@/db/queries/standings";
 import { Banner, Button, Field, inputClass, useAction } from "@/components/admin/controls";
 
 /**
- * Coach's Choice is the one MVP category the rollup cannot compute — it is a
+ * Leader's Choice is the one MVP category the rollup cannot compute — it is a
  * judgement call, one nomination per team per week.
  */
 export function CoachChoice({
@@ -31,7 +31,7 @@ export function CoachChoice({
 
   return (
     <Card>
-      <Eyebrow>Coach&rsquo;s choice · week {weekNo}</Eyebrow>
+      <Eyebrow>Leader&rsquo;s choice · week {weekNo}</Eyebrow>
       {current && (
         <p className="text-ink-2 mt-2 text-[13px] font-bold">
           Currently: {current.name}

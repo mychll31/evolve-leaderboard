@@ -330,10 +330,8 @@ export async function runWeeklyRollup(
     });
   }
 
-  // Nudge anyone missing a required metric.
-  const requiredKeys = standings.metrics
-    .filter((m) => m.key !== "attendance")
-    .map((m) => m.key);
+  // Every active metric is required under equal-average scoring.
+  const requiredKeys = standings.metrics.map((m) => m.key);
   for (const member of standings.members) {
     const recorded = recordedBy.get(member.membershipId) ?? new Set<string>();
     const missing = requiredKeys.filter((key) => !recorded.has(key));

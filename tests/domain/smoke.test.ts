@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { FORMULAS, METRIC_TYPES } from "@/domain/types";
+import type { Metric } from "@/domain/types";
 
 describe("test harness", () => {
   it("resolves the @/ alias into src/", () => {
-    expect(METRIC_TYPES).toContain("percentage");
-    expect(FORMULAS).toEqual(["weighted", "points", "average"]);
+    const metric: Metric = { id: "m1", key: "attendance", name: "Attendance" };
+    expect(metric.key).toBe("attendance");
   });
 });

@@ -55,8 +55,8 @@ export default async function TeamsPage() {
                   </DisplayNumber>
                   <div className="mt-1 truncate text-[11.5px] font-extrabold tracking-[0.1em] text-white/75 uppercase">
                     {champion.coachName
-                      ? `Coach ${champion.coachName}`
-                      : "No coach assigned"}
+                      ? `Leader ${champion.coachName}`
+                      : "No leader assigned"}
                     {" · "}
                     {champion.memberCount} member
                     {champion.memberCount === 1 ? "" : "s"}
@@ -119,7 +119,7 @@ export default async function TeamsPage() {
                     {team.name}
                   </div>
                   <div className="text-ink-3 truncate text-[11.5px] font-semibold">
-                    {team.coachName ? `Coach ${team.coachName} · ` : ""}
+                    {team.coachName ? `Leader ${team.coachName} · ` : ""}
                     {team.memberCount} member
                     {team.memberCount === 1 ? "" : "s"} · {team.wins}W
                   </div>

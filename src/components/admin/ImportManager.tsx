@@ -11,7 +11,7 @@ import { Banner, Button, useAction, inputClass } from "./controls";
 
 const SAMPLE = `name,email,team,position,role
 Ada Lovelace,ada@example.com,Founders,PG,member
-Grace Hopper,grace@example.com,Titans,,coach`;
+Grace Hopper,grace@example.com,Titans,,leader`;
 
 export function ImportManager({
   seasonId,
@@ -185,7 +185,7 @@ export function ImportManager({
                             {unknownTeam && " ✕"}
                           </td>
                           <td className="text-ink-2 px-5 py-2.5 text-[12.5px] font-semibold sm:px-6">
-                            {row.role}
+                            {row.role === "coach" ? "Leader" : row.role}
                           </td>
                         </tr>
                       );
@@ -207,7 +207,7 @@ export function ImportManager({
               ["email", "Required · matched to update"],
               ["team", "Required · must already exist"],
               ["position", "Optional · PG, SG, SF, PF, C"],
-              ["role", "Optional · member or coach"],
+              ["role", "Optional · member or leader"],
             ].map(([col, note]) => (
               <li key={col} className="flex items-baseline justify-between gap-3">
                 <code className="text-ink text-[12.5px] font-bold">{col}</code>

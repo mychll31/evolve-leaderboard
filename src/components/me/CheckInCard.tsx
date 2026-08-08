@@ -17,8 +17,8 @@ function timeOf(date: Date): string {
 /**
  * The member's own attendance control — the one thing a member can write.
  *
- * A check-in counts immediately; there is no approval step. A coach can still
- * override it afterwards from the Coach Desk, and their decision wins.
+ * A check-in counts immediately; there is no approval step. A Leader can still
+ * override it afterwards from the Leader Desk, and their decision wins.
  */
 export function CheckInCard({
   membershipId,
@@ -51,8 +51,8 @@ export function CheckInCard({
       label: "Awaiting review",
       icon: "⏳",
       detail: checkIn.recordedAt
-        ? `Checked in at ${timeOf(checkIn.recordedAt)}${checkIn.isLate ? " · late" : ""}. Your coach still needs to confirm this one.`
-        : "Your coach still needs to confirm this one.",
+        ? `Checked in at ${timeOf(checkIn.recordedAt)}${checkIn.isLate ? " · late" : ""}. Your Leader still needs to confirm this one.`
+        : "Your Leader still needs to confirm this one.",
     },
     present: {
       tone: "border-positive-line bg-positive-tint",
@@ -67,7 +67,7 @@ export function CheckInCard({
       label: "Marked missing",
       icon: "✕",
       detail:
-        "Your coach recorded this session as missed. Speak to them if that is wrong.",
+        "Your Leader recorded this session as missed. Speak to them if that is wrong.",
     },
   } as const;
 
@@ -125,7 +125,7 @@ export function CheckInCard({
       </button>
 
       <p className="text-ink-3 mt-2.5 text-[11.5px] leading-relaxed font-semibold">
-        Counts as soon as you tap. Your coach can correct it afterwards.
+        Counts as soon as you tap. Your Leader can correct it afterwards.
       </p>
     </Card>
   );

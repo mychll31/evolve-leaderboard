@@ -105,8 +105,7 @@ export default async function MemberPage(props: {
                   <div key={part.key}>
                     <div className="flex items-baseline justify-between text-[12.5px] font-bold">
                       <span className="text-ink-2">
-                        {part.name}{" "}
-                        <span className="text-ink-4">· {part.weight}%</span>
+                        {part.name}
                       </span>
                       <span className="text-ink">{fmt.pct(part.value)}</span>
                     </div>
@@ -125,7 +124,7 @@ export default async function MemberPage(props: {
             <Card>
               <Eyebrow>Not scored</Eyebrow>
               <p className="text-ink-2 mt-2 text-[13px] font-semibold">
-                Coaches do not appear in the standings.
+                Leaders do not appear in the standings.
               </p>
             </Card>
           )}
@@ -144,7 +143,7 @@ export default async function MemberPage(props: {
                   href={`/coach?team=${member.teamId}`}
                   className="border-line text-ink-2 hover:bg-surface-2 rounded-xl border px-4 py-2.5 text-[13px] font-bold"
                 >
-                  {member.teamName} coach desk
+                  {member.teamName} Leader desk
                 </Link>
               )}
               {ctx.isAdmin && (

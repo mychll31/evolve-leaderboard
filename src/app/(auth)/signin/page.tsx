@@ -15,7 +15,7 @@ import { getSessionUser, hasDevelopmentAuthBypass } from "@/lib/auth/guards";
  */
 const ERRORS: Record<string, string> = {
   AccessDenied:
-    "That Google account is not on the Leaderboard roster. Ask your coach or an admin to add your email, then try again.",
+    "That Google account is not on the Leaderboard roster. Ask your Leader or an admin to add your email, then try again.",
   Configuration:
     "Sign-in is not configured correctly. Please contact an administrator.",
   Verification: "That sign-in link has expired. Please try again.",

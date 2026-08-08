@@ -159,7 +159,7 @@ export function PeopleManager({
                       }
                     >
                       <option value="member">Member</option>
-                      <option value="coach">Coach</option>
+                      <option value="coach">Leader</option>
                     </select>
                   </td>
                   <td className="px-2 py-3">

@@ -60,8 +60,6 @@ export type ActionResult<T = undefined> =
 
 const ADMIN_PATHS = [
   "/admin",
-  "/admin/seasons",
-  "/admin/calendar",
   "/admin/teams",
   "/admin/people",
   "/admin/import",

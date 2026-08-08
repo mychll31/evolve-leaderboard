@@ -27,7 +27,7 @@ const ERRORS: Record<string, ErrorCopy> = {
     heading: "YOU'RE NOT ON THE ROSTER YET",
     body: "Leaderboard is invite-only. Your Google account signed in fine, but that email address hasn't been added to the season yet — so there's nothing here for it to open.",
     detail:
-      "Ask your coach or a Leaderboard admin to add your email address. Once they have, come back and sign in with the same Google account.",
+      "Ask your Leader or a Leaderboard admin to add your email address. Once they have, come back and sign in with the same Google account.",
     audience: "member",
   },
   Configuration: {
@@ -126,7 +126,7 @@ export default async function AuthErrorPage(props: {
                 href="mailto:?subject=Leaderboard%20access&body=Hi%2C%20please%20add%20my%20email%20address%20to%20Leaderboard%20so%20I%20can%20sign%20in."
                 className="border-shell-line text-shell-ink flex-1 rounded-xl border px-5 py-3.5 text-center text-[13px] font-extrabold tracking-[0.06em] uppercase transition-colors hover:bg-white/5"
               >
-                Email my coach
+                Email my Leader
               </a>
             )}
           </div>

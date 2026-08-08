@@ -1,20 +1,11 @@
-import { and, eq } from "drizzle-orm";
-import {
-  Card,
-  DisplayNumber,
-  Eyebrow,
-  ProgressBar,
-  SectionTitle,
-  fmt,
-} from "@/components/ui";
-import { CheckInCard } from "@/components/me/CheckInCard";
+import { eq } from "drizzle-orm";
+import { Card, SectionTitle } from "@/components/ui";
 import { FlipCard, type LogRow } from "@/components/me/FlipCard";
-import { SignOutButton } from "@/components/shell/SignOutButton";
+import { MetricLogger } from "@/components/me/MetricLogger";
 import { getDb } from "@/db/client";
 import { getBadges } from "@/db/queries/badges";
-import { getCheckIn } from "@/db/queries/checkin";
 import { getAppContext } from "@/db/queries/context";
-import { metricEntries, metrics } from "@/db/schema";
+import { getSelfLog } from "@/db/queries/member";
 import { scoreSnapshots } from "@/db/schema";
 
 export default async function MePage() {
@@ -33,57 +24,28 @@ export default async function MePage() {
           <SectionTitle className="mt-2">NO PLAYER CARD</SectionTitle>
           <p className="text-ink-2 mt-3 text-[14px] leading-relaxed">
             {ctx.coachedTeams.length > 0
-              ? `You coach ${ctx.coachedTeams.map((t) => t.name).join(", ")} this season. Coaches are not scored, so there is no player card — head to the Coach Desk instead.`
+              ? `You lead ${ctx.coachedTeams.map((t) => t.name).join(", ")}. Leaders are not scored, so there is no player card.`
               : "You are not on a team for this season yet. Ask an admin to add you."}
           </p>
         </Card>
-        <AccountCard
-          name={ctx.user.name ?? ctx.user.email ?? "Member"}
-          email={ctx.user.email ?? ""}
-        />
       </div>
     );
   }
 
-  const [attendanceMetric] = await db
-    .select({ id: metrics.id })
-    .from(metrics)
-    .where(
-      and(
-        eq(metrics.seasonId, ctx.standings.season.id),
-        eq(metrics.key, "attendance"),
-      ),
-    )
-    .limit(1);
-
-  const [badges, attended, history, checkIn] = await Promise.all([
+  const [badges, history, selfLog] = await Promise.all([
     getBadges(db, member.membershipId),
-    attendanceMetric
-      ? db
-          .select({ value: metricEntries.value })
-          .from(metricEntries)
-          .where(
-            and(
-              eq(metricEntries.membershipId, member.membershipId),
-              eq(metricEntries.metricId, attendanceMetric.id),
-              eq(metricEntries.status, "approved"),
-            ),
-          )
-      : Promise.resolve([] as { value: number }[]),
     db
       .select()
       .from(scoreSnapshots)
       .where(eq(scoreSnapshots.membershipId, member.membershipId)),
-    getCheckIn(db, ctx.standings.season.id, member.membershipId),
+    getSelfLog(db, ctx.standings.season.id, member.membershipId),
   ]);
 
-  const presentCount = attended.filter((a) => a.value > 0).length;
   const bestRank = history.length
     ? Math.min(...history.map((h) => h.rank))
     : member.rank;
 
   const log: LogRow[] = [
-    { label: "Sessions attended", value: `${presentCount}/${ctx.standings.heldCount}` },
     { label: "Current streak", value: `${member.streak}`, tone: "accent" },
     { label: "Best rank", value: `#${bestRank}` },
     { label: "Badges earned", value: `${badges.filter((b) => b.owned).length}` },
@@ -91,72 +53,17 @@ export default async function MePage() {
   ];
 
   return (
-    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-      <div>
-        <SectionTitle className="text-[30px] tracking-normal sm:text-[38px]">
-          MY CARD
-        </SectionTitle>
-        <p className="text-ink-3 mt-1 text-[12px] font-semibold">
+    <div className="flex min-w-0 flex-col gap-6">
+      <div className="max-w-[300px]">
+        <FlipCard member={member} log={log} badges={badges} />
+        <p className="text-ink-3 mt-2.5 text-center text-[11.5px] font-semibold">
           Tap the card to flip · {ctx.standings.season.name}
         </p>
-        <div className="mt-4">
-          <FlipCard member={member} log={log} badges={badges} />
-        </div>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <CheckInCard membershipId={member.membershipId} checkIn={checkIn} />
-
-        {/* The transparency counterpart to the admin metric builder: if admins
-            can reweight the formula, members must see why their number moved. */}
-        <Card>
-          <Eyebrow>Score breakdown</Eyebrow>
-          <div className="mt-4 flex flex-col gap-4">
-            {member.breakdown.map((part) => (
-              <div key={part.key}>
-                <div className="flex items-baseline justify-between text-[12.5px] font-bold">
-                  <span className="text-ink-2">
-                    {part.name}{" "}
-                    <span className="text-ink-4">· weight {part.weight}%</span>
-                  </span>
-                  <span className="text-ink">{fmt.pct(part.value)}</span>
-                </div>
-                <ProgressBar className="mt-1.5" height={7} gradient value={part.value} />
-              </div>
-            ))}
-          </div>
-          <div className="border-line mt-5 flex items-center justify-between border-t pt-4">
-            <span className="text-ink-2 text-[12px] font-extrabold tracking-[0.1em] uppercase">
-              Total · {ctx.standings.season.formula}
-            </span>
-            <DisplayNumber className="text-ink text-[32px]">
-              {fmt.total(member.score)}
-            </DisplayNumber>
-          </div>
-        </Card>
-
-        <AccountCard
-          name={member.name}
-          email={ctx.user.email ?? ""}
-        />
-      </div>
+      <MetricLogger membershipId={member.membershipId} rows={selfLog} />
     </div>
   );
 }
 
-/**
- * Account controls live here because the sidebar — which also carries sign-out
- * — is `lg:` and above only. Without this, phone users had no way to sign out.
- */
-function AccountCard({ name, email }: { name: string; email: string }) {
-  return (
-    <Card>
-      <Eyebrow>Account</Eyebrow>
-      <div className="text-ink mt-2 text-[14px] font-extrabold">{name}</div>
-      {email && (
-        <div className="text-ink-3 text-[12.5px] font-semibold">{email}</div>
-      )}
-      <SignOutButton variant="panel" className="mt-4" />
-    </Card>
-  );
-}
+

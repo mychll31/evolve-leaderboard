@@ -15,6 +15,11 @@ describe("shell navigation", () => {
     expect(titleFor("/admin/analytics", true, true)).toBe("Season Analytics");
   });
 
+  it("does not expose removed season and calendar admin headings", () => {
+    expect(titleFor("/admin/seasons", true, true)).toBe("Metric Builder");
+    expect(titleFor("/admin/calendar", true, true)).toBe("Metric Builder");
+  });
+
   it("keeps Hall of Fame hidden from leaderboard navigation", () => {
     const hrefs = buildNav({ isAdmin: true, isCoach: true }).map((i) => i.href);
 

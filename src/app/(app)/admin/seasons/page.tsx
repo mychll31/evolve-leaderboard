@@ -1,8 +1,5 @@
-import { SeasonsManager } from "@/components/admin/SeasonsManager";
-import { getDb } from "@/db/client";
-import { listSeasons } from "@/db/queries/admin";
+import { redirect } from "next/navigation";
 
-export default async function AdminSeasonsPage() {
-  const seasons = await listSeasons(getDb());
-  return <SeasonsManager seasons={seasons} />;
+export default function AdminSeasonsPage() {
+  redirect("/admin");
 }

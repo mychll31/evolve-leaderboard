@@ -181,6 +181,8 @@ export function parseMemberImport(input: string): MemberImportParse {
     const email = (row.email ?? "").toLowerCase();
     const team = row.team ?? "";
     const roleRaw = (row.role ?? "member").toLowerCase() || "member";
+    const role =
+      roleRaw === "coach" || roleRaw === "leader" ? "coach" : "member";
 
     if (!name) issues.push({ line, message: "Name is required" });
     if (!email) {
@@ -196,10 +198,10 @@ export function parseMemberImport(input: string): MemberImportParse {
       seen.set(email, line);
     }
     if (!team) issues.push({ line, message: "Team is required" });
-    if (roleRaw !== "member" && roleRaw !== "coach") {
+    if (roleRaw !== "member" && roleRaw !== "coach" && roleRaw !== "leader") {
       issues.push({
         line,
-        message: `Role must be "member" or "coach", got "${roleRaw}"`,
+        message: `Role must be "member" or "leader", got "${roleRaw}"`,
       });
     }
 
@@ -209,7 +211,7 @@ export function parseMemberImport(input: string): MemberImportParse {
       email,
       team,
       position: row.position ? row.position.toUpperCase() : null,
-      role: roleRaw === "coach" ? "coach" : "member",
+      role,
     });
   });
 

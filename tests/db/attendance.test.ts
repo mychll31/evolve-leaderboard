@@ -147,7 +147,7 @@ describe("attendance write path", () => {
       expect(rows).toHaveLength(1);
     });
 
-    it("counts toward attendance as soon as the session is held", async () => {
+    it("does not change the season-level attendance score", async () => {
       const season = await getActiveSeason(t.db);
       const before = await getStandings(t.db, season!, TODAY);
       const beforeAtt = before.members.find(
@@ -171,10 +171,7 @@ describe("attendance write path", () => {
         (m) => m.membershipId === michael.membershipId,
       )!.breakdown.find((b) => b.key === "attendance")!.value;
 
-      // The denominator grew by one held session. If the check-in had needed
-      // approval to count, attendance would have dropped instead of holding.
-      expect(beforeAtt).toBeCloseTo(100, 6);
-      expect(afterAtt).toBeCloseTo(100, 6);
+      expect(afterAtt).toBeCloseTo(beforeAtt, 6);
     });
 
     it("cannot overwrite a decision a coach has already made", async () => {
@@ -347,14 +344,15 @@ describe("attendance write path", () => {
       expect(await entryFor(michael.membershipId, openMeeting)).toBeUndefined();
     });
 
-    it("moves the leaderboard once recorded", async () => {
+    it("does not move the leaderboard once legacy attendance is recorded", async () => {
       const season = await getActiveSeason(t.db);
       const before = await getStandings(t.db, season!, TODAY);
       const beforeScore = before.members.find(
         (m) => m.membershipId === michael.membershipId,
       )!.score;
 
-      // Mark absent for a session that already counted as held.
+      // Mark absent for a legacy session. Visible scoring uses the season-level
+      // attendance metric instead.
       const [held] = await t.db
         .select()
         .from(meetings)
@@ -371,7 +369,7 @@ describe("attendance write path", () => {
       const afterScore = after.members.find(
         (m) => m.membershipId === michael.membershipId,
       )!.score;
-      expect(afterScore).toBeLessThan(beforeScore);
+      expect(afterScore).toBeCloseTo(beforeScore, 6);
     });
   });
 

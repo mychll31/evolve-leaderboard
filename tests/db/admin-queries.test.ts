@@ -69,29 +69,24 @@ describe("admin + member queries", () => {
     expect(rows.every((r) => r.hasEntries)).toBe(true);
   });
 
-  it("builds member detail with audit trail and derived lateness", async () => {
+  it("builds member detail with metric audit trail", async () => {
     const [founders] = await t.db.select().from(teams).where(eq(teams.name, "Founders"));
     const all = await t.db.select().from(memberships);
     const m = all.find((x) => x.teamId === founders.id && x.role === "member")!;
 
     const detail = await getMemberDetail(t.db, standings, m.id);
     expect(detail).not.toBeNull();
-    expect(detail!.attendance.length).toBeGreaterThan(0);
-    expect(detail!.seasonMetrics.map((s) => s.key)).toEqual(["assignment", "quiz"]);
-    expect(detail!.seasonMetrics[0].entry).not.toBeNull();
+    expect(detail!.seasonMetrics.map((s) => s.key)).toEqual([
+      "attendance",
+      "assignment",
+      "quiz",
+    ]);
+    expect(detail!.seasonMetrics.every((s) => s.entry !== null)).toBe(true);
     expect(detail!.standing).not.toBeNull();
 
-    const recorded = detail!.attendance.filter((a) => a.entry !== null);
-    expect(recorded.every((a) => a.entry!.recordedAt instanceof Date)).toBe(true);
-    expect(recorded.some((a) => a.entry!.source === "self")).toBe(true);
-  });
-
-  it("orders attendance newest first", async () => {
-    const all = await t.db.select().from(memberships);
-    const m = all.find((x) => x.role === "member")!;
-    const detail = await getMemberDetail(t.db, standings, m.id);
-    const dates = detail!.attendance.map((a) => a.meetsOn);
-    expect([...dates].sort((a, b) => b.localeCompare(a))).toEqual(dates);
+    const recorded = detail!.seasonMetrics.map((m) => m.entry!);
+    expect(recorded.every((entry) => entry.recordedAt instanceof Date)).toBe(true);
+    expect(recorded.every((entry) => entry.source === "coach")).toBe(true);
   });
 
   it("returns null for an unknown membership", async () => {

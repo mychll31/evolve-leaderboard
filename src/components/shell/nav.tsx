@@ -112,12 +112,12 @@ export function buildNav({
   ];
 
   if (isCoach) {
-    items.push({ href: "/coach", label: "Coach Desk", short: "Desk", title: "Coach Desk", name: "desk", icon: null, phone: true });
+    items.push({ href: "/coach", label: "Leader Desk", short: "Desk", title: "Leader Desk", name: "desk", icon: null, phone: true });
   }
   if (isAdmin) {
-    // Labelled "Admin", not "Metric Builder": this is the entrance to seasons,
-    // the calendar, teams, people, badges and import as well. Naming it after
-    // one of its seven tabs hid user management completely.
+    // Labelled "Admin", not "Metric Builder": this is the entrance to metrics,
+    // teams, people, analytics, badges and import. Naming it after one tab
+    // hides the rest of the console.
     items.push({ href: "/admin", label: "Admin", short: "Admin", title: "Admin", name: "admin", icon: null, phone: true });
   }
 
@@ -128,8 +128,6 @@ export function buildNav({
 
 /** Routes that live under a nav entry but deserve their own heading. */
 const SUB_TITLES: Record<string, string> = {
-  "/admin/seasons": "Seasons",
-  "/admin/calendar": "Session Calendar",
   "/admin/teams": "Manage Teams",
   "/admin/people": "People",
   "/admin/analytics": "Season Analytics",

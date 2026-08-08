@@ -1,56 +1,31 @@
 import type { Entry, Metric } from "../types";
 
-function mean(values: number[]): number {
-  if (values.length === 0) return 0;
-  return values.reduce((sum, v) => sum + v, 0) / values.length;
-}
-
 /**
- * Folds a member's entries for one metric into a single raw figure, expressed
- * in that metric's own units (a percentage, a count, a 1-10 score).
+ * Folds a member's entries for one metric into one raw 0-100 value.
  *
  * Only `approved` entries count. Pending and rejected entries are invisible to
  * scoring, which is what stops an unapproved check-in from moving the
  * leaderboard.
  *
- * `entries` is assumed to be ordered oldest-first. Session-bound booleans are
- * averaged across held meetings; season-level booleans and manual scores read
- * the most recent value.
+ * The current product has no calendar scoring: every metric is season-level,
+ * and the most recent approved value wins. Older calendar-bound rows are only
+ * used as a backward-compatible fallback if no season-level value exists.
  */
 export function aggregate(
   metric: Metric,
   entries: Entry[],
-  eligibleMeetings: number,
+  _eligibleMeetings = 0,
 ): number {
   const approved = entries.filter(
     (e) => e.metricId === metric.id && e.status === "approved",
   );
+  if (approved.length === 0) return 0;
 
-  switch (metric.type) {
-    case "percentage": {
-      // Percentage metrics are session-bound: the denominator is the number of
-      // meetings actually held, NOT the number of entries recorded. That is
-      // what makes a missing entry count against the member rather than
-      // silently shrinking the denominator.
-      if (eligibleMeetings > 0) {
-        const present = approved.reduce((sum, e) => sum + e.value, 0);
-        return (present / eligibleMeetings) * 100;
-      }
-      // No calendar yet — fall back to the mean of whatever was recorded.
-      return mean(approved.map((e) => e.value));
-    }
-    case "integer":
-      return approved.reduce((sum, e) => sum + e.value, 0);
-    case "decimal":
-      return mean(approved.map((e) => e.value));
-    case "boolean": {
-      if (eligibleMeetings > 0 && approved.some((e) => e.meetingId !== null)) {
-        const yes = approved.reduce((sum, e) => sum + (e.value ? 1 : 0), 0);
-        return yes / eligibleMeetings;
-      }
-      return approved.length > 0 && approved[approved.length - 1].value ? 1 : 0;
-    }
-    case "manual_score":
-      return approved.length > 0 ? approved[approved.length - 1].value : 0;
+  const seasonLevel = approved.filter((e) => e.meetingId === null);
+  if (seasonLevel.length > 0) {
+    return seasonLevel[seasonLevel.length - 1].value;
   }
+
+  const total = approved.reduce((sum, entry) => sum + entry.value, 0);
+  return total / approved.length;
 }

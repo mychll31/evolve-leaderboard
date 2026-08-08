@@ -52,7 +52,7 @@ export function TeamsManager({
             </div>
 
             <div className="mt-4">
-              <Field label="Coach">
+              <Field label="Leader">
                 <select
                   className={inputClass}
                   value={team.coachUserId ?? ""}
@@ -61,11 +61,11 @@ export function TeamsManager({
                     const value = e.target.value;
                     if (!value) {
                       act(() => removeCoachAction(team.id), {
-                        successMessage: `Coach removed from ${team.name}`,
+                        successMessage: `Leader removed from ${team.name}`,
                       });
                     } else {
                       act(() => assignCoachAction(team.id, value), {
-                        successMessage: `Coach assigned to ${team.name}`,
+                        successMessage: `Leader assigned to ${team.name}`,
                       });
                     }
                   }}

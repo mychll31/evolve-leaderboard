@@ -12,7 +12,6 @@ import {
 } from "@/db/schema";
 import { rankMembers } from "@/domain/ranking";
 import { scoreBreakdown } from "@/domain/scoring";
-import { combine } from "@/domain/scoring/combine";
 import { currentStreak } from "@/domain/streaks";
 import type { Entry, Meeting, Metric } from "@/domain/types";
 
@@ -22,10 +21,9 @@ export type BreakdownPart = {
   metricId: string;
   key: string;
   name: string;
-  weight: number;
-  /** In the metric's own units — 7 assignments, 93 percent. */
+  /** Raw 0-100 value before clamping. */
   raw: number;
-  /** Normalised 0-100, the value that actually feeds the formula. */
+  /** Clamped 0-100 value that feeds the total average. */
   value: number;
 };
 
@@ -164,9 +162,6 @@ export async function getStandings(
     id: m.id,
     key: m.key,
     name: m.name,
-    type: m.type,
-    weight: m.weight,
-    target: m.target,
   }));
 
   const meetingDefs: Meeting[] = meetingRows.map((m) => ({
@@ -205,10 +200,10 @@ export async function getStandings(
   const scored = memberRows.map((row) => {
     const entries = byMember.get(row.membershipId) ?? [];
     const parts = scoreBreakdown(metricDefs, entries, heldCount);
-    const score = combine(
-      parts.map((p) => ({ weight: p.metric.weight, value: p.value })),
-      season.formula,
-    );
+    const score =
+      parts.length === 0
+        ? 0
+        : parts.reduce((sum, part) => sum + part.value, 0) / parts.length;
     const attendance =
       parts.find((p) => p.metric.key === "attendance")?.value ?? 0;
     const streak = attendanceMetricId
@@ -227,7 +222,6 @@ export async function getStandings(
         metricId: p.metric.id,
         key: p.metric.key,
         name: p.metric.name,
-        weight: p.metric.weight,
         raw: p.raw,
         value: p.value,
       })),
