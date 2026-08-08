@@ -1,11 +1,9 @@
 import { eq } from "drizzle-orm";
 import { Card, SectionTitle } from "@/components/ui";
 import { FlipCard, type LogRow } from "@/components/me/FlipCard";
-import { MetricLogger } from "@/components/me/MetricLogger";
 import { getDb } from "@/db/client";
 import { getBadges } from "@/db/queries/badges";
 import { getAppContext } from "@/db/queries/context";
-import { getSelfLog } from "@/db/queries/member";
 import { scoreSnapshots } from "@/db/schema";
 
 export default async function MePage() {
@@ -32,13 +30,12 @@ export default async function MePage() {
     );
   }
 
-  const [badges, history, selfLog] = await Promise.all([
+  const [badges, history] = await Promise.all([
     getBadges(db, member.membershipId),
     db
       .select()
       .from(scoreSnapshots)
       .where(eq(scoreSnapshots.membershipId, member.membershipId)),
-    getSelfLog(db, ctx.standings.season.id, member.membershipId),
   ]);
 
   const bestRank = history.length
@@ -53,17 +50,11 @@ export default async function MePage() {
   ];
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
-      <div className="max-w-[300px]">
-        <FlipCard member={member} log={log} badges={badges} />
-        <p className="text-ink-3 mt-2.5 text-center text-[11.5px] font-semibold">
-          Tap the card to flip · {ctx.standings.season.name}
-        </p>
-      </div>
-
-      <MetricLogger membershipId={member.membershipId} rows={selfLog} />
+    <div className="mx-auto w-full max-w-[380px]">
+      <FlipCard member={member} log={log} badges={badges} />
+      <p className="text-ink-3 mt-2.5 text-center text-[11.5px] font-semibold">
+        Tap the card to flip · {ctx.standings.season.name}
+      </p>
     </div>
   );
 }
-
-

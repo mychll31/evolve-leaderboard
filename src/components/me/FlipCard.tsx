@@ -31,7 +31,7 @@ export function FlipCard({
         onClick={() => setFlipped((f) => !f)}
         aria-pressed={flipped}
         aria-label={flipped ? "Show player stats" : "Show season log"}
-        className="relative block h-[400px] w-full cursor-pointer text-left [transform-style:preserve-3d] transition-transform duration-700"
+        className="relative block h-[400px] w-full cursor-pointer text-left [transform-style:preserve-3d] transition-transform duration-700 sm:h-[500px]"
         style={{
           transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
           transitionTimingFunction: "cubic-bezier(.3,.8,.3,1)",
