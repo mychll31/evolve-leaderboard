@@ -15,26 +15,40 @@ import type { MemberStanding } from "@/db/queries/standings";
 
 type Place = {
   color: string;
-  /** Literal class strings: Tailwind cannot see classes built at runtime. */
+  /**
+   * Geometry is inline `clamp()` rather than responsive classes: it scales
+   * smoothly between a phone and a desktop with no breakpoint to land
+   * awkwardly between, and it cannot break if the stylesheet is a build
+   * behind — which is exactly how this podium once rendered with squashed
+   * avatars and two missing blocks.
+   */
   avatar: string;
+  initials: string;
   block: string;
+  numeral: string;
 };
 
 const PLACES: Record<number, Place> = {
   1: {
     color: "#12B5CB",
-    avatar: "size-[52px] text-[19px] sm:size-[62px] sm:text-[23px]",
-    block: "h-[104px] sm:h-[132px]",
+    avatar: "clamp(48px, 7vw, 62px)",
+    initials: "clamp(17px, 2.5vw, 23px)",
+    block: "clamp(96px, 14vw, 132px)",
+    numeral: "clamp(30px, 4.6vw, 44px)",
   },
   2: {
     color: "#F97316",
-    avatar: "size-[44px] text-[16px] sm:size-[52px] sm:text-[19px]",
-    block: "h-[74px] sm:h-[96px]",
+    avatar: "clamp(42px, 6vw, 52px)",
+    initials: "clamp(15px, 2.1vw, 19px)",
+    block: "clamp(70px, 10vw, 96px)",
+    numeral: "clamp(26px, 4vw, 38px)",
   },
   3: {
     color: "#7C3AED",
-    avatar: "size-[44px] text-[16px] sm:size-[52px] sm:text-[19px]",
-    block: "h-[62px] sm:h-[82px]",
+    avatar: "clamp(42px, 6vw, 52px)",
+    initials: "clamp(15px, 2.1vw, 19px)",
+    block: "clamp(60px, 8.6vw, 82px)",
+    numeral: "clamp(26px, 4vw, 38px)",
   },
 };
 
@@ -66,17 +80,40 @@ function Entrant({ member, place }: { member: MemberStanding; place: number }) {
 
       <div className="relative">
         <div
-          className={`font-display flex items-center justify-center rounded-full font-extrabold text-white ${spec.avatar}`}
+          className="font-display flex shrink-0 items-center justify-center rounded-full font-extrabold text-white"
           style={{
+            width: spec.avatar,
+            height: spec.avatar,
+            fontSize: spec.initials,
             background: spec.color,
             boxShadow: `0 10px 22px -12px ${spec.color}`,
           }}
         >
           {member.initials}
         </div>
+        {/* Geometry inline, like the avatar and the block: Safari was left
+            with a stylesheet where `size-6` had not been generated and drew
+            this as a tall capsule beside the name. */}
         <span
           aria-hidden
-          className="font-display border-card absolute -bottom-2 left-1/2 flex size-6 -translate-x-1/2 items-center justify-center rounded-full border-2 bg-[#DCE7EF] text-[11px] font-extrabold text-[#41525F]"
+          className="font-display font-extrabold"
+          style={{
+            position: "absolute",
+            bottom: -8,
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 24,
+            height: 24,
+            borderRadius: 9999,
+            border: "2px solid var(--color-card)",
+            background: "#DCE7EF",
+            color: "#41525F",
+            fontSize: 11,
+            lineHeight: 1,
+          }}
         >
           {place}
         </span>
@@ -100,13 +137,20 @@ function Entrant({ member, place }: { member: MemberStanding; place: number }) {
       </span>
 
       <div
-        className={`relative mt-3 w-full max-w-[150px] rounded-t-[14px] ${spec.block}`}
+        className="relative mt-3 w-full"
         style={{
+          height: spec.block,
+          maxWidth: 150,
+          borderTopLeftRadius: 14,
+          borderTopRightRadius: 14,
           background: `linear-gradient(180deg, ${spec.color} 0%, ${spec.color}D9 100%)`,
           boxShadow: `inset 0 6px 0 rgba(255,255,255,.18), 0 -6px 22px -14px ${spec.color}`,
         }}
       >
-        <span className="font-display absolute inset-0 flex items-center justify-center text-[34px] font-extrabold text-white sm:text-[44px]">
+        <span
+          className="font-display absolute inset-0 flex items-center justify-center font-extrabold text-white"
+          style={{ fontSize: spec.numeral }}
+        >
           {place}
         </span>
       </div>
