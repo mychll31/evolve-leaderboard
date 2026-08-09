@@ -31,7 +31,7 @@ export function FlipCard({
         onClick={() => setFlipped((f) => !f)}
         aria-pressed={flipped}
         aria-label={flipped ? "Show player stats" : "Show season log"}
-        className="relative block h-[400px] w-full cursor-pointer text-left [transform-style:preserve-3d] transition-transform duration-700"
+        className="relative block h-[400px] w-full cursor-pointer text-left [transform-style:preserve-3d] transition-transform duration-700 sm:h-[500px]"
         style={{
           transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
           transitionTimingFunction: "cubic-bezier(.3,.8,.3,1)",
@@ -72,7 +72,7 @@ export function FlipCard({
             {member.position ? ` · ${member.position}` : ""}
           </div>
           <div className="relative mt-5 grid grid-cols-4 gap-2">
-            <CardStat label="Pts" value={fmt.total(member.score)} />
+            <CardStat label="Score" value={fmt.total(member.score)} />
             {member.breakdown.slice(0, 2).map((b) => (
               <CardStat
                 key={b.key}
@@ -80,7 +80,7 @@ export function FlipCard({
                 value={Math.round(b.value).toString()}
               />
             ))}
-            <CardStat label="Strk" value={member.streak.toString()} accent />
+            <CardStat label="Streak" value={member.streak.toString()} accent />
           </div>
         </div>
 

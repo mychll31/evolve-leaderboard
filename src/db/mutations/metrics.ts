@@ -1,7 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import type { Database } from "@/db/client";
-import { metricEntries, metrics } from "@/db/schema";
-import { METRIC_TYPES, type MetricType } from "@/domain/types";
+import { metrics } from "@/db/schema";
 import type { Actor } from "@/lib/auth/scoping";
 import {
   ConflictError,
@@ -12,9 +11,6 @@ import {
 
 export type MetricInput = {
   name: string;
-  type: MetricType;
-  target?: number | null;
-  required?: boolean;
 };
 
 function slugify(name: string): string {
@@ -28,34 +24,12 @@ function slugify(name: string): string {
 
 function validate(input: MetricInput): void {
   if (!input.name.trim()) throw new ConflictError("Metric name is required");
-  if (!METRIC_TYPES.includes(input.type)) {
-    throw new ConflictError(`Unknown metric type "${input.type}"`);
-  }
-  if (input.type === "integer" || input.type === "decimal") {
-    if (input.target === null || input.target === undefined || input.target <= 0) {
-      throw new ConflictError(
-        `A ${input.type} metric needs a positive target to scale against — without one it can never score above zero`,
-      );
-    }
-  }
-}
-
-async function hasEntries(db: Database, metricId: string): Promise<boolean> {
-  const [entry] = await db
-    .select({ id: metricEntries.id })
-    .from(metricEntries)
-    .where(eq(metricEntries.metricId, metricId))
-    .limit(1);
-  return Boolean(entry);
 }
 
 /**
- * Creates a metric at weight 0.
- *
- * Anything higher would dilute every score the instant it is saved, while
- * nobody yet holds an entry for it — the whole leaderboard would drop together
- * for no reason a member could see. The admin raises the weight deliberately,
- * once there is data behind it.
+ * Creates an equally-weighted metric.
+ * The legacy type/weight/target columns are filled with neutral values for
+ * compatibility, but scoring ignores them.
  */
 export async function createMetric(
   db: Database,
@@ -85,10 +59,10 @@ export async function createMetric(
       seasonId,
       key,
       name: input.name.trim(),
-      type: input.type,
+      type: "percentage",
       weight: 0,
-      target: input.target ?? null,
-      required: input.required ?? false,
+      target: null,
+      required: true,
       sortOrder: existing.reduce((max, m) => Math.max(max, m.sortOrder + 1), 0),
       active: true,
     })
@@ -97,15 +71,6 @@ export async function createMetric(
   return row.id;
 }
 
-/**
- * Edits a metric.
- *
- * `type` is immutable once any entry exists: `value` is a bare REAL whose
- * meaning comes entirely from the type — 1/0 for a boolean, a count for an
- * integer, 1-10 for a manual score — so changing it would silently
- * reinterpret every historical record. `target` stays editable because
- * rescaling is a legitimate correction.
- */
 export async function updateMetric(
   db: Database,
   actor: Actor,
@@ -123,19 +88,10 @@ export async function updateMetric(
   if (!metric) throw new NotFoundError("Metric");
   await assertSeasonWritable(db, metric.seasonId);
 
-  if (input.type !== metric.type && (await hasEntries(db, metricId))) {
-    throw new ConflictError(
-      `"${metric.name}" already has recorded values, so its type can no longer change. Create a new metric instead.`,
-    );
-  }
-
   await db
     .update(metrics)
     .set({
       name: input.name.trim(),
-      type: input.type,
-      target: input.target ?? null,
-      required: input.required ?? metric.required,
     })
     .where(eq(metrics.id, metricId));
 }

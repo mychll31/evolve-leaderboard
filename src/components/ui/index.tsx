@@ -227,9 +227,8 @@ export const fmt = {
   /**
    * A member's overall score, always shown as a percentage.
    *
-   * Every metric is normalised and clamped to 0-100 before the formula runs,
-   * so `weighted` and `average` are percentages by construction. `points`
-   * sums them instead and can exceed 100 — it will read as e.g. "230.0%".
+   * Every active metric is clamped to 0-100, then the member's total is the
+   * equal average of those values.
    *
    * NOT for team points, which are a sum of member scores and have no ceiling.
    */

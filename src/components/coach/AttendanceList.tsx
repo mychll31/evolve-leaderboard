@@ -115,7 +115,10 @@ export function AttendanceList({ desk }: { desk: CoachDesk }) {
                 >
                   {row.note}
                   {row.source && row.source !== "self" && (
-                    <span className="text-ink-4"> · by {row.source}</span>
+                    <span className="text-ink-4">
+                      {" "}
+                      · by {row.source === "coach" ? "Leader" : row.source}
+                    </span>
                   )}
                 </div>
               </div>
@@ -183,7 +186,7 @@ export function AttendanceList({ desk }: { desk: CoachDesk }) {
 }
 
 export function DeskCounters({ desk }: { desk: CoachDesk }) {
-  // Check-ins count immediately, so there is no approval queue. What a coach
+  // Check-ins count immediately, so there is no approval queue. What a Leader
   // needs to see is who is still unaccounted for.
   const tiles = [
     {

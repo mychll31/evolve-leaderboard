@@ -19,7 +19,7 @@ export type DevAccount = {
   name: string;
   email: string;
   /** Which of the three roles this account demonstrates. */
-  label: "Super Admin" | "Coach" | "Member";
+  label: "Super Admin" | "Leader" | "Member";
   teamName: string | null;
 };
 
@@ -70,7 +70,7 @@ export async function listDevelopmentAccounts(): Promise<DevAccount[]> {
         row.globalRole === "super_admin"
           ? ("Super Admin" as const)
           : row.seasonRole === "coach"
-            ? ("Coach" as const)
+            ? ("Leader" as const)
             : ("Member" as const),
     }));
 }
@@ -81,7 +81,7 @@ export async function listDevelopmentAccounts(): Promise<DevAccount[]> {
  */
 export async function listDevelopmentRoleSamples(): Promise<DevAccount[]> {
   const accounts = await listDevelopmentAccounts();
-  const order: DevAccount["label"][] = ["Super Admin", "Coach", "Member"];
+  const order: DevAccount["label"][] = ["Super Admin", "Leader", "Member"];
 
   return order
     .map((label) => accounts.find((account) => account.label === label))

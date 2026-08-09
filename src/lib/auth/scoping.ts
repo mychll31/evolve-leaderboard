@@ -80,7 +80,7 @@ export async function assertCanManageMembership(
   membershipId: string,
 ): Promise<void> {
   if (!(await canManageMembership(db, actor, membershipId))) {
-    throw new AuthorizationError("You do not coach this member's team");
+    throw new AuthorizationError("You do not lead this member's team");
   }
 }
 

@@ -128,7 +128,7 @@ describe("describeAwardCategory", () => {
   it("names each slot in plain language", () => {
     expect(describeAwardCategory("overall")).toBe("Most Valuable Player");
     expect(describeAwardCategory("most_improved")).toBe("Most Improved");
-    expect(describeAwardCategory("coach_choice")).toBe("Coach's Choice");
+    expect(describeAwardCategory("coach_choice")).toBe("Leader's Choice");
     expect(
       describeAwardCategory("metric:attendance", { attendance: "Attendance" }),
     ).toBe("Best Attendance");

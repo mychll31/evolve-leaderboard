@@ -1,14 +1,11 @@
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { AttendanceList, DeskCounters } from "@/components/coach/AttendanceList";
 import { CoachChoice } from "@/components/coach/CoachChoice";
 import { Card, DisplayNumber, Eyebrow, fmt } from "@/components/ui";
 import { getDb } from "@/db/client";
-import { getCoachDesk } from "@/db/queries/coach";
 import { getAppContext } from "@/db/queries/context";
 import { teams, weeklyAwards } from "@/db/schema";
-import { coachTeamIds } from "@/lib/auth/scoping";
 
 export default async function CoachPage(props: {
   searchParams: Promise<{ team?: string }>;
@@ -17,7 +14,7 @@ export default async function CoachPage(props: {
   const db = getDb();
   const { team: requestedTeam } = await props.searchParams;
 
-  // Which teams may this user open? Coaches get theirs; a super admin gets all.
+  // Which teams may this user open? Leaders get theirs; a super admin gets all.
   const allowed = ctx.isAdmin
     ? (
         await db
@@ -37,10 +34,19 @@ export default async function CoachPage(props: {
     notFound();
   }
 
-  const desk = await getCoachDesk(db, ctx.standings, activeTeam.id);
-  if (!desk) notFound();
+  const teamMembers = ctx.standings.members.filter(
+    (m) => m.teamId === activeTeam.id,
+  );
+  const bottomPerformers = [...teamMembers]
+    .sort((a, b) => a.score - b.score || a.name.localeCompare(b.name))
+    .slice(0, 3);
+  const teamAverage =
+    teamMembers.length === 0
+      ? 0
+      : teamMembers.reduce((sum, member) => sum + member.score, 0) /
+        teamMembers.length;
 
-  // This week's coach's-choice nomination for this team, if one exists.
+  // This week's Leader's-choice nomination for this team, if one exists.
   const [choiceRow] = await db
     .select({
       membershipId: weeklyAwards.membershipId,
@@ -92,10 +98,76 @@ export default async function CoachPage(props: {
         </div>
       )}
 
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_372px]">
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_372px]">
         <div className="flex min-w-0 flex-col gap-5">
-          <DeskCounters desk={desk} />
-          <AttendanceList desk={desk} />
+          <Card>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <Eyebrow>Leader desk</Eyebrow>
+                <DisplayNumber className="text-ink mt-1 text-[34px]">
+                  {activeTeam.name}
+                </DisplayNumber>
+              </div>
+              <div className="text-right">
+                <DisplayNumber className="text-ink text-[34px]">
+                  {fmt.total(teamAverage)}
+                </DisplayNumber>
+                <Eyebrow className="text-ink-4">Team average</Eyebrow>
+              </div>
+            </div>
+
+            <div className="mt-5 -mx-5 overflow-x-auto sm:-mx-6">
+              <table className="w-full min-w-[560px] border-collapse">
+                <thead>
+                  <tr className="border-line bg-surface-2 text-ink-3 border-y text-[10px] font-extrabold tracking-[0.14em] uppercase">
+                    <th className="px-5 py-3 text-left sm:px-6">Player</th>
+                    <th className="px-2 py-3 text-left">Rank</th>
+                    <th className="px-2 py-3 text-left">Score</th>
+                    <th className="px-5 py-3 text-right sm:px-6">Open</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teamMembers.map((member) => (
+                    <tr
+                      key={member.membershipId}
+                      className="border-line-2 border-b last:border-0"
+                    >
+                      <td className="px-5 py-3 sm:px-6">
+                        <div className="text-ink text-[13.5px] font-bold">
+                          {member.name}
+                        </div>
+                        <div className="text-ink-3 text-[11.5px] font-semibold">
+                          {member.position ?? "Member"}
+                        </div>
+                      </td>
+                      <td className="text-ink-2 px-2 py-3 text-[13px] font-bold">
+                        #{member.rank}
+                      </td>
+                      <td className="px-2 py-3">
+                        <DisplayNumber className="text-ink text-[22px]">
+                          {fmt.total(member.score)}
+                        </DisplayNumber>
+                      </td>
+                      <td className="px-5 py-3 text-right sm:px-6">
+                        <Link
+                          href={`/members/${member.membershipId}`}
+                          className="border-line text-ink-2 hover:bg-surface-2 rounded-[10px] border bg-white px-3 py-2 text-[11.5px] font-extrabold tracking-[0.06em] uppercase"
+                        >
+                          Open
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {teamMembers.length === 0 && (
+              <p className="text-ink-3 mt-4 text-[13px] font-semibold">
+                No members yet.
+              </p>
+            )}
+          </Card>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -111,7 +183,7 @@ export default async function CoachPage(props: {
           <Card>
             <Eyebrow className="text-positive">Top performers</Eyebrow>
             <ul className="mt-3.5 flex flex-col gap-3">
-              {desk.topPerformers.map((p) => (
+              {teamMembers.slice(0, 3).map((p) => (
                 <li key={p.membershipId} className="flex items-center justify-between gap-3">
                   <span className="text-ink-2 truncate text-[13.5px] font-bold">
                     {p.name}
@@ -121,7 +193,7 @@ export default async function CoachPage(props: {
                   </DisplayNumber>
                 </li>
               ))}
-              {desk.topPerformers.length === 0 && (
+              {teamMembers.length === 0 && (
                 <li className="text-ink-3 text-[13px] font-semibold">
                   No members yet.
                 </li>
@@ -132,7 +204,7 @@ export default async function CoachPage(props: {
           <Card>
             <Eyebrow className="text-negative">Needs attention</Eyebrow>
             <ul className="mt-3.5 flex flex-col gap-3">
-              {desk.bottomPerformers.map((p) => (
+              {bottomPerformers.map((p) => (
                 <li key={p.membershipId} className="flex items-center justify-between gap-3">
                   <span className="text-ink-2 truncate text-[13.5px] font-bold">
                     {p.name}
@@ -142,7 +214,7 @@ export default async function CoachPage(props: {
                   </DisplayNumber>
                 </li>
               ))}
-              {desk.bottomPerformers.length === 0 && (
+              {bottomPerformers.length === 0 && (
                 <li className="text-ink-3 text-[13px] font-semibold">
                   No members yet.
                 </li>

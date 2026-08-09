@@ -102,7 +102,7 @@ export function describeAwardCategory(
 ): string {
   if (category === "overall") return "Most Valuable Player";
   if (category === "most_improved") return "Most Improved";
-  if (category === "coach_choice") return "Coach's Choice";
+  if (category === "coach_choice") return "Leader's Choice";
   if (category.startsWith("metric:")) {
     const key = category.slice("metric:".length);
     return `Best ${metricNames[key] ?? key}`;

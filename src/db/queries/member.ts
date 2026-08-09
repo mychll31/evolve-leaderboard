@@ -1,7 +1,6 @@
-import { aliasedTable, and, asc, eq } from "drizzle-orm";
+import { aliasedTable, and, asc, eq, isNull } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import {
-  meetings,
   memberships,
   metricEntries,
   metrics,
@@ -26,21 +25,26 @@ export type SeasonMetricRow = {
   metricId: string;
   key: string;
   name: string;
-  type: "percentage" | "integer" | "decimal" | "boolean" | "manual_score";
-  target: number | null;
-  weight: number;
   entry: EntryAudit | null;
 };
 
-export type AttendanceRow = {
-  meetingId: string;
-  meetsOn: string;
-  startsAt: Date;
-  lateAfterMinutes: number;
-  meetingStatus: "scheduled" | "held" | "cancelled";
-  /** Derived at render time, never stored. */
-  isLate: boolean;
-  entry: EntryAudit | null;
+/**
+ * One metric as the member themselves sees it on /me: what is recorded, who
+ * recorded it, and whether they may still change it.
+ */
+export type SelfLogRow = {
+  metricId: string;
+  key: string;
+  name: string;
+  /** The season-level value scoring reads. Null when nothing is recorded. */
+  value: number | null;
+  /** Done: the member logged it, or a Leader recorded anything above zero. */
+  logged: boolean;
+  source: EntryAudit["source"] | null;
+  recordedAt: Date | null;
+  recordedByName: string | null;
+  /** A Leader or admin owns this value, so the member may not overwrite it. */
+  locked: boolean;
 };
 
 export type MemberDetail = {
@@ -58,17 +62,68 @@ export type MemberDetail = {
   /** Null for coaches, who are not scored. */
   standing: MemberStanding | null;
   seasonMetrics: SeasonMetricRow[];
-  attendance: AttendanceRow[];
 };
 
 /**
- * Everything the per-member detail page shows: current value per metric, the
- * full session-by-session attendance record, and the audit trail behind each —
- * who recorded it, who decided it, and whether it came from a self check-in, a
- * coach, an admin or an import.
+ * The member's own logging surface: every active metric this season, with the
+ * season-level value that scoring actually reads.
  *
- * Those fields have existed on `metric_entries` since Build 1 and have had
- * nowhere to surface until now.
+ * Deliberately narrower than `getMemberDetail` — it looks only at the
+ * `meetingId is null` row, because that is the row a member's own save writes
+ * to. Falling back to a legacy per-session row here would show a value the
+ * member cannot edit and mislabel the metric as locked.
+ */
+export async function getSelfLog(
+  db: Database,
+  seasonId: string,
+  membershipId: string,
+): Promise<SelfLogRow[]> {
+  const recorder = aliasedTable(users, "recorder");
+
+  const [metricRows, entryRows] = await Promise.all([
+    db
+      .select()
+      .from(metrics)
+      .where(and(eq(metrics.seasonId, seasonId), eq(metrics.active, true)))
+      .orderBy(asc(metrics.sortOrder)),
+    db
+      .select({
+        metricId: metricEntries.metricId,
+        value: metricEntries.value,
+        status: metricEntries.status,
+        source: metricEntries.source,
+        recordedAt: metricEntries.recordedAt,
+        recordedByName: recorder.name,
+      })
+      .from(metricEntries)
+      .leftJoin(recorder, eq(recorder.id, metricEntries.recordedBy))
+      .where(
+        and(
+          eq(metricEntries.membershipId, membershipId),
+          isNull(metricEntries.meetingId),
+        ),
+      ),
+  ]);
+
+  return metricRows.map((metric) => {
+    const entry = entryRows.find((e) => e.metricId === metric.id) ?? null;
+    return {
+      metricId: metric.id,
+      key: metric.key,
+      name: metric.name,
+      value: entry?.value ?? null,
+      logged: (entry?.value ?? 0) > 0,
+      source: entry?.source ?? null,
+      recordedAt: entry?.recordedAt ?? null,
+      recordedByName: entry?.recordedByName ?? null,
+      locked: Boolean(entry && entry.source !== "self"),
+    };
+  });
+}
+
+/**
+ * Everything the per-member detail page shows: current value per active metric
+ * and the audit trail behind each one.
  */
 export async function getMemberDetail(
   db: Database,
@@ -100,7 +155,7 @@ export async function getMemberDetail(
 
   if (!membership || membership.seasonId !== standings.season.id) return null;
 
-  const [metricRows, meetingRows, entryRows] = await Promise.all([
+  const [metricRows, entryRows] = await Promise.all([
     db
       .select()
       .from(metrics)
@@ -111,11 +166,6 @@ export async function getMemberDetail(
         ),
       )
       .orderBy(asc(metrics.sortOrder)),
-    db
-      .select()
-      .from(meetings)
-      .where(eq(meetings.seasonId, membership.seasonId))
-      .orderBy(asc(meetings.meetsOn)),
     db
       .select({
         id: metricEntries.id,
@@ -148,48 +198,18 @@ export async function getMemberDetail(
     note: row.note,
   });
 
-  const attendanceMetric = metricRows.find((m) => m.key === "attendance");
-
-  const seasonMetrics: SeasonMetricRow[] = metricRows
-    .filter((m) => m.key !== "attendance")
-    .map((metric) => {
-      const entry = entryRows.find(
-        (e) => e.metricId === metric.id && e.meetingId === null,
-      );
-      return {
-        metricId: metric.id,
-        key: metric.key,
-        name: metric.name,
-        type: metric.type,
-        target: metric.target,
-        weight: metric.weight,
-        entry: entry ? toAudit(entry) : null,
-      };
-    });
-
-  const attendance: AttendanceRow[] = attendanceMetric
-    ? meetingRows.map((meeting) => {
-        const entry = entryRows.find(
-          (e) =>
-            e.metricId === attendanceMetric.id && e.meetingId === meeting.id,
-        );
-        const isLate = Boolean(
-          entry &&
-            entry.value > 0 &&
-            entry.recordedAt.getTime() >
-              meeting.startsAt.getTime() + meeting.lateAfterMinutes * 60_000,
-        );
-        return {
-          meetingId: meeting.id,
-          meetsOn: meeting.meetsOn,
-          startsAt: meeting.startsAt,
-          lateAfterMinutes: meeting.lateAfterMinutes,
-          meetingStatus: meeting.status,
-          isLate,
-          entry: entry ? toAudit(entry) : null,
-        };
-      })
-    : [];
+  const seasonMetrics: SeasonMetricRow[] = metricRows.map((metric) => {
+    const metricEntriesForMember = entryRows.filter((e) => e.metricId === metric.id);
+    const seasonLevel =
+      metricEntriesForMember.find((e) => e.meetingId === null) ??
+      metricEntriesForMember.at(-1);
+    return {
+      metricId: metric.id,
+      key: metric.key,
+      name: metric.name,
+      entry: seasonLevel ? toAudit(seasonLevel) : null,
+    };
+  });
 
   const name = membership.name ?? membership.email ?? "Unknown";
 
@@ -208,6 +228,5 @@ export async function getMemberDetail(
     standing:
       standings.members.find((m) => m.membershipId === membershipId) ?? null,
     seasonMetrics,
-    attendance: attendance.reverse(),
   };
 }

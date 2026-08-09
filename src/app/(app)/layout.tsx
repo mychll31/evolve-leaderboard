@@ -21,7 +21,7 @@ export default async function AppLayout({
   const roleLabel = ctx.isAdmin
     ? "Super Admin"
     : ctx.coachedTeams.length > 0
-      ? "Coach"
+      ? "Leader"
       : "Member";
 
   return (
@@ -39,10 +39,13 @@ export default async function AppLayout({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar
-          week={ctx.standings.weekNo}
           isCoach={ctx.isCoach}
           isAdmin={ctx.isAdmin}
           unreadCount={unreadCount}
+          userName={name}
+          initials={name.slice(0, 2).toUpperCase()}
+          subLabel={own?.teamName ?? ctx.coachedTeams[0]?.name ?? roleLabel}
+          signOut={<SignOutButton variant="panel" />}
         />
         <main className="flex-1 px-4 pt-5 pb-28 sm:px-8 sm:pt-7 lg:pb-11">
           {children}

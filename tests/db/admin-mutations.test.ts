@@ -233,8 +233,6 @@ describe("admin mutations", () => {
       });
       await createMetric(t.db, admin, draftId, {
         name: "Practice",
-        type: "integer",
-        target: 10,
       });
 
       await deleteSeason(t.db, admin, draftId);
@@ -312,8 +310,6 @@ describe("admin mutations", () => {
       });
       const metricId = await createMetric(t.db, admin, draftId, {
         name: "Practice",
-        type: "integer",
-        target: 10,
       });
       await setEntryValue(t.db, admin, {
         membershipId,
@@ -777,25 +773,22 @@ describe("admin mutations", () => {
   /* ---------------------------------------------------------------- metrics */
 
   describe("metrics", () => {
-    it("creates a metric at weight zero so it cannot dilute existing scores", async () => {
+    it("creates a metric that immediately participates in equal scoring", async () => {
       const season = await getActiveSeason(t.db);
       const before = await getStandings(t.db, season!, TODAY);
       const beforeTop = before.members[0].score;
 
       await createMetric(t.db, admin, seasonId, {
         name: "Leadership",
-        type: "manual_score",
       });
 
       const after = await getStandings(t.db, season!, TODAY);
-      expect(after.members[0].score).toBeCloseTo(beforeTop, 6);
+      expect(after.members[0].score).toBeLessThan(beforeTop);
     });
 
     it("derives a unique key and disambiguates collisions", async () => {
       await createMetric(t.db, admin, seasonId, {
         name: "Quiz",
-        type: "integer",
-        target: 5,
       });
       const rows = await t.db
         .select()
@@ -806,41 +799,30 @@ describe("admin mutations", () => {
       expect(keys).toContain("quiz-2");
     });
 
-    it("refuses an integer metric with no target to scale against", async () => {
-      await expect(
-        createMetric(t.db, admin, seasonId, {
-          name: "Sales",
-          type: "integer",
-          target: 0,
-        }),
-      ).rejects.toThrow(/positive target/);
-    });
-
-    it("refuses to change a metric's type once values exist", async () => {
+    it("updates the metric name without changing compatibility fields", async () => {
       const [assignment] = await t.db
         .select()
         .from(metrics)
         .where(eq(metrics.key, "assignment"));
-      await expect(
-        updateMetric(t.db, admin, assignment.id, {
-          name: "Assignment",
-          type: "manual_score",
-        }),
-      ).rejects.toThrow(/type can no longer change/);
+      await updateMetric(t.db, admin, assignment.id, {
+        name: "Homework",
+      });
+      const [row] = await t.db.select().from(metrics).where(eq(metrics.id, assignment.id));
+      expect(row.name).toBe("Homework");
+      expect(row.type).toBe(assignment.type);
     });
 
-    it("allows a type change while a metric is still empty", async () => {
+    it("uses neutral compatibility fields for new metrics", async () => {
       const id = await createMetric(t.db, admin, seasonId, {
         name: "Leadership",
-        type: "manual_score",
-      });
-      await updateMetric(t.db, admin, id, {
-        name: "Leadership",
-        type: "integer",
-        target: 4,
       });
       const [row] = await t.db.select().from(metrics).where(eq(metrics.id, id));
-      expect(row.type).toBe("integer");
+      expect(row).toMatchObject({
+        type: "percentage",
+        weight: 0,
+        target: null,
+        required: true,
+      });
     });
 
     it("keeps entries when a metric is soft-deleted, but drops it from scoring", async () => {
@@ -979,18 +961,17 @@ describe("admin mutations", () => {
       ).rejects.toThrow(AuthorizationError);
     });
 
-    it("rejects a value outside a manual score's range", async () => {
+    it("rejects a value above 100", async () => {
       const id = await createMetric(t.db, admin, seasonId, {
         name: "Leadership",
-        type: "manual_score",
       });
       await expect(
         setEntryValue(t.db, admin, {
           membershipId,
           metricId: id,
-          value: 11,
+          value: 101,
         }),
-      ).rejects.toThrow(/0 to 10/);
+      ).rejects.toThrow(/greater than 100/);
     });
 
     it("rejects a negative value", async () => {

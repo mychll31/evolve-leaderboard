@@ -125,7 +125,7 @@ export async function nominateCoachChoiceAction(
 
     const weekNo = weekNoFor(season.startsOn, new Date());
 
-    // Coach's choice is one nomination per team per week, which is what the
+    // Leader's choice is one nomination per team per week, which is what the
     // composite unique key on (season, week, category, team) encodes.
     await db
       .insert(weeklyAwards)

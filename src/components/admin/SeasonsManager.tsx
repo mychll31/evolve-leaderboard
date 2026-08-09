@@ -44,7 +44,7 @@ export function SeasonsManager({ seasons }: { seasons: SeasonSummary[] }) {
     const input = { ...draft, name: draft.name.trim() };
     if (cloneFrom) {
       act(() => cloneSeasonAction(cloneFrom, input), {
-        successMessage: "Season cloned. Teams, metrics and coaches carried over.",
+        successMessage: "Season cloned. Teams, metrics and Leaders carried over.",
         onDone: () => {
           setDraft(EMPTY);
           setCloneFrom(null);
@@ -73,7 +73,7 @@ export function SeasonsManager({ seasons }: { seasons: SeasonSummary[] }) {
       : "NEW SEASON";
 
   return (
-    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="flex flex-col gap-4">
         {seasons.map((season) => {
           const canRemove =
@@ -240,7 +240,7 @@ export function SeasonsManager({ seasons }: { seasons: SeasonSummary[] }) {
         <SectionTitle>{title}</SectionTitle>
         {cloneFrom && (
           <p className="text-ink-3 mt-2 text-[12px] font-semibold">
-            Teams, metrics and coach assignments carry over. Members, scores and
+            Teams, metrics and Leader assignments carry over. Members, scores and
             badges do not — rosters change between seasons.
           </p>
         )}

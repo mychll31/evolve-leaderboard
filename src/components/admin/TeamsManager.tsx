@@ -30,8 +30,8 @@ export function TeamsManager({
   const [editing, setEditing] = useState<string | null>(null);
 
   return (
-    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {teams.map((team) => (
           <Card key={team.id}>
             <div className="flex items-center gap-3">
@@ -52,7 +52,7 @@ export function TeamsManager({
             </div>
 
             <div className="mt-4">
-              <Field label="Coach">
+              <Field label="Leader">
                 <select
                   className={inputClass}
                   value={team.coachUserId ?? ""}
@@ -61,11 +61,11 @@ export function TeamsManager({
                     const value = e.target.value;
                     if (!value) {
                       act(() => removeCoachAction(team.id), {
-                        successMessage: `Coach removed from ${team.name}`,
+                        successMessage: `Leader removed from ${team.name}`,
                       });
                     } else {
                       act(() => assignCoachAction(team.id, value), {
-                        successMessage: `Coach assigned to ${team.name}`,
+                        successMessage: `Leader assigned to ${team.name}`,
                       });
                     }
                   }}

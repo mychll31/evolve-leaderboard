@@ -6,13 +6,12 @@ import clsx from "clsx";
 
 const TABS = [
   { href: "/admin", label: "Metrics" },
-  { href: "/admin/seasons", label: "Seasons" },
-  { href: "/admin/calendar", label: "Calendar" },
   { href: "/admin/teams", label: "Teams" },
   { href: "/admin/people", label: "People" },
   { href: "/admin/analytics", label: "Analytics" },
   { href: "/admin/badges", label: "Badges" },
   { href: "/admin/import", label: "Import" },
+  { href: "/report", label: "Report" },
 ];
 
 export function AdminNav() {

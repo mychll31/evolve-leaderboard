@@ -62,15 +62,20 @@ describe("seed", () => {
     expect(rows.filter((r) => r.role === "coach")).toHaveLength(10);
   });
 
-  it("creates the three weighted metrics summing to 100", async () => {
+  it("creates the three equal percentage metrics", async () => {
     const rows = await t.db.select().from(metrics);
     expect(rows).toHaveLength(3);
-    expect(rows.reduce((s, m) => s + m.weight, 0)).toBe(100);
-    expect(rows.map((m) => m.type)).toEqual(["boolean", "boolean", "boolean"]);
+    expect(rows.every((m) => m.weight === 0)).toBe(true);
+    expect(rows.map((m) => m.type)).toEqual([
+      "percentage",
+      "percentage",
+      "percentage",
+    ]);
     expect(rows.every((m) => m.target === null)).toBe(true);
+    expect(rows.every((m) => m.required)).toBe(true);
   });
 
-  it("records attendance for every member at every held meeting, bar the demo gap", async () => {
+  it("records season-level attendance plus legacy meeting history", async () => {
     const [attendance] = await t.db
       .select()
       .from(metrics)
@@ -84,12 +89,15 @@ describe("seed", () => {
           eq(metricEntries.status, "approved"),
         ),
       );
-    // One Founder is deliberately left unrecorded at the latest session, so
-    // the Coach Desk always opens with something to act on.
-    expect(approved).toHaveLength(14 * result.heldMeetings - 1);
+    expect(approved.filter((entry) => entry.meetingId === null)).toHaveLength(14);
+    // One Founder is deliberately left unrecorded at the latest session in the
+    // legacy meeting history.
+    expect(approved.filter((entry) => entry.meetingId !== null)).toHaveLength(
+      14 * result.heldMeetings - 1,
+    );
   });
 
-  it("leaves the latest session unrecorded for one member, so the Coach Desk has work", async () => {
+  it("leaves the latest session unrecorded for one member in legacy history", async () => {
     // Check-ins count immediately, so nothing is ever left pending.
     const pending = await t.db
       .select()

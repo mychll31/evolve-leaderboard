@@ -7,18 +7,6 @@
  * with literals and never needs a database.
  */
 
-export const METRIC_TYPES = [
-  "percentage",
-  "integer",
-  "decimal",
-  "boolean",
-  "manual_score",
-] as const;
-export type MetricType = (typeof METRIC_TYPES)[number];
-
-export const FORMULAS = ["weighted", "points", "average"] as const;
-export type Formula = (typeof FORMULAS)[number];
-
 export const ENTRY_STATUSES = ["pending", "approved", "rejected"] as const;
 export type EntryStatus = (typeof ENTRY_STATUSES)[number];
 
@@ -28,24 +16,18 @@ export type EntrySource = (typeof ENTRY_SOURCES)[number];
 export const MEETING_STATUSES = ["scheduled", "held", "cancelled"] as const;
 export type MeetingStatus = (typeof MEETING_STATUSES)[number];
 
+/** Legacy season formula value kept for existing season rows. */
+export type Formula = "weighted" | "points" | "average";
+
 export type Metric = {
   id: string;
   key: string;
   name: string;
-  type: MetricType;
-  /** Relative weight in `weighted` mode. Ignored by `points` and `average`. */
-  weight: number;
-  /**
-   * Scale used to normalise `integer` and `decimal` metrics to 0-100.
-   * Required for those two types, ignored for the rest. A null or zero
-   * target normalises to 0 rather than dividing by zero.
-   */
-  target: number | null;
 };
 
 export type Entry = {
   metricId: string;
-  /** Set for metrics recorded per session (attendance); null otherwise. */
+  /** Legacy calendar rows set this; new score entries are season-level. */
   meetingId: string | null;
   value: number;
   status: EntryStatus;
@@ -60,9 +42,9 @@ export type Meeting = {
 
 export type ScoreBreakdownPart = {
   metric: Metric;
-  /** Raw aggregate before normalisation, for display. */
+  /** Raw aggregate before clamping, for display. */
   raw: number;
-  /** Normalised 0-100 value that actually feeds the formula. */
+  /** Clamped 0-100 value that feeds the total average. */
   value: number;
 };
 

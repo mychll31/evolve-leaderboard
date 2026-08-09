@@ -9,13 +9,13 @@ const ROLE_META: Record<
     emoji: "🛠",
     blurb: "Everything, plus the admin console",
   },
-  Coach: {
+  Leader: {
     emoji: "📋",
     blurb: "Their own team's desk and score entry",
   },
   Member: {
     emoji: "🏀",
-    blurb: "Read-only, plus their own check-in",
+    blurb: "Read-only access to their own card",
   },
 };
 

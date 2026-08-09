@@ -28,8 +28,17 @@ export default async function MemberPage(props: {
   const canEdit = await canManageMembership(db, ctx.user, id);
   const isOwn = ctx.membershipId === id;
 
-  // Members may read their own page; everyone else needs write scope to see it.
-  if (!canEdit && !isOwn) notFound();
+  // Teammates may read each other. The team page already names them and shows
+  // what each has done, so refusing the page behind that link was a dead end
+  // rather than a protection — and the leaderboard publishes every score to
+  // everyone anyway. Anyone further out still needs write scope.
+  const ownTeamId = ctx.membershipId
+    ? ctx.standings.members.find((m) => m.membershipId === ctx.membershipId)
+        ?.teamId
+    : null;
+  const isTeammate = ownTeamId !== null && ownTeamId === member.teamId;
+
+  if (!canEdit && !isOwn && !isTeammate) notFound();
 
   return (
     <div className="flex flex-col gap-5">
@@ -91,7 +100,7 @@ export default async function MemberPage(props: {
         </div>
       </div>
 
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0">
           <MemberEditor member={member} canEdit={canEdit} />
         </div>
@@ -105,8 +114,7 @@ export default async function MemberPage(props: {
                   <div key={part.key}>
                     <div className="flex items-baseline justify-between text-[12.5px] font-bold">
                       <span className="text-ink-2">
-                        {part.name}{" "}
-                        <span className="text-ink-4">· {part.weight}%</span>
+                        {part.name}
                       </span>
                       <span className="text-ink">{fmt.pct(part.value)}</span>
                     </div>
@@ -125,7 +133,7 @@ export default async function MemberPage(props: {
             <Card>
               <Eyebrow>Not scored</Eyebrow>
               <p className="text-ink-2 mt-2 text-[13px] font-semibold">
-                Coaches do not appear in the standings.
+                Leaders do not appear in the standings.
               </p>
             </Card>
           )}
@@ -144,7 +152,7 @@ export default async function MemberPage(props: {
                   href={`/coach?team=${member.teamId}`}
                   className="border-line text-ink-2 hover:bg-surface-2 rounded-xl border px-4 py-2.5 text-[13px] font-bold"
                 >
-                  {member.teamName} coach desk
+                  {member.teamName} Leader desk
                 </Link>
               )}
               {ctx.isAdmin && (
