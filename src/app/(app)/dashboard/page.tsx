@@ -38,17 +38,9 @@ export default async function DashboardPage() {
         />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="text-[11px] font-extrabold tracking-[0.24em] text-white/85 uppercase">
-              Leaderboard · {standings.season.startsOn} —{" "}
-              {standings.season.endsOn}
-            </div>
-            <DisplayNumber className="mt-2 text-[44px] text-white sm:text-[64px]">
+            <DisplayNumber className="text-[44px] text-white sm:text-[64px]">
               Evolve - Leaderboard
             </DisplayNumber>
-            <p className="mt-2.5 text-[13.5px] font-semibold text-white/90">
-              {standings.daysLeft} days left · {standings.memberCount} members
-              across {standings.teamCount} teams
-            </p>
           </div>
           <div className="grid grid-cols-3 gap-2.5">
             {ownStanding ? (

@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { buildNav, titleFor } from "@/components/shell/nav";
 
 describe("shell navigation", () => {
+  it("labels the dashboard plainly", () => {
+    expect(titleFor("/dashboard", false, false)).toBe("Dashboard");
+  });
+
   it("keeps analytics out of the shared member and coach nav", () => {
     expect(buildNav({ isAdmin: false, isCoach: false }).map((i) => i.href)).not.toContain(
       "/analytics",

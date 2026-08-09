@@ -106,7 +106,7 @@ export function buildNav({
   isAdmin: boolean;
 }): (NavItem & { name: NavName })[] {
   const items: (NavItem & { name: NavName })[] = [
-    { href: "/dashboard", label: "Dashboard", short: "Home", title: "Season Dashboard", name: "home", icon: null, phone: true },
+    { href: "/dashboard", label: "Dashboard", short: "Home", title: "Dashboard", name: "home", icon: null, phone: true },
     { href: "/leaderboard", label: "Leaderboard", short: "Ranks", title: "Player Leaderboard", name: "ranks", icon: null, phone: true },
     { href: "/teams", label: "Teams", short: "Teams", title: "Team Standings", name: "teams", icon: null, phone: true },
   ];
