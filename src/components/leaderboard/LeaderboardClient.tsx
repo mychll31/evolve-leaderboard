@@ -193,6 +193,7 @@ export function LeaderboardClient({
   }, [members, teamIds]);
 
   const maxScore = Math.max(1, ...members.map((m) => m.score));
+  const rankedRows = rows.filter((member) => member.score > 0);
 
   const chosenTeams = teams.filter((t) => teamIds.includes(t.id));
   const scopeLabel =
@@ -202,7 +203,7 @@ export function LeaderboardClient({
 
   return (
     <div className="flex flex-col gap-5">
-      {rows.length > 0 && <TopPerformers members={rows} />}
+      {rankedRows.length > 0 && <TopPerformers members={rankedRows} />}
 
       {/* Team filter — the only control on the board. A dropdown rather than
           chips: ten teams wrapped onto four rows and pushed the standings
@@ -257,9 +258,12 @@ export function LeaderboardClient({
                   />
                   <DisplayNumber
                     className="w-16 shrink-0 text-center text-[30px]"
-                    style={{ color: rankColor(p.rank) }}
+                    style={{
+                      color:
+                        p.score > 0 ? rankColor(p.rank) : "var(--color-ink-4)",
+                    }}
                   >
-                    {p.rank}
+                    {p.score > 0 ? p.rank : "-"}
                   </DisplayNumber>
                   <Delta value={p.delta} className="w-8 shrink-0" />
                   <Avatar
@@ -318,9 +322,12 @@ export function LeaderboardClient({
                 />
                 <DisplayNumber
                   className="w-7 shrink-0 text-center text-[22px]"
-                  style={{ color: rankColor(p.rank) }}
+                  style={{
+                    color:
+                      p.score > 0 ? rankColor(p.rank) : "var(--color-ink-4)",
+                  }}
                 >
-                  {p.rank}
+                  {p.score > 0 ? p.rank : "-"}
                 </DisplayNumber>
                 <div className="min-w-0 flex-1">
                   <div className="text-ink truncate text-[14.5px] font-extrabold">

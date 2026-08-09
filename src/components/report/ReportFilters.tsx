@@ -212,6 +212,7 @@ export function ReportFilters({
   selectedMetricIds,
   search,
   status,
+  sort,
   showTeamFilter,
 }: {
   teams: ReportFilterOption[];
@@ -220,6 +221,8 @@ export function ReportFilters({
   selectedMetricIds: string[];
   search: string;
   status: ReportStatus;
+  /** Carried through so changing a filter does not silently reset the sort. */
+  sort?: string;
   showTeamFilter: boolean;
 }) {
   const router = useRouter();
@@ -268,12 +271,13 @@ export function ReportFilters({
       nextTeamIds.forEach((id) => params.append("team", id));
       nextMetricIds.forEach((id) => params.append("metric", id));
       if (nextStatus !== "all") params.set("status", nextStatus);
+      if (sort) params.set("sort", sort);
 
       committedSearch.current = nextSearch;
       const qs = params.toString();
       router.replace(qs ? `/report?${qs}` : "/report", { scroll: false });
     },
-    [metricIds, router, searchText, statusValue, teamIds],
+    [metricIds, router, searchText, sort, statusValue, teamIds],
   );
 
   useEffect(() => {

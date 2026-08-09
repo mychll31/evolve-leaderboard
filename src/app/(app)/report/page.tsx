@@ -5,7 +5,10 @@ import {
   type ReportFilterOption,
   type ReportStatus,
 } from "@/components/report/ReportFilters";
-import { ReportSheet } from "@/components/report/ReportSheet";
+import {
+  ReportSheet,
+  type ReportSort,
+} from "@/components/report/ReportSheet";
 import { Card, DisplayNumber, Eyebrow, StatTile, fmt } from "@/components/ui";
 import { getDb } from "@/db/client";
 import { getAppContext } from "@/db/queries/context";
@@ -21,6 +24,7 @@ type ReportSearchParams = {
   team?: string | string[];
   metric?: string | string[];
   status?: string | string[];
+  sort?: string | string[];
 };
 
 function paramValues(value: string | string[] | undefined): string[] {
@@ -181,6 +185,25 @@ export default async function ReportPage(props: {
     statusParam === "logged" || statusParam === "not-logged"
       ? statusParam
       : "all";
+  const sortParam = paramString(searchParams.sort);
+  const sort: ReportSort =
+    sortParam === "name" || sortParam === "name-desc" ? sortParam : "team";
+  // Clicking Name walks A-Z, then Z-A, then back to grouping by team, and
+  // carries every other filter along so a sorted view stays a shareable link.
+  const nextSort: ReportSort =
+    sort === "name" ? "name-desc" : sort === "name-desc" ? "team" : "name";
+  const sortHref = (() => {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    selectedTeamIds.forEach((id) => params.append("team", id));
+    selectedMetricIds.forEach((id) => params.append("metric", id));
+    if (statusParam === "logged" || statusParam === "not-logged") {
+      params.set("status", statusParam);
+    }
+    if (nextSort !== "team") params.set("sort", nextSort);
+    const qs = params.toString();
+    return qs ? `/report?${qs}` : "/report";
+  })();
   const scopedTeamIds = ctx.isAdmin
     ? selectedTeamIds.length > 0
       ? selectedTeamIds
@@ -266,6 +289,7 @@ export default async function ReportPage(props: {
         selectedMetricIds={selectedMetricIds}
         search={search}
         status={status}
+        sort={sort === "team" ? undefined : sort}
         showTeamFilter={ctx.isAdmin}
       />
 
@@ -283,7 +307,7 @@ export default async function ReportPage(props: {
           </p>
         </Card>
       ) : (
-        <ReportSheet report={report} />
+        <ReportSheet report={report} sort={sort} nameSortHref={sortHref} />
       )}
     </div>
   );

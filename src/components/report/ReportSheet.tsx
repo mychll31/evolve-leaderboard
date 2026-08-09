@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { SeasonReport } from "@/db/queries/teams";
 
+/** Default groups by team; the Name header switches to a plain A-Z. */
+export type ReportSort = "team" | "name" | "name-desc";
+
 /**
  * The report as a spreadsheet: one row per person, one column per metric.
  *
@@ -38,11 +41,23 @@ const frozen = (left: number, width: number, z: number, background: string) => (
   minWidth: width,
 });
 
-export function ReportSheet({ report }: { report: SeasonReport }) {
-  const rows = [...report.members].sort(
-    (a, b) =>
-      a.teamName.localeCompare(b.teamName) || a.name.localeCompare(b.name),
-  );
+export function ReportSheet({
+  report,
+  sort = "team",
+  nameSortHref,
+}: {
+  report: SeasonReport;
+  sort?: ReportSort;
+  /** Where the Name header points, which is whatever sort comes next. */
+  nameSortHref?: string;
+}) {
+  const rows = [...report.members].sort((a, b) => {
+    if (sort === "name") return a.name.localeCompare(b.name);
+    if (sort === "name-desc") return b.name.localeCompare(a.name);
+    return (
+      a.teamName.localeCompare(b.teamName) || a.name.localeCompare(b.name)
+    );
+  });
 
   return (
     <div className="border-line bg-card overflow-auto rounded-[14px] border">
@@ -59,7 +74,27 @@ export function ReportSheet({ report }: { report: SeasonReport }) {
                 top: 0,
               }}
             >
-              Name
+              {nameSortHref ? (
+                <Link
+                  href={nameSortHref}
+                  scroll={false}
+                  className="hover:text-primary flex items-center gap-1.5"
+                  aria-label={
+                    sort === "name"
+                      ? "Sorted by name A to Z. Sort Z to A"
+                      : sort === "name-desc"
+                        ? "Sorted by name Z to A. Group by team"
+                        : "Grouped by team. Sort by name A to Z"
+                  }
+                >
+                  Name
+                  <span aria-hidden className="text-ink-3 text-[10px]">
+                    {sort === "name" ? "▲" : sort === "name-desc" ? "▼" : "↕"}
+                  </span>
+                </Link>
+              ) : (
+                "Name"
+              )}
             </th>
             <th
               scope="col"
