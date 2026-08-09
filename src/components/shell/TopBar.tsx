@@ -8,7 +8,6 @@ import { Avatar } from "@/components/ui";
 import { NavIcon, titleFor } from "./nav";
 
 export function TopBar({
-  week,
   isCoach,
   isAdmin,
   unreadCount,
@@ -17,7 +16,6 @@ export function TopBar({
   subLabel,
   signOut,
 }: {
-  week: number;
   isCoach: boolean;
   isAdmin: boolean;
   unreadCount: number;
@@ -30,7 +28,6 @@ export function TopBar({
 }) {
   const pathname = usePathname();
   const title = titleFor(pathname, isAdmin, isCoach);
-  const showLabels = pathname !== "/dashboard";
 
   return (
     <header className="border-line flex h-[62px] shrink-0 items-center gap-3 border-b bg-white px-4 sm:h-[74px] sm:gap-5 sm:px-8">
@@ -42,21 +39,9 @@ export function TopBar({
         priority
         className="h-5 w-auto shrink-0 lg:hidden"
       />
-      {showLabels ? (
-        <h1 className="font-display text-ink min-w-0 flex-1 truncate text-[20px] font-extrabold tracking-[0.02em] sm:text-[26px]">
-          {title}
-        </h1>
-      ) : (
-        <>
-          <h1 className="sr-only">{title}</h1>
-          <div className="flex-1" />
-        </>
-      )}
-      {showLabels && (
-        <div className="bg-primary-tint text-primary-dark shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] sm:text-[11px]">
-          WEEK {week}
-        </div>
-      )}
+      <h1 className="font-display text-ink min-w-0 flex-1 truncate text-[20px] font-extrabold tracking-[0.02em] sm:text-[26px]">
+        {title}
+      </h1>
 
       <Link
         href="/notifications"

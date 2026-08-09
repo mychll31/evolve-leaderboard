@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import clsx from "clsx";
 import {
   Avatar,
   Card,
@@ -19,6 +20,157 @@ type MetricColumn = { key: string; name: string };
 /** Row pitch for the standings rows, in px. */
 const ROW_H = 76;
 
+/**
+ * Multi-team filter.
+ *
+ * A native `<select multiple>` means ctrl-clicking on a desktop and a scroll
+ * box that cannot be styled, so this is a plain popover of checkboxes: the
+ * behaviour a Select2-style control gives, without adding jQuery to a React
+ * app. An empty selection means every team, so the board opens complete.
+ */
+function TeamFilter({
+  teams,
+  selected,
+  onChange,
+}: {
+  teams: TeamChip[];
+  selected: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapper = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!wrapper.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  const chosen = teams.filter((t) => selected.includes(t.id));
+  const label =
+    chosen.length === 0
+      ? "All teams"
+      : chosen.length === 1
+        ? chosen[0].name
+        : `${chosen[0].name} +${chosen.length - 1}`;
+
+  const toggle = (id: string) =>
+    onChange(
+      selected.includes(id)
+        ? selected.filter((s) => s !== id)
+        : [...selected, id],
+    );
+
+  return (
+    <div ref={wrapper} className="relative min-w-0 flex-1 sm:max-w-[320px]">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        className="border-line bg-card text-ink hover:border-primary focus-visible:ring-primary/30 flex w-full cursor-pointer items-center gap-2 rounded-xl border px-3.5 py-2.5 text-left text-[13px] font-bold transition-colors focus-visible:ring-2 focus-visible:outline-none"
+      >
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        {chosen.length > 0 && (
+          <span className="bg-primary-tint text-primary-dark shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-extrabold">
+            {chosen.length}
+          </span>
+        )}
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--color-ink-3)"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+          className="shrink-0"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          role="dialog"
+          aria-label="Filter by team"
+          className="border-line absolute top-[calc(100%+8px)] left-0 z-40 max-h-[320px] w-full overflow-y-auto rounded-[16px] border bg-white p-2 shadow-[0_18px_40px_-20px_rgba(15,23,32,.45)]"
+        >
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className={clsx(
+              "hover:bg-surface-2 w-full cursor-pointer rounded-[10px] px-3 py-2 text-left text-[13px] font-bold transition-colors",
+              chosen.length === 0 ? "text-primary-dark" : "text-ink-2",
+            )}
+          >
+            All teams
+          </button>
+
+          <div className="border-line-2 mt-1 border-t pt-1">
+            {teams.map((team) => {
+              const active = selected.includes(team.id);
+              return (
+                <label
+                  key={team.id}
+                  className="hover:bg-surface-2 flex cursor-pointer items-center gap-2.5 rounded-[10px] px-3 py-2 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    className="peer sr-only"
+                    checked={active}
+                    onChange={() => toggle(team.id)}
+                  />
+                  <span
+                    aria-hidden
+                    className="peer-focus-visible:ring-primary/40 grid size-[18px] shrink-0 place-items-center rounded-[5px] border-2 peer-focus-visible:ring-2"
+                    style={{
+                      borderColor: active ? team.color : "var(--color-line)",
+                      background: active ? team.color : "#FFFFFF",
+                    }}
+                  >
+                    {active && (
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#FFFFFF"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M5 12.5l4.5 4.5L19 7.5" />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="text-ink min-w-0 flex-1 truncate text-[13px] font-bold">
+                    {team.name}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function LeaderboardClient({
   members,
   teams,
@@ -28,59 +180,51 @@ export function LeaderboardClient({
   teams: TeamChip[];
   metrics: MetricColumn[];
 }) {
-  const [teamId, setTeamId] = useState<string | null>(null);
+  // Empty means every team, so the board opens showing the whole season.
+  const [teamIds, setTeamIds] = useState<string[]>([]);
 
   const rows = useMemo(() => {
-    const filtered = teamId
-      ? members.filter((m) => m.teamId === teamId)
-      : members;
+    const filtered =
+      teamIds.length > 0
+        ? members.filter((m) => teamIds.includes(m.teamId))
+        : members;
     return [...filtered].sort((a, b) => a.rank - b.rank);
-  }, [members, teamId]);
+  }, [members, teamIds]);
 
   const maxScore = Math.max(1, ...members.map((m) => m.score));
 
-  const activeTeam = teams.find((t) => t.id === teamId) ?? null;
+  const chosenTeams = teams.filter((t) => teamIds.includes(t.id));
+  const scopeLabel =
+    chosenTeams.length === 0
+      ? "all teams"
+      : chosenTeams.map((t) => t.name).join(", ");
 
   return (
     <div>
-      {/* Team filter — the only control on the board. */}
+      {/* Team filter — the only control on the board. A dropdown rather than
+          chips: ten teams wrapped onto four rows and pushed the standings
+          themselves below the fold. */}
       <Card>
-        <div className="flex flex-wrap gap-2">
-          {[{ id: null, name: "All teams", color: "#12B5CB" }, ...teams].map(
-            (chip) => {
-              const active = teamId === chip.id;
-              return (
-                <button
-                  key={chip.id ?? "all"}
-                  onClick={() => setTeamId(chip.id)}
-                  aria-pressed={active}
-                  className="cursor-pointer rounded-full border px-3.5 py-2 text-[12px] font-bold whitespace-nowrap transition-colors"
-                  style={{
-                    background: active ? chip.color : "#FFFFFF",
-                    color: active ? "#FFFFFF" : "var(--color-ink-2)",
-                    borderColor: active ? chip.color : "var(--color-line)",
-                  }}
-                >
-                  {chip.name}
-                </button>
-              );
-            },
-          )}
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-ink-3 text-[10px] font-extrabold tracking-[0.14em] uppercase">
+            Teams
+          </span>
+          <TeamFilter teams={teams} selected={teamIds} onChange={setTeamIds} />
         </div>
       </Card>
 
       {/* States what you are actually looking at, which chips alone do not. */}
       {rows.length > 0 && (
         <p className="text-ink-3 mt-4 text-[12px] font-bold tracking-[0.04em]">
-          {rows.length} player{rows.length === 1 ? "" : "s"}
-          {activeTeam ? ` · ${activeTeam.name}` : " · all teams"}
+          {rows.length} player{rows.length === 1 ? "" : "s"} · {scopeLabel}
         </p>
       )}
 
       {rows.length === 0 && (
         <Card className="mt-5 text-center">
           <p className="text-ink-2 text-[14px] font-semibold">
-            No players on this team yet.
+            No players on{" "}
+            {chosenTeams.length === 1 ? "this team" : "these teams"} yet.
           </p>
         </Card>
       )}

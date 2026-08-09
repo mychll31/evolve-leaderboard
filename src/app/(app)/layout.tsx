@@ -39,7 +39,6 @@ export default async function AppLayout({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar
-          week={ctx.standings.weekNo}
           isCoach={ctx.isCoach}
           isAdmin={ctx.isAdmin}
           unreadCount={unreadCount}
