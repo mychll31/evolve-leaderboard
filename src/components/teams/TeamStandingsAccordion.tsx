@@ -14,85 +14,87 @@ import type { TeamStanding } from "@/db/queries/teams";
 export function TeamStandingsAccordion({
   teams,
   leaderPoints,
+  detailTeamIds,
+  defaultOpenTeamId = null,
 }: {
   teams: TeamStanding[];
   leaderPoints: number;
+  detailTeamIds: string[];
+  defaultOpenTeamId?: string | null;
 }) {
-  const [openTeamId, setOpenTeamId] = useState<string | null>(null);
+  const [openTeamId, setOpenTeamId] = useState<string | null>(defaultOpenTeamId);
+  const detailTeamIdSet = new Set(detailTeamIds);
+  const singleTeam = teams.length === 1;
 
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <div
+      className={
+        singleTeam
+          ? "grid grid-cols-1 gap-4"
+          : "grid grid-cols-1 items-start gap-4 xl:grid-cols-2"
+      }
+    >
       {teams.map((team) => {
         const behind = leaderPoints - team.points;
         const share = leaderPoints > 0 ? (team.points / leaderPoints) * 100 : 0;
         const isLeader = team.rank === 1;
-        const open = openTeamId === team.teamId;
+        const canViewDetails = detailTeamIdSet.has(team.teamId);
+        const open = canViewDetails && openTeamId === team.teamId;
         const panelId = `team-metrics-${team.teamId}`;
-
-        return (
-          <Card
-            key={team.teamId}
-            className={
-              isLeader
-                ? "border-accent-line min-w-0 overflow-hidden !bg-accent-tint"
-                : "min-w-0 overflow-hidden"
-            }
-          >
-            <button
-              type="button"
-              aria-expanded={open}
-              aria-controls={panelId}
-              onClick={() => setOpenTeamId(open ? null : team.teamId)}
-              className="w-full cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
-            >
-              <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 sm:flex sm:gap-3.5">
-                <DisplayNumber
-                  className="w-8 shrink-0 text-[28px]"
-                  style={{ color: rankColor(team.rank) }}
-                >
-                  {team.rank}
-                </DisplayNumber>
-                <div
-                  className="font-display flex size-12 shrink-0 items-center justify-center rounded-[14px] text-[19px] font-extrabold text-white"
-                  style={{ background: team.color }}
-                >
-                  {team.abbr}
+        const summary = (
+          <>
+            {/* Flex rather than a grid of arbitrary tracks: this row has to
+                hold rank, crest, name and score on one line from a phone to a
+                desktop, and only the name should ever give up space. */}
+            <div className="flex min-w-0 items-center gap-3 sm:gap-3.5">
+              <DisplayNumber
+                className="w-7 shrink-0 text-[26px] sm:w-8 sm:text-[28px]"
+                style={{ color: rankColor(team.rank) }}
+              >
+                {team.rank}
+              </DisplayNumber>
+              <div
+                className="font-display flex size-11 shrink-0 items-center justify-center rounded-[14px] text-[17px] font-extrabold text-white sm:size-12 sm:text-[19px]"
+                style={{ background: team.color }}
+              >
+                {team.abbr}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-display text-ink truncate text-[22px] leading-tight font-bold tracking-[0.03em] sm:text-[27px]">
+                  {team.name}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-display text-ink truncate text-[24px] leading-tight font-bold tracking-[0.03em] sm:text-[27px]">
-                    {team.name}
-                  </div>
-                  <div className="text-ink-3 truncate text-[11.5px] font-semibold">
-                    {team.coachName ? `Leader ${team.coachName} · ` : ""}
-                    {team.memberCount} member
-                    {team.memberCount === 1 ? "" : "s"}
-                  </div>
-                </div>
-                <div className="col-span-3 justify-self-end text-right sm:col-span-1 sm:shrink-0">
-                  <DisplayNumber className="text-ink text-[30px] sm:text-[32px]">
-                    {fmt.score(team.points)}%
-                  </DisplayNumber>
-                  <Eyebrow className="text-ink-4">Score</Eyebrow>
+                <div className="text-ink-3 truncate text-[11.5px] font-semibold">
+                  {team.coachName ? `Leader ${team.coachName} · ` : ""}
+                  {team.memberCount} member
+                  {team.memberCount === 1 ? "" : "s"}
                 </div>
               </div>
+              <div className="shrink-0 text-right">
+                <DisplayNumber className="text-ink text-[26px] sm:text-[32px]">
+                  {fmt.score(team.points)}%
+                </DisplayNumber>
+                <Eyebrow className="text-ink-4">Score</Eyebrow>
+              </div>
+            </div>
 
-              <div className="mt-4 flex items-center gap-3">
-                <div className="bg-line-2 h-1.5 flex-1 overflow-hidden rounded-full">
-                  <div
-                    className="h-full rounded-full transition-[width] duration-500"
-                    style={{
-                      width: `${Math.max(2, share)}%`,
-                      background: team.color,
-                    }}
-                  />
-                </div>
-                <span
-                  className={`shrink-0 text-[11px] font-extrabold tracking-[0.06em] uppercase ${
-                    isLeader ? "text-accent" : "text-ink-3"
-                  }`}
-                >
-                  {isLeader ? "Leader" : `-${fmt.score(behind)}% behind`}
-                </span>
+            <div className="mt-4 flex items-center gap-3">
+              <div className="bg-line-2 h-1.5 flex-1 overflow-hidden rounded-full">
+                <div
+                  className="h-full rounded-full transition-[width] duration-500"
+                  style={{
+                    width: `${Math.max(2, share)}%`,
+                    background: team.color,
+                  }}
+                />
+              </div>
+              <span
+                className={`shrink-0 text-[11px] font-extrabold tracking-[0.06em] uppercase ${
+                  isLeader ? "text-accent" : "text-ink-3"
+                }`}
+              >
+                {isLeader ? "Leader" : `-${fmt.score(behind)}% behind`}
+              </span>
+              {canViewDetails && (
                 <span
                   aria-hidden
                   className={`text-ink-3 grid size-7 shrink-0 place-items-center rounded-lg border border-line bg-white transition-transform ${
@@ -112,8 +114,36 @@ export function TeamStandingsAccordion({
                     <path d="m6 9 6 6 6-6" />
                   </svg>
                 </span>
-              </div>
-            </button>
+              )}
+            </div>
+          </>
+        );
+
+        return (
+          <Card
+            key={team.teamId}
+            className={[
+              isLeader
+                ? "border-accent-line min-w-0 overflow-hidden !bg-accent-tint"
+                : "min-w-0 overflow-hidden",
+              open && !singleTeam ? "xl:col-span-2" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            {canViewDetails ? (
+              <button
+                type="button"
+                aria-expanded={open}
+                aria-controls={panelId}
+                onClick={() => setOpenTeamId(open ? null : team.teamId)}
+                className="w-full cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
+              >
+                {summary}
+              </button>
+            ) : (
+              <div>{summary}</div>
+            )}
 
             {open && (
               <div id={panelId}>
@@ -123,7 +153,13 @@ export function TeamStandingsAccordion({
                   </p>
                 ) : (
                   <>
-                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div
+                      className={
+                        singleTeam || open
+                          ? "mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5"
+                          : "mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3"
+                      }
+                    >
                       {team.metricAverages.map((metric) => (
                         <div
                           key={metric.key}
