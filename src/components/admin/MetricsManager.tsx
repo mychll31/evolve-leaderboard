@@ -48,7 +48,7 @@ export function MetricsManager({
   };
 
   return (
-    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
       <Card className="min-w-0">
         <SectionTitle>METRICS</SectionTitle>
         <p className="text-ink-3 mt-2 text-[12px] font-semibold">

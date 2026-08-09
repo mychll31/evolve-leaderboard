@@ -28,7 +28,7 @@ export async function AnalyticsPanel({ standings }: { standings: Standings }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="py-4">
           <Eyebrow>Weeks tracked</Eyebrow>
           <DisplayNumber className="text-ink mt-0.5 text-[34px]">
@@ -135,7 +135,7 @@ export async function AnalyticsPanel({ standings }: { standings: Standings }) {
         )}
       </Card>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card>
           <SectionTitle>BIGGEST MOVERS</SectionTitle>
           <p className="text-ink-3 mt-2 text-[12px] font-semibold">

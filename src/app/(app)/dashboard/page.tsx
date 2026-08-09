@@ -1,15 +1,4 @@
-import Link from "next/link";
-import {
-  Avatar,
-  Card,
-  Delta,
-  DisplayNumber,
-  Eyebrow,
-  SectionTitle,
-  StatTile,
-  fmt,
-  rankColor,
-} from "@/components/ui";
+import { DisplayNumber, StatTile, fmt } from "@/components/ui";
 import { MetricLogger } from "@/components/me/MetricLogger";
 import { getDb } from "@/db/client";
 import { getAppContext } from "@/db/queries/context";
@@ -24,19 +13,10 @@ export default async function DashboardPage() {
   const selfLog = ctx.membershipId
     ? await getSelfLog(getDb(), standings.season.id, ctx.membershipId)
     : [];
-
-  const avg = (key: string) =>
-    standings.members.length === 0
-      ? 0
-      : standings.members.reduce(
-          (s, m) => s + (m.breakdown.find((b) => b.key === key)?.value ?? 0),
-          0,
-        ) / standings.members.length;
-
-  // The attendance trend and session heatmap used to sit here too. They are
-  // on /admin/analytics, which charts them from stored weekly snapshots rather
-  // than recomputing — so this was a duplicate that could disagree with itself.
-  const topFive = standings.members.slice(0, 5);
+  const ownStanding = ctx.membershipId
+    ? standings.members.find((m) => m.membershipId === ctx.membershipId)
+    : undefined;
+  const loggedCount = selfLog.filter((row) => row.logged).length;
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
@@ -71,9 +51,43 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="grid grid-cols-3 gap-2.5">
-            <StatTile tone="onColor" label="Avg att" value={fmt.pct(avg("attendance"))} />
-            <StatTile tone="onColor" label="Avg asn" value={fmt.pct(avg("assignment"))} />
-            <StatTile tone="onColor" label="Active" value={standings.memberCount} />
+            {ownStanding ? (
+              <>
+                <StatTile
+                  tone="onColor"
+                  label="Score"
+                  value={fmt.total(ownStanding.score)}
+                />
+                <StatTile
+                  tone="onColor"
+                  label="Logged"
+                  value={`${loggedCount}/${selfLog.length}`}
+                />
+                <StatTile
+                  tone="onColor"
+                  label="Rank"
+                  value={`#${ownStanding.rank}`}
+                />
+              </>
+            ) : (
+              <>
+                <StatTile
+                  tone="onColor"
+                  label="Top score"
+                  value={fmt.total(standings.members[0]?.score ?? 0)}
+                />
+                <StatTile
+                  tone="onColor"
+                  label="Players"
+                  value={standings.memberCount}
+                />
+                <StatTile
+                  tone="onColor"
+                  label="Teams"
+                  value={standings.teamCount}
+                />
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -81,65 +95,6 @@ export default async function DashboardPage() {
       {ctx.membershipId && selfLog.length > 0 && (
         <MetricLogger membershipId={ctx.membershipId} rows={selfLog} />
       )}
-
-      {/* Top five */}
-      <Card>
-        <div className="flex items-center justify-between gap-3">
-          <SectionTitle>TOP 5 PLAYERS</SectionTitle>
-          <Link
-            href="/leaderboard"
-            className="text-accent shrink-0 text-[11.5px] font-extrabold tracking-[0.08em]"
-          >
-            FULL LEADERBOARD ›
-          </Link>
-        </div>
-        <ul className="mt-3.5">
-          {topFive.map((p) => (
-            <li
-              key={p.membershipId}
-              className="border-line-2 flex items-center gap-3 border-b py-3 last:border-0 sm:gap-4"
-            >
-              <DisplayNumber
-                className="w-6 shrink-0 text-[22px]"
-                style={{ color: rankColor(p.rank) }}
-              >
-                {p.rank}
-              </DisplayNumber>
-              <Avatar initials={p.initials} color={p.teamColor} size={38} />
-              <div className="min-w-0 flex-1">
-                <div className="text-ink truncate text-[14.5px] font-extrabold">
-                  {p.name}
-                </div>
-                <div className="text-ink-3 truncate text-[11.5px] font-semibold">
-                  {p.teamName}
-                  {p.position ? ` · ${p.position}` : ""}
-                </div>
-              </div>
-              <Delta value={p.delta} className="w-8 shrink-0 text-right" />
-              <div className="hidden w-[70px] text-right sm:block">
-                <Eyebrow className="text-ink-4">Att</Eyebrow>
-                <div className="text-ink-2 text-[14px] font-bold">
-                  {fmt.pct(
-                    p.breakdown.find((b) => b.key === "attendance")?.value ?? 0,
-                  )}
-                </div>
-              </div>
-              <div className="hidden w-[70px] text-right sm:block">
-                <Eyebrow className="text-ink-4">Streak</Eyebrow>
-                <div className="text-accent text-[14px] font-extrabold">
-                  🔥{p.streak}
-                </div>
-              </div>
-              <div className="w-[62px] shrink-0 text-right sm:w-[72px]">
-                <Eyebrow className="text-ink-4">Pts</Eyebrow>
-                <DisplayNumber className="text-ink text-[24px] sm:text-[26px]">
-                  {fmt.total(p.score)}
-                </DisplayNumber>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </Card>
     </div>
   );
 }

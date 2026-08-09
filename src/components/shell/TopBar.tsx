@@ -39,16 +39,14 @@ export function TopBar({
         width={1686}
         height={406}
         priority
-        className="h-5 w-auto lg:hidden"
+        className="h-5 w-auto shrink-0 lg:hidden"
       />
-      <h1 className="font-display text-ink truncate text-[20px] font-extrabold tracking-[0.02em] sm:text-[26px]">
+      <h1 className="font-display text-ink min-w-0 flex-1 truncate text-[20px] font-extrabold tracking-[0.02em] sm:text-[26px]">
         {title}
       </h1>
       <div className="bg-primary-tint text-primary-dark shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] sm:text-[11px]">
         WEEK {week}
       </div>
-
-      <div className="flex-1" />
 
       <Link
         href="/notifications"

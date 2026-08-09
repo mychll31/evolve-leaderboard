@@ -86,62 +86,6 @@ function MetricIcon({
   );
 }
 
-/**
- * The one control on the row. A real checkbox rather than a styled button, so
- * it keeps native keyboard and screen-reader behaviour for free.
- */
-function LogCheckbox({
-  label,
-  checked,
-  disabled,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  disabled: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <label
-      className={clsx(
-        "shrink-0",
-        disabled ? "cursor-default" : "cursor-pointer",
-      )}
-    >
-      <input
-        type="checkbox"
-        className="peer sr-only"
-        checked={checked}
-        disabled={disabled}
-        aria-label={label}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span
-        className={clsx(
-          "peer-focus-visible:ring-primary/40 grid size-9 place-items-center rounded-[10px] border-2 transition-colors peer-focus-visible:ring-2",
-          checked
-            ? "border-positive bg-positive"
-            : "border-line bg-white hover:border-primary",
-          disabled && "opacity-45",
-        )}
-      >
-        {checked && (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            stroke="#FFFFFF"
-            {...stroke}
-            aria-hidden
-          >
-            <path d="M5 12.5l4.5 4.5L19 7.5" />
-          </svg>
-        )}
-      </span>
-    </label>
-  );
-}
-
 function MetricCard({
   row,
   pending,
@@ -151,11 +95,23 @@ function MetricCard({
   pending: boolean;
   onToggle: (logged: boolean) => void;
 }) {
-  const value = row.value ?? 0;
   const blurb = blurbs[row.key] ?? `Log your ${row.name.toLowerCase()}`;
+  const disabled = pending || row.locked;
 
   return (
-    <div className="border-line bg-card flex flex-wrap items-center gap-4 rounded-[18px] border px-5 py-4">
+    <button
+      type="button"
+      aria-pressed={row.logged}
+      disabled={disabled}
+      onClick={() => onToggle(!row.logged)}
+      className={clsx(
+        "border-line bg-card flex w-full items-center gap-4 rounded-[18px] border px-5 py-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
+        disabled
+          ? "cursor-default opacity-70"
+          : "cursor-pointer hover:border-primary hover:bg-primary-tint",
+        row.logged && "border-positive-line bg-positive-tint",
+      )}
+    >
       <MetricIcon metricKey={row.key} logged={row.logged} />
 
       <div className="min-w-0 flex-1">
@@ -166,36 +122,7 @@ function MetricCard({
           {blurb}
         </div>
       </div>
-
-      <div className="text-right">
-        <div
-          className={clsx(
-            "text-[13px] font-extrabold tracking-[0.06em] uppercase",
-            row.locked
-              ? "text-ink-3"
-              : row.logged
-                ? "text-positive"
-                : "text-ink-4",
-          )}
-        >
-          {row.locked ? "Leader set" : row.logged ? "Done" : "Not yet"}
-        </div>
-        <div className="text-ink-3 mt-1 text-[11.5px] font-semibold">
-          {row.locked
-            ? `Set by ${row.recordedByName ?? "your Leader"} · ${Math.round(value)}%`
-            : row.logged
-              ? "Counts in full"
-              : "Worth 0 so far"}
-        </div>
-      </div>
-
-      <LogCheckbox
-        label={`${row.name} done`}
-        checked={row.logged}
-        disabled={pending || row.locked}
-        onChange={onToggle}
-      />
-    </div>
+    </button>
   );
 }
 
@@ -222,7 +149,7 @@ export function MetricLogger({
         )}
       </div>
       <p className="text-ink-3 mt-1.5 text-[12.5px] font-semibold">
-        Tap each one as you do it. Every metric counts equally, so all{" "}
+        Click or tap a metric card as you do it. Every metric counts equally, so all{" "}
         {rows.length || "of them"} logged is 100%.
       </p>
 

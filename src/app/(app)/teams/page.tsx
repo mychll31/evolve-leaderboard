@@ -20,12 +20,12 @@ export default async function TeamsPage() {
   const contested = teams.filter((t) => t.memberCount > 0);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex min-w-0 flex-col gap-5">
       {/* Champion banner, matching the leaderboard's leader strip so the two
           standings pages read as a pair. */}
       {champion && (
         <div
-          className="relative overflow-hidden rounded-[22px] p-6 sm:p-7"
+          className="relative min-w-0 overflow-hidden rounded-[22px] p-5 sm:p-7"
           style={{
             background: `linear-gradient(112deg, ${champion.color} 0%, #0F1720 118%)`,
           }}
@@ -38,19 +38,19 @@ export default async function TeamsPage() {
                 "radial-gradient(420px 220px at 88% 0%, rgba(255,255,255,.28), transparent 70%)",
             }}
           />
-          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="relative flex min-w-0 flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
               <div className="text-[10.5px] font-extrabold tracking-[0.22em] text-white/80 uppercase">
                 Top of the table · week {standings.weekNo}
               </div>
-              <div className="mt-3 flex items-center gap-4">
+              <div className="mt-3 flex min-w-0 items-center gap-3.5 sm:gap-4">
                 <div className="font-display flex size-[62px] shrink-0 items-center justify-center rounded-[18px] bg-white/95 text-[22px] font-extrabold sm:size-[70px] sm:text-[25px]"
                   style={{ color: champion.color }}
                 >
                   {champion.abbr}
                 </div>
                 <div className="min-w-0">
-                  <DisplayNumber className="truncate text-[40px] text-white sm:text-[52px]">
+                  <DisplayNumber className="truncate text-[36px] text-white sm:text-[52px]">
                     {champion.name}
                   </DisplayNumber>
                   <div className="mt-1 truncate text-[11.5px] font-extrabold tracking-[0.1em] text-white/75 uppercase">
@@ -66,7 +66,7 @@ export default async function TeamsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:grid-cols-3">
               <StatTile tone="onColor" label="Points" value={fmt.points(champion.points)} />
               <StatTile tone="onColor" label="Weeks won" value={champion.wins} />
               {/* Kept numeric: a name in a tile sized for big figures reads
@@ -75,6 +75,7 @@ export default async function TeamsPage() {
                 tone="onColor"
                 label={`Avg ${champion.metricAverages[0]?.name ?? "score"}`}
                 value={fmt.pct(champion.metricAverages[0]?.value ?? 0)}
+                className="col-span-2 sm:col-span-1"
               />
             </div>
           </div>
@@ -86,7 +87,7 @@ export default async function TeamsPage() {
         {standings.memberCount} members · ranked by total member score
       </p>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {teams.map((team) => {
           const behind = leaderPoints - team.points;
           const share = leaderPoints > 0 ? (team.points / leaderPoints) * 100 : 0;
@@ -98,7 +99,9 @@ export default async function TeamsPage() {
               className={
                 // The leader gets a warm border so the top of the table is
                 // findable without reading every rank number.
-                isLeader ? "border-accent-line !bg-accent-tint" : undefined
+                isLeader
+                  ? "border-accent-line min-w-0 overflow-hidden !bg-accent-tint"
+                  : "min-w-0 overflow-hidden"
               }
             >
               <div className="flex items-center gap-3.5">

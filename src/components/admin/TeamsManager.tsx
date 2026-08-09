@@ -30,8 +30,8 @@ export function TeamsManager({
   const [editing, setEditing] = useState<string | null>(null);
 
   return (
-    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {teams.map((team) => (
           <Card key={team.id}>
             <div className="flex items-center gap-3">
