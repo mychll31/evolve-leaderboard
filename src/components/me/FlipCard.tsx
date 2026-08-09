@@ -3,9 +3,13 @@
 import { useState } from "react";
 import { DisplayNumber, fmt } from "@/components/ui";
 import type { MemberStanding } from "@/db/queries/standings";
-import type { BadgeView } from "@/db/queries/badges";
 
-export type LogRow = { label: string; value: string; tone?: "accent" };
+export type LogRow = {
+  label: string;
+  value: string;
+  tone?: "accent";
+  kind?: "number" | "text";
+};
 
 /**
  * The player card from the phone design: tap to flip between stats and the
@@ -15,14 +19,16 @@ export type LogRow = { label: string; value: string; tone?: "accent" };
 export function FlipCard({
   member,
   log,
-  badges,
+  affirmation,
 }: {
   member: MemberStanding;
   log: LogRow[];
-  badges: BadgeView[];
+  affirmation: string;
 }) {
   const [flipped, setFlipped] = useState(false);
-  const owned = badges.filter((b) => b.owned);
+  const loggedCount = member.breakdown.filter((part) => part.value > 0).length;
+  const totalMetrics = member.breakdown.length;
+  const rankLabel = member.score > 0 ? `#${member.rank}` : "-";
 
   return (
     <div className="[perspective:1400px]">
@@ -31,7 +37,7 @@ export function FlipCard({
         onClick={() => setFlipped((f) => !f)}
         aria-pressed={flipped}
         aria-label={flipped ? "Show player stats" : "Show season log"}
-        className="relative block h-[400px] w-full cursor-pointer text-left [transform-style:preserve-3d] transition-transform duration-700 sm:h-[500px]"
+        className="relative block h-[430px] w-full cursor-pointer text-left [transform-style:preserve-3d] transition-transform duration-700 sm:h-[500px]"
         style={{
           transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
           transitionTimingFunction: "cubic-bezier(.3,.8,.3,1)",
@@ -58,7 +64,7 @@ export function FlipCard({
               PLAYER CARD
             </span>
             <span className="text-[10px] font-extrabold tracking-[0.14em] text-[#FFE2CC]">
-              RANK #{member.rank}
+              RANK {rankLabel}
             </span>
           </div>
           <div className="font-display relative mt-4 flex size-24 items-center justify-center rounded-[26px] bg-white/95 text-[40px] font-extrabold text-[#0B7F92]">
@@ -71,28 +77,22 @@ export function FlipCard({
             {member.teamName}
             {member.position ? ` · ${member.position}` : ""}
           </div>
-          <div className="relative mt-5 grid grid-cols-4 gap-2">
+          <div className="relative mt-5 grid grid-cols-3 gap-2">
             <CardStat label="Score" value={fmt.total(member.score)} />
-            {member.breakdown.slice(0, 2).map((b) => (
-              <CardStat
-                key={b.key}
-                label={b.name.slice(0, 3)}
-                value={Math.round(b.value).toString()}
-              />
-            ))}
-            <CardStat label="Streak" value={member.streak.toString()} accent />
+            <CardStat label="Logged" value={`${loggedCount}/${totalMetrics}`} />
+            <CardStat label="Rank" value={rankLabel} accent />
           </div>
         </div>
 
         {/* Back */}
         <div
-          className="border-line bg-card absolute inset-0 flex flex-col overflow-hidden rounded-[26px] border p-6 [backface-visibility:hidden] [transform:rotateY(180deg)]"
+          className="border-line bg-card absolute inset-0 flex flex-col overflow-hidden rounded-[26px] border p-5 [backface-visibility:hidden] [transform:rotateY(180deg)] sm:p-6"
           style={{ boxShadow: "0 12px 30px -20px rgba(15,23,32,.4)" }}
         >
           <div className="text-ink-3 text-[10px] font-extrabold tracking-[0.2em] uppercase">
             Season log
           </div>
-          <div className="mt-3.5 flex flex-col gap-2.5">
+          <div className="mt-3 flex flex-col gap-2">
             {log.map((row) => (
               <div
                 key={row.label}
@@ -101,34 +101,28 @@ export function FlipCard({
                 <span className="text-ink-2 text-[12.5px] font-bold">
                   {row.label}
                 </span>
-                <DisplayNumber
-                  className={`text-[20px] ${row.tone === "accent" ? "text-accent" : "text-ink"}`}
-                >
-                  {row.value}
-                </DisplayNumber>
+                {row.kind === "text" ? (
+                  <span className="text-ink min-w-0 max-w-[160px] truncate text-right text-[12.5px] font-extrabold">
+                    {row.value}
+                  </span>
+                ) : (
+                  <DisplayNumber
+                    className={`text-[19px] ${row.tone === "accent" ? "text-accent" : "text-ink"}`}
+                  >
+                    {row.value}
+                  </DisplayNumber>
+                )}
               </div>
             ))}
           </div>
-          <div className="text-ink-3 mt-4 text-[10px] font-extrabold tracking-[0.2em] uppercase">
-            Badges
-          </div>
-          <div className="mt-2.5 flex flex-wrap gap-2">
-            {owned.length === 0 && (
-              <span className="text-ink-3 text-[12px] font-semibold">
-                None earned yet.
-              </span>
-            )}
-            {owned.map((b) => (
-              <span
-                key={b.id}
-                className="border-line bg-surface-2 flex items-center gap-1.5 rounded-full border px-3 py-1.5"
-              >
-                <span className="text-[14px]">{b.icon}</span>
-                <span className="text-ink-2 text-[11px] font-extrabold">
-                  {b.name}
-                </span>
-              </span>
-            ))}
+
+          <div className="border-primary/20 bg-primary-tint/55 mt-4 rounded-[16px] border p-3">
+            <div className="text-primary-dark text-[9.5px] font-extrabold tracking-[0.18em] uppercase">
+              Daily affirmation
+            </div>
+            <p className="text-ink-2 mt-1.5 text-[12px] leading-snug font-bold">
+              {affirmation}
+            </p>
           </div>
         </div>
       </button>
