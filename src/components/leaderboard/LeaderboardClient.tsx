@@ -13,6 +13,7 @@ import {
   rankColor,
 } from "@/components/ui";
 import type { MemberStanding } from "@/db/queries/standings";
+import { TopPerformers } from "./TopPerformers";
 
 type TeamChip = { id: string; name: string; color: string };
 type MetricColumn = { key: string; name: string };
@@ -200,7 +201,9 @@ export function LeaderboardClient({
       : chosenTeams.map((t) => t.name).join(", ");
 
   return (
-    <div>
+    <div className="flex flex-col gap-5">
+      {rows.length > 0 && <TopPerformers members={rows} />}
+
       {/* Team filter — the only control on the board. A dropdown rather than
           chips: ten teams wrapped onto four rows and pushed the standings
           themselves below the fold. */}
@@ -215,13 +218,13 @@ export function LeaderboardClient({
 
       {/* States what you are actually looking at, which chips alone do not. */}
       {rows.length > 0 && (
-        <p className="text-ink-3 mt-4 text-[12px] font-bold tracking-[0.04em]">
+        <p className="text-ink-3 -mt-1 text-[12px] font-bold tracking-[0.04em]">
           {rows.length} player{rows.length === 1 ? "" : "s"} · {scopeLabel}
         </p>
       )}
 
       {rows.length === 0 && (
-        <Card className="mt-5 text-center">
+        <Card className="text-center">
           <p className="text-ink-2 text-[14px] font-semibold">
             No players on{" "}
             {chosenTeams.length === 1 ? "this team" : "these teams"} yet.
@@ -234,7 +237,7 @@ export function LeaderboardClient({
       {rows.length > 0 && (
         <>
           <div
-            className="relative mt-5 hidden lg:block"
+            className="relative hidden lg:block"
             style={{ height: rows.length * ROW_H }}
           >
             {rows.map((p, i) => (
@@ -307,7 +310,7 @@ export function LeaderboardClient({
           </div>
 
           {/* Phone: same data, compact rows, no absolute positioning. */}
-          <ul className="mt-5 flex flex-col gap-2 lg:hidden">
+          <ul className="flex flex-col gap-2 lg:hidden">
             {rows.map((p) => (
               <li
                 key={p.membershipId}

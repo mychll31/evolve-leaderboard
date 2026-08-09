@@ -1,9 +1,4 @@
-import {
-  Card,
-  DisplayNumber,
-  StatTile,
-  fmt,
-} from "@/components/ui";
+import { Card, DisplayNumber, StatTile, fmt } from "@/components/ui";
 import { TeamStandingsAccordion } from "@/components/teams/TeamStandingsAccordion";
 import { getDb } from "@/db/client";
 import { getAppContext } from "@/db/queries/context";
@@ -15,8 +10,10 @@ export default async function TeamsPage() {
 
   const champion = teams[0];
   const leaderPoints = champion?.points ?? 0;
-  const championAverage =
-    champion && champion.memberCount > 0 ? champion.points / champion.memberCount : 0;
+  const championAverage = champion && champion.memberCount > 0
+    ? champion.points / champion.memberCount
+    : 0;
+  const championTotalScore = champion?.points ?? 0;
   const contested = teams.filter((t) => t.memberCount > 0);
 
   return (
@@ -44,7 +41,8 @@ export default async function TeamsPage() {
                 Top of the table
               </div>
               <div className="mt-3 flex min-w-0 items-center gap-3.5 sm:gap-4">
-                <div className="font-display flex size-[62px] shrink-0 items-center justify-center rounded-[18px] bg-white/95 text-[22px] font-extrabold sm:size-[70px] sm:text-[25px]"
+                <div
+                  className="font-display flex size-[62px] shrink-0 items-center justify-center rounded-[18px] bg-white/95 text-[22px] font-extrabold sm:size-[70px] sm:text-[25px]"
                   style={{ color: champion.color }}
                 >
                   {champion.abbr}
@@ -53,29 +51,32 @@ export default async function TeamsPage() {
                   <DisplayNumber className="truncate text-[36px] text-white sm:text-[52px]">
                     {champion.name}
                   </DisplayNumber>
-                  <div className="mt-1 truncate text-[11.5px] font-extrabold tracking-[0.1em] text-white/75 uppercase">
-                    {champion.coachName
-                      ? `Leader ${champion.coachName}`
-                      : "No leader assigned"}
-                    {" · "}
-                    {champion.memberCount} member
-                    {champion.memberCount === 1 ? "" : "s"}
-                    {champion.topPlayer ? ` · Top ${champion.topPlayer.name}` : ""}
+                  <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-[11.5px] font-extrabold tracking-[0.1em] text-white/75 uppercase">
+                    <span>
+                      {champion.coachName
+                        ? `Leader ${champion.coachName}`
+                        : "No leader assigned"}
+                    </span>
+                    <span>
+                      {champion.memberCount} member
+                      {champion.memberCount === 1 ? "" : "s"}
+                    </span>
+                    <span>Total score {fmt.score(championTotalScore)}%</span>
+                    <span>Avg score {fmt.total(championAverage)}</span>
                   </div>
                 </div>
               </div>
             </div>
-
-            <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:grid-cols-3">
-              <StatTile tone="onColor" label="Points" value={fmt.points(champion.points)} />
-              <StatTile tone="onColor" label="Weeks won" value={champion.wins} />
-              {/* Kept numeric: a name in a tile sized for big figures reads
-                  as a broken number. The top player moves to the line above. */}
+            <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:min-w-[320px]">
+              <StatTile
+                tone="onColor"
+                label="Total score"
+                value={`${fmt.score(championTotalScore)}%`}
+              />
               <StatTile
                 tone="onColor"
                 label="Avg score"
                 value={fmt.total(championAverage)}
-                className="col-span-2 sm:col-span-1"
               />
             </div>
           </div>
@@ -84,7 +85,7 @@ export default async function TeamsPage() {
 
       <p className="text-ink-3 text-[12px] font-bold tracking-[0.04em]">
         {teams.length} team{teams.length === 1 ? "" : "s"} ·{" "}
-        {standings.memberCount} members · ranked by total member score
+        {standings.memberCount} members · ranked by total team score
       </p>
 
       <TeamStandingsAccordion teams={teams} leaderPoints={leaderPoints} />

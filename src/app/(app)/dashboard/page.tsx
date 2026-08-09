@@ -47,17 +47,17 @@ export default async function DashboardPage() {
               <>
                 <StatTile
                   tone="onColor"
-                  label="Score"
+                  label="Your Score"
                   value={fmt.total(ownStanding.score)}
                 />
                 <StatTile
                   tone="onColor"
-                  label="Logged"
+                  label="Your Logged"
                   value={`${loggedCount}/${selfLog.length}`}
                 />
                 <StatTile
                   tone="onColor"
-                  label="Rank"
+                  label="Your Rank &nbsp;&nbsp;&nbsp;&nbsp;"
                   value={`#${ownStanding.rank}`}
                 />
               </>

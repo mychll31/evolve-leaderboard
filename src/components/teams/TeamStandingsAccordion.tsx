@@ -45,7 +45,7 @@ export function TeamStandingsAccordion({
               onClick={() => setOpenTeamId(open ? null : team.teamId)}
               className="w-full cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
             >
-              <div className="flex items-center gap-3.5">
+              <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 sm:flex sm:gap-3.5">
                 <DisplayNumber
                   className="w-8 shrink-0 text-[28px]"
                   style={{ color: rankColor(team.rank) }}
@@ -65,14 +65,14 @@ export function TeamStandingsAccordion({
                   <div className="text-ink-3 truncate text-[11.5px] font-semibold">
                     {team.coachName ? `Leader ${team.coachName} · ` : ""}
                     {team.memberCount} member
-                    {team.memberCount === 1 ? "" : "s"} · {team.wins}W
+                    {team.memberCount === 1 ? "" : "s"}
                   </div>
                 </div>
-                <div className="shrink-0 text-right">
-                  <DisplayNumber className="text-ink text-[32px]">
-                    {fmt.points(team.points)}
+                <div className="col-span-3 justify-self-end text-right sm:col-span-1 sm:shrink-0">
+                  <DisplayNumber className="text-ink text-[30px] sm:text-[32px]">
+                    {fmt.score(team.points)}%
                   </DisplayNumber>
-                  <Eyebrow className="text-ink-4">Points</Eyebrow>
+                  <Eyebrow className="text-ink-4">Score</Eyebrow>
                 </div>
               </div>
 
@@ -91,7 +91,7 @@ export function TeamStandingsAccordion({
                     isLeader ? "text-accent" : "text-ink-3"
                   }`}
                 >
-                  {isLeader ? "Leader" : `-${fmt.points(behind)} behind`}
+                  {isLeader ? "Leader" : `-${fmt.score(behind)}% behind`}
                 </span>
                 <span
                   aria-hidden
