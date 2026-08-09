@@ -52,7 +52,7 @@ export default async function TeamsPage() {
           <div className="relative flex min-w-0 flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
               <div className="text-[10.5px] font-extrabold tracking-[0.22em] text-white/80 uppercase">
-                {ctx.isAdmin ? "Top of the table" : "Your team"}
+                {ctx.isAdmin ? "Leading team" : "Your team"}
               </div>
               <div className="mt-3 flex min-w-0 items-center gap-3.5 sm:gap-4">
                 <div
@@ -88,12 +88,12 @@ export default async function TeamsPage() {
             <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:min-w-[320px]">
               <StatTile
                 tone="onColor"
-                label="Total score"
+                label="Team score"
                 value={`${fmt.score(featuredTotalScore)}%`}
               />
               <StatTile
                 tone="onColor"
-                label="Avg score"
+                label="Average person"
                 value={fmt.total(featuredAverage)}
               />
             </div>
@@ -103,7 +103,7 @@ export default async function TeamsPage() {
 
       <p className="text-ink-3 text-[12px] font-bold tracking-[0.04em]">
         {teams.length} team{teams.length === 1 ? "" : "s"} ·{" "}
-        {standings.memberCount} members · ranked by total team score
+        {standings.memberCount} people · sorted by team score
       </p>
 
       <TeamStandingsAccordion
@@ -115,7 +115,7 @@ export default async function TeamsPage() {
       {contested.length === 0 && (
         <Card>
           <p className="text-ink-2 text-[14px] font-semibold">
-            No teams have members yet. Add people at Admin → People.
+            No teams have people in them yet. Add people at Admin → People.
           </p>
         </Card>
       )}

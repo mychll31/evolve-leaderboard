@@ -219,14 +219,14 @@ export function LeaderboardClient({
       {/* States what you are actually looking at, which chips alone do not. */}
       {rows.length > 0 && (
         <p className="text-ink-3 -mt-1 text-[12px] font-bold tracking-[0.04em]">
-          {rows.length} player{rows.length === 1 ? "" : "s"} · {scopeLabel}
+          {rows.length} {rows.length === 1 ? "person" : "people"} · {scopeLabel}
         </p>
       )}
 
       {rows.length === 0 && (
         <Card className="text-center">
           <p className="text-ink-2 text-[14px] font-semibold">
-            No players on{" "}
+            Nobody is on{" "}
             {chosenTeams.length === 1 ? "this team" : "these teams"} yet.
           </p>
         </Card>
@@ -280,18 +280,13 @@ export function LeaderboardClient({
                   <div className="flex-1 px-6">
                     <ProgressBar gradient value={(p.score / maxScore) * 100} />
                   </div>
-                  {metrics.map((m) => (
-                    <div key={m.key} className="w-[88px] shrink-0 text-right">
-                      <Eyebrow className="text-ink-4">
-                        {m.name.slice(0, 3)}
-                      </Eyebrow>
-                      <div className="text-ink-2 text-[15px] font-bold">
-                        {fmt.pct(
-                          p.breakdown.find((b) => b.key === m.key)?.value ?? 0,
-                        )}
-                      </div>
+                  <div className="w-[88px] shrink-0 text-right">
+                    <Eyebrow className="text-ink-4">Done</Eyebrow>
+                    <div className="text-ink-2 text-[15px] font-bold">
+                      {p.breakdown.filter((b) => b.value > 0).length}/
+                      {metrics.length}
                     </div>
-                  ))}
+                  </div>
                   <div className="w-[88px] shrink-0 text-right">
                     <Eyebrow className="text-ink-4">Streak</Eyebrow>
                     <div className="text-accent text-[15px] font-extrabold">
@@ -299,7 +294,7 @@ export function LeaderboardClient({
                     </div>
                   </div>
                   <div className="w-[92px] shrink-0 text-right">
-                    <Eyebrow className="text-ink-4">Pts</Eyebrow>
+                    <Eyebrow className="text-ink-4">Score</Eyebrow>
                     <DisplayNumber className="text-ink text-[30px]">
                       {fmt.total(p.score)}
                     </DisplayNumber>

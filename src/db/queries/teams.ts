@@ -1,6 +1,12 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { Database } from "@/db/client";
-import { memberships, scoreSnapshots, teams, users } from "@/db/schema";
+import {
+  memberships,
+  metricEntries,
+  scoreSnapshots,
+  teams,
+  users,
+} from "@/db/schema";
 import type { MemberStanding, Standings } from "./standings";
 
 export type TeamMetricAverage = {
@@ -139,4 +145,146 @@ export async function getTeamStandings(
   return rows
     .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name))
     .map((team, i) => ({ ...team, rank: i + 1 }));
+}
+
+export type TeamRosterMember = {
+  membershipId: string;
+  name: string;
+  initials: string;
+  position: string | null;
+  score: number;
+  rank: number;
+  /** Metric ids this member has a logged (non-zero, approved) value for. */
+  loggedMetricIds: string[];
+  loggedCount: number;
+};
+
+export type TeamMetricCoverage = {
+  metricId: string;
+  key: string;
+  name: string;
+  /** How many of the team have logged it. */
+  logged: number;
+};
+
+export type TeamRoster = {
+  teamId: string;
+  name: string;
+  abbr: string;
+  color: string;
+  coachName: string | null;
+  metrics: { metricId: string; key: string; name: string }[];
+  members: TeamRosterMember[];
+  coverage: TeamMetricCoverage[];
+  /** Every member has logged every metric. */
+  complete: boolean;
+};
+
+/**
+ * Who on a team has logged what.
+ *
+ * Built for the question a Leader actually asks — "who has not done it yet" —
+ * so it returns the roster crossed with every active metric rather than the
+ * averages `getTeamStandings` gives. A metric counts as logged when there is
+ * an approved season-level entry above zero, which is the same test scoring
+ * applies, so this can never disagree with the member's own score.
+ */
+export async function getTeamRoster(
+  db: Database,
+  standings: Standings,
+  teamId: string,
+): Promise<TeamRoster | null> {
+  const [team] = await db
+    .select()
+    .from(teams)
+    .where(eq(teams.id, teamId))
+    .limit(1);
+  if (!team || team.seasonId !== standings.season.id) return null;
+
+  const [coachRow] = await db
+    .select({ name: users.name })
+    .from(memberships)
+    .innerJoin(users, eq(users.id, memberships.userId))
+    .where(
+      and(
+        eq(memberships.teamId, teamId),
+        eq(memberships.role, "coach"),
+        eq(memberships.active, true),
+      ),
+    )
+    .limit(1);
+
+  const roster = standings.members
+    .filter((m) => m.teamId === teamId)
+    .sort((a, b) => a.rank - b.rank);
+
+  const metrics = standings.metrics.map((metric) => ({
+    metricId: metric.id,
+    key: metric.key,
+    name: metric.name,
+  }));
+
+  const entries =
+    roster.length === 0
+      ? []
+      : await db
+          .select({
+            membershipId: metricEntries.membershipId,
+            metricId: metricEntries.metricId,
+            value: metricEntries.value,
+          })
+          .from(metricEntries)
+          .where(
+            and(
+              eq(metricEntries.seasonId, standings.season.id),
+              eq(metricEntries.status, "approved"),
+              isNull(metricEntries.meetingId),
+              inArray(
+                metricEntries.membershipId,
+                roster.map((m) => m.membershipId),
+              ),
+            ),
+          );
+
+  const activeMetricIds = new Set(metrics.map((m) => m.metricId));
+  const loggedByMember = new Map<string, Set<string>>();
+  for (const entry of entries) {
+    if (entry.value <= 0 || !activeMetricIds.has(entry.metricId)) continue;
+    const set = loggedByMember.get(entry.membershipId) ?? new Set<string>();
+    set.add(entry.metricId);
+    loggedByMember.set(entry.membershipId, set);
+  }
+
+  const members: TeamRosterMember[] = roster.map((member) => {
+    const logged = loggedByMember.get(member.membershipId) ?? new Set<string>();
+    return {
+      membershipId: member.membershipId,
+      name: member.name,
+      initials: member.initials,
+      position: member.position,
+      score: member.score,
+      rank: member.rank,
+      loggedMetricIds: [...logged],
+      loggedCount: logged.size,
+    };
+  });
+
+  const coverage: TeamMetricCoverage[] = metrics.map((metric) => ({
+    ...metric,
+    logged: members.filter((m) => m.loggedMetricIds.includes(metric.metricId))
+      .length,
+  }));
+
+  return {
+    teamId: team.id,
+    name: team.name,
+    abbr: team.abbr,
+    color: team.color,
+    coachName: coachRow?.name ?? null,
+    metrics,
+    members,
+    coverage,
+    complete:
+      members.length > 0 && members.every((m) => m.loggedCount === metrics.length),
+  };
 }

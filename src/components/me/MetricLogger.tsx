@@ -51,13 +51,6 @@ const glyphs: Record<string, React.ReactNode> = {
   ),
 };
 
-/** Mirrors the seeded metrics; anything an admin adds gets a generic line. */
-const blurbs: Record<string, string> = {
-  attendance: "Log your attendance",
-  assignment: "Submit your assignments",
-  quiz: "Complete weekly quizzes",
-};
-
 function MetricIcon({
   metricKey,
   logged,
@@ -95,8 +88,15 @@ function MetricCard({
   pending: boolean;
   onToggle: (logged: boolean) => void;
 }) {
-  const blurb = blurbs[row.key] ?? `Log your ${row.name.toLowerCase()}`;
   const disabled = pending || row.locked;
+  // One plain line, not a restatement of the name: an item called "Week 1 ·
+  // Attend the August 7 session" was getting "Log your week 1 · attend the
+  // august 7 session" underneath it.
+  const blurb = row.locked
+    ? "Your leader ticked this one"
+    : row.logged
+      ? "Done — nice work"
+      : "Tap when you've done this";
 
   return (
     <button
@@ -140,17 +140,17 @@ export function MetricLogger({
     <section>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-ink text-[12.5px] font-extrabold tracking-[0.14em] uppercase">
-          Your metrics
+          Your list
         </h2>
         {rows.length > 0 && (
           <span className="text-ink-3 text-[12px] font-bold">
-            {done} of {rows.length} logged
+            {done} of {rows.length} done
           </span>
         )}
       </div>
       <p className="text-ink-3 mt-1.5 text-[12.5px] font-semibold">
-        Click or tap a metric card as you do it. Every metric counts equally, so all{" "}
-        {rows.length || "of them"} logged is 100%.
+        Tap each thing when you finish it. They all count the same, so
+        finishing all {rows.length || "of them"} puts you at 100%.
       </p>
 
       {(error || success) && (
@@ -168,15 +168,15 @@ export function MetricLogger({
             onToggle={(logged) =>
               act(() => logOwnEntryAction(membershipId, row.metricId, logged), {
                 successMessage: logged
-                  ? `${row.name} logged — it counts toward your score now.`
-                  : `${row.name} un-logged.`,
+                  ? `Nice! "${row.name}" is done.`
+                  : `"${row.name}" is back on your list.`,
               })
             }
           />
         ))}
         {rows.length === 0 && (
           <div className="border-line bg-card text-ink-2 rounded-[18px] border p-5 text-[13.5px] font-semibold">
-            No metrics are being tracked this season yet.
+            Nothing to do yet — your leader will add things here.
           </div>
         )}
       </div>

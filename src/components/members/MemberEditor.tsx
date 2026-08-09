@@ -54,11 +54,15 @@ function MetricEditor({
           <div className="font-display text-ink text-[22px] leading-none font-bold">
             {metric.name}
           </div>
-          <div className="text-ink-3 mt-1.5 text-[11.5px] font-bold">
-            0-100
-          </div>
-          {metric.entry && <AuditLine entry={metric.entry} />}
-          {!metric.entry && (
+          {canEdit && (
+            <div className="text-ink-3 mt-1.5 text-[11.5px] font-bold">
+              0-100
+            </div>
+          )}
+          {/* Who recorded it, when, and any note is for the person who can
+              change it. A teammate reading the page sees done or not done. */}
+          {canEdit && metric.entry && <AuditLine entry={metric.entry} />}
+          {canEdit && !metric.entry && (
             <div className="text-ink-4 mt-1 text-[11px] font-semibold">
               Not recorded
             </div>
@@ -94,8 +98,12 @@ function MetricEditor({
           </div>
         )}
         {!canEdit && (
-          <div className="font-display text-ink text-[28px] font-extrabold">
-            {metric.entry?.value ?? "—"}
+          <div
+            className={`text-[13px] font-extrabold tracking-[0.06em] uppercase ${
+              (metric.entry?.value ?? 0) > 0 ? "text-positive" : "text-ink-4"
+            }`}
+          >
+            {(metric.entry?.value ?? 0) > 0 ? "Done" : "Not yet"}
           </div>
         )}
       </div>
@@ -118,11 +126,11 @@ export function MemberEditor({
       {success && <Banner tone="success">{success}</Banner>}
 
       <Card>
-        <SectionTitle>SCORES</SectionTitle>
+        <SectionTitle>THEIR LIST</SectionTitle>
         {!canEdit && (
           <p className="text-ink-3 mt-2 text-[12px] font-semibold">
-            Read-only — only this member&rsquo;s Leader or an admin can change
-            these.
+            You can see how they are doing, but only their leader can change
+            anything here.
           </p>
         )}
         <div className="mt-4 flex flex-col gap-3">

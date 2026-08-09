@@ -28,8 +28,17 @@ export default async function MemberPage(props: {
   const canEdit = await canManageMembership(db, ctx.user, id);
   const isOwn = ctx.membershipId === id;
 
-  // Members may read their own page; everyone else needs write scope to see it.
-  if (!canEdit && !isOwn) notFound();
+  // Teammates may read each other. The team page already names them and shows
+  // what each has done, so refusing the page behind that link was a dead end
+  // rather than a protection — and the leaderboard publishes every score to
+  // everyone anyway. Anyone further out still needs write scope.
+  const ownTeamId = ctx.membershipId
+    ? ctx.standings.members.find((m) => m.membershipId === ctx.membershipId)
+        ?.teamId
+    : null;
+  const isTeammate = ownTeamId !== null && ownTeamId === member.teamId;
+
+  if (!canEdit && !isOwn && !isTeammate) notFound();
 
   return (
     <div className="flex flex-col gap-5">

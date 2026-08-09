@@ -196,7 +196,7 @@ export function TopPerformers({ members }: { members: MemberStanding[] }) {
       ))}
 
       <div className="text-ink-3 relative text-center text-[10px] font-extrabold tracking-[0.18em] uppercase">
-        Top performers
+        Top 3 right now
       </div>
 
       <ol className="relative mt-4 grid grid-cols-3 items-end gap-2 sm:gap-4">

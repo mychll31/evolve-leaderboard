@@ -72,7 +72,7 @@ export function FlipCard({
             {member.position ? ` · ${member.position}` : ""}
           </div>
           <div className="relative mt-5 grid grid-cols-4 gap-2">
-            <CardStat label="Pts" value={fmt.total(member.score)} />
+            <CardStat label="Score" value={fmt.total(member.score)} />
             {member.breakdown.slice(0, 2).map((b) => (
               <CardStat
                 key={b.key}
@@ -80,7 +80,7 @@ export function FlipCard({
                 value={Math.round(b.value).toString()}
               />
             ))}
-            <CardStat label="Strk" value={member.streak.toString()} accent />
+            <CardStat label="Streak" value={member.streak.toString()} accent />
           </div>
         </div>
 

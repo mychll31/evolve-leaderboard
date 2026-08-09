@@ -73,7 +73,7 @@ export function TeamStandingsAccordion({
                 <DisplayNumber className="text-ink text-[26px] sm:text-[32px]">
                   {fmt.score(team.points)}%
                 </DisplayNumber>
-                <Eyebrow className="text-ink-4">Score</Eyebrow>
+                <Eyebrow className="text-ink-4">Team score</Eyebrow>
               </div>
             </div>
 
@@ -92,7 +92,7 @@ export function TeamStandingsAccordion({
                   isLeader ? "text-accent" : "text-ink-3"
                 }`}
               >
-                {isLeader ? "Leader" : `-${fmt.score(behind)}% behind`}
+                {isLeader ? "Top team" : `${fmt.score(behind)}% behind the top team`}
               </span>
               {canViewDetails && (
                 <span
@@ -145,11 +145,23 @@ export function TeamStandingsAccordion({
               <div>{summary}</div>
             )}
 
+            {/* Always visible, not buried in the panel: the averages say how
+                the team is doing, this says who has not logged yet — which is
+                the thing a Leader has to act on. */}
+            {canViewDetails && (
+              <Link
+                href={`/teams/${team.teamId}`}
+                className="border-line text-ink-2 hover:border-primary hover:text-primary mt-3.5 inline-block rounded-[10px] border bg-white px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase transition-colors"
+              >
+                See who did what ›
+              </Link>
+            )}
+
             {open && (
               <div id={panelId}>
                 {team.memberCount === 0 ? (
                   <p className="text-ink-3 mt-4 text-[12.5px] font-semibold">
-                    No members yet - this team is not scored.
+                    Nobody is on this team yet, so it has no score.
                   </p>
                 ) : (
                   <>
@@ -165,7 +177,7 @@ export function TeamStandingsAccordion({
                           key={metric.key}
                           className="bg-surface-2 rounded-xl px-3.5 py-2.5"
                         >
-                          <Eyebrow>Avg {metric.name}</Eyebrow>
+                          <Eyebrow>{metric.name}</Eyebrow>
                           <DisplayNumber className="text-ink mt-0.5 text-[23px]">
                             {fmt.pct(metric.value)}
                           </DisplayNumber>
@@ -175,20 +187,21 @@ export function TeamStandingsAccordion({
 
                     <div className="border-line-2 mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-3.5">
                       <TeamPlayer
-                        label="Top"
+                        label="Doing best"
                         name={team.topPlayer?.name}
                         membershipId={team.topPlayer?.membershipId}
                         tone="positive"
                       />
                       {team.bottomPlayer && (
                         <TeamPlayer
-                          label="Needs attention"
+                          label="Needs help"
                           name={team.bottomPlayer.name}
                           membershipId={team.bottomPlayer.membershipId}
                           tone="negative"
                         />
                       )}
                     </div>
+
                   </>
                 )}
               </div>
