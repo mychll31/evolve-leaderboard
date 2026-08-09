@@ -4,6 +4,7 @@ import { SignOutButton } from "@/components/shell/SignOutButton";
 import { TopBar } from "@/components/shell/TopBar";
 import { getDb } from "@/db/client";
 import { getAppContext } from "@/db/queries/context";
+import { requireUser } from "@/lib/auth/guards";
 import { countUnread } from "@/db/queries/gamification";
 
 export default async function AppLayout({
@@ -11,8 +12,14 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const ctx = await getAppContext();
-  const unreadCount = await countUnread(getDb(), ctx.user.id);
+  // Counting notifications only needs the user id, so it runs alongside the
+  // season load rather than waiting a whole round trip behind it. The session
+  // lookup is request-cached, so asking for it here costs nothing extra.
+  const user = await requireUser();
+  const [ctx, unreadCount] = await Promise.all([
+    getAppContext(),
+    countUnread(getDb(), user.id),
+  ]);
   const own = ctx.membershipId
     ? ctx.standings.members.find((m) => m.membershipId === ctx.membershipId)
     : undefined;

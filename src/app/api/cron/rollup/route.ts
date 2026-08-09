@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/client";
+import { expireStandings } from "@/db/queries/cached-standings";
 import { runWeeklyRollup } from "@/db/mutations/rollup";
 import { seasons } from "@/db/schema";
 
@@ -48,6 +49,10 @@ export async function GET(request: Request) {
       ...(await runWeeklyRollup(db, season.id)),
     });
   }
+
+  // Snapshots feed the rank deltas, so the cached standings are now stale.
+  // Nobody is waiting on a weekly cron, so stale-while-revalidate is fine.
+  expireStandings();
 
   return NextResponse.json({ ran: results.length, results });
 }

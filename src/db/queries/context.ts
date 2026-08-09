@@ -4,7 +4,8 @@ import { cache } from "react";
 import { getDb } from "@/db/client";
 import { memberships, teams } from "@/db/schema";
 import { requireUser, type SessionUser } from "@/lib/auth/guards";
-import { getActiveSeason, getStandings, type Standings } from "./standings";
+import { getCachedStandings } from "./cached-standings";
+import { getActiveSeason, type Standings } from "./standings";
 
 export type AppContext = {
   user: SessionUser;
@@ -34,7 +35,7 @@ export const getAppContext = cache(async function getAppContext(): Promise<AppCo
   if (!season) redirect("/no-season");
 
   const [standings, ownRows] = await Promise.all([
-    getStandings(db, season),
+    getCachedStandings(season),
     db
       .select({
         id: memberships.id,

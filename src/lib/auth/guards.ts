@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db/client";
 import { users } from "@/db/schema";
@@ -103,11 +104,19 @@ async function developmentUser(): Promise<SessionUser | null> {
   return { id: row.id, role: row.role, name: row.name, email: row.email };
 }
 
-export async function getSessionUser(): Promise<SessionUser | null> {
-  const session = await auth();
-  if (session?.user?.id) return session.user as SessionUser;
-  return developmentUser();
-}
+/**
+ * Wrapped in React's request cache so resolving the session costs one database
+ * round trip per request however many callers ask for it. The layout needs the
+ * user id before it can count notifications, and the page needs it again for
+ * the app context — without this that is two session lookups.
+ */
+export const getSessionUser = cache(
+  async function getSessionUser(): Promise<SessionUser | null> {
+    const session = await auth();
+    if (session?.user?.id) return session.user as SessionUser;
+    return developmentUser();
+  },
+);
 
 /**
  * Route protection lives here rather than in middleware.

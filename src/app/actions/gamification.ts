@@ -2,6 +2,7 @@
 
 import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { updateStandings } from "@/db/queries/cached-standings";
 import { getDb } from "@/db/client";
 import {
   ConflictError,
@@ -52,6 +53,7 @@ async function run<T>(fn: () => Promise<T>, paths: string[]): Promise<ActionResu
     }
     return { ok: false, error: "Something went wrong. Please try again." };
   }
+  updateStandings();
   for (const path of paths) revalidatePath(path);
   return { ok: true, data };
 }

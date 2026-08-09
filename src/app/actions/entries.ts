@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db/client";
+import { updateStandings } from "@/db/queries/cached-standings";
 import { logOwnEntry } from "@/db/mutations/entries";
 import {
   ConflictError,
@@ -41,6 +42,7 @@ export async function logOwnEntryAction(
     return { ok: false, error: "Something went wrong" };
   }
 
+  updateStandings();
   // A logged value counts immediately, so every screen that shows a score is
   // now stale — including the Leader Desk, which is where it gets corrected.
   for (const path of [

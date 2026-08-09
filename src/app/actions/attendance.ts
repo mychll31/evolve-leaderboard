@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db/client";
+import { updateStandings } from "@/db/queries/cached-standings";
 import {
   approveAllPending,
   checkIn,
@@ -32,6 +33,7 @@ async function run(fn: () => Promise<void>): Promise<ActionResult> {
     };
   }
 
+  updateStandings();
   // Attendance moves scores, so the leaderboard and dashboard are stale too.
   for (const path of ["/coach", "/dashboard", "/leaderboard", "/teams", "/me"]) {
     revalidatePath(path);

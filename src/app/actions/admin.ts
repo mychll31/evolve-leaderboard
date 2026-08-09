@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db/client";
+import { updateStandings } from "@/db/queries/cached-standings";
 import { deleteEntry, setEntryValue } from "@/db/mutations/entries";
 import {
   ConflictError,
@@ -90,6 +91,8 @@ async function run<T>(
     return { ok: false, error: "Something went wrong. Please try again." };
   }
 
+  // Any admin write can move a score — metrics, people, teams, seasons.
+  updateStandings();
   for (const path of paths) revalidatePath(path);
   return { ok: true, data };
 }
