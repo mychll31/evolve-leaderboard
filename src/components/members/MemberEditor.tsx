@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Card, SectionTitle } from "@/components/ui";
-import { setEntryValueAction } from "@/app/actions/admin";
+import { deleteEntryAction, setEntryValueAction } from "@/app/actions/admin";
 import type { MemberDetail, SeasonMetricRow } from "@/db/queries/member";
-import { Banner, Button, inputClass, useAction } from "@/components/admin/controls";
+import { Banner, Button, useAction } from "@/components/admin/controls";
 
 function timeOf(date: Date): string {
   return date.toLocaleTimeString("en-US", {
@@ -45,7 +44,7 @@ function MetricEditor({
   onAct: (fn: () => Promise<{ ok: boolean; error?: string }>) => void;
   pending: boolean;
 }) {
-  const [value, setValue] = useState(metric.entry?.value?.toString() ?? "");
+  const isLogged = (metric.entry?.value ?? 0) > 0;
 
   return (
     <div className="border-line-2 bg-surface-2 rounded-2xl border px-5 py-4">
@@ -56,7 +55,7 @@ function MetricEditor({
           </div>
           {canEdit && (
             <div className="text-ink-3 mt-1.5 text-[11.5px] font-bold">
-              0-100
+              {isLogged ? "Logged" : "Not logged"}
             </div>
           )}
           {/* Who recorded it, when, and any note is for the person who can
@@ -70,30 +69,33 @@ function MetricEditor({
         </div>
 
         {canEdit && (
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min={0}
-              max={100}
-              step="1"
-              className={`${inputClass} w-24 text-right`}
-              value={value}
-              disabled={pending}
-              onChange={(e) => setValue(e.target.value)}
-            />
+          <div className="flex items-center rounded-xl border border-line bg-white p-1">
             <Button
-              disabled={pending || value === ""}
-              onClick={() =>
+              variant={isLogged ? "primary" : "ghost"}
+              disabled={pending}
+              onClick={() => {
+                if (isLogged) return;
                 onAct(() =>
                   setEntryValueAction({
                     membershipId,
                     metricId: metric.metricId,
-                    value: Number(value),
+                    value: 100,
                   }),
-                )
-              }
+                );
+              }}
             >
-              Save
+              Logged
+            </Button>
+            <Button
+              variant={!isLogged ? "primary" : "ghost"}
+              disabled={pending}
+              onClick={() => {
+                const entryId = metric.entry?.entryId;
+                if (!entryId) return;
+                onAct(() => deleteEntryAction(entryId));
+              }}
+            >
+              Not logged
             </Button>
           </div>
         )}

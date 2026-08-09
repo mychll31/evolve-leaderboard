@@ -288,3 +288,161 @@ export async function getTeamRoster(
       members.length > 0 && members.every((m) => m.loggedCount === metrics.length),
   };
 }
+
+export type ReportMember = {
+  membershipId: string;
+  name: string;
+  initials: string;
+  position: string | null;
+  teamId: string;
+  teamName: string;
+  teamColor: string;
+  score: number;
+  doneCount: number;
+  /** Metric ids already logged, used by report filters. */
+  doneMetricIds: string[];
+  /** Names of the things still outstanding, in checklist order. */
+  missing: string[];
+  /** Metric ids still outstanding, in checklist order. */
+  missingMetricIds: string[];
+};
+
+export type ReportTeam = {
+  teamId: string;
+  name: string;
+  abbr: string;
+  color: string;
+  members: ReportMember[];
+  /** Members who have done everything. */
+  finished: number;
+};
+
+export type SeasonReport = {
+  /** How many things there are to do this season. */
+  total: number;
+  metrics: { metricId: string; key: string; name: string }[];
+  teams: ReportTeam[];
+  members: ReportMember[];
+  finished: ReportMember[];
+  outstanding: ReportMember[];
+};
+
+/**
+ * Who has done what, across whichever teams the viewer may see.
+ *
+ * One entries query for the whole scope rather than one per team: a season
+ * with ten teams would otherwise make ten round trips to answer a single
+ * screen. Scope is decided by the caller — everyone for an admin, their own
+ * team for a member — and never inferred here.
+ */
+export async function getSeasonReport(
+  db: Database,
+  standings: Standings,
+  teamIds: string[] | null,
+  metricIds: string[] | null = null,
+): Promise<SeasonReport> {
+  const roster =
+    teamIds === null
+      ? standings.members
+      : standings.members.filter((m) => teamIds.includes(m.teamId));
+
+  const metricScope =
+    metricIds === null
+      ? standings.metrics
+      : standings.metrics.filter((metric) => metricIds.includes(metric.id));
+  const metrics = metricScope.map((metric) => ({
+    metricId: metric.id,
+    key: metric.key,
+    name: metric.name,
+  }));
+  const total = metrics.length;
+
+  const entries =
+    roster.length === 0
+      ? []
+      : await db
+          .select({
+            membershipId: metricEntries.membershipId,
+            metricId: metricEntries.metricId,
+            value: metricEntries.value,
+          })
+          .from(metricEntries)
+          .where(
+            and(
+              eq(metricEntries.seasonId, standings.season.id),
+              eq(metricEntries.status, "approved"),
+              isNull(metricEntries.meetingId),
+              inArray(
+                metricEntries.membershipId,
+                roster.map((m) => m.membershipId),
+              ),
+            ),
+          );
+
+  const activeIds = new Set(metrics.map((m) => m.metricId));
+  const doneByMember = new Map<string, Set<string>>();
+  for (const entry of entries) {
+    if (entry.value <= 0 || !activeIds.has(entry.metricId)) continue;
+    const set = doneByMember.get(entry.membershipId) ?? new Set<string>();
+    set.add(entry.metricId);
+    doneByMember.set(entry.membershipId, set);
+  }
+
+  const members: ReportMember[] = roster.map((member) => {
+    const done = doneByMember.get(member.membershipId) ?? new Set<string>();
+    const missing = metrics.filter((m) => !done.has(m.metricId));
+    return {
+      membershipId: member.membershipId,
+      name: member.name,
+      initials: member.initials,
+      position: member.position,
+      teamId: member.teamId,
+      teamName: member.teamName,
+      teamColor: member.teamColor,
+      score: member.score,
+      doneCount: done.size,
+      doneMetricIds: [...done],
+      missing: missing.map((m) => m.name),
+      missingMetricIds: missing.map((m) => m.metricId),
+    };
+  });
+
+  const byTeam = new Map<string, ReportMember[]>();
+  for (const member of members) {
+    byTeam.set(member.teamId, [...(byTeam.get(member.teamId) ?? []), member]);
+  }
+
+  const teamRows = await db
+    .select()
+    .from(teams)
+    .where(eq(teams.seasonId, standings.season.id));
+
+  const reportTeams: ReportTeam[] = [...byTeam.entries()]
+    .map(([teamId, teamMembers]) => {
+      const row = teamRows.find((t) => t.id === teamId);
+      return {
+        teamId,
+        name: row?.name ?? teamMembers[0].teamName,
+        abbr: row?.abbr ?? "",
+        color: row?.color ?? teamMembers[0].teamColor,
+        members: [...teamMembers].sort(
+          (a, b) => a.doneCount - b.doneCount || a.name.localeCompare(b.name),
+        ),
+        finished: teamMembers.filter((m) => m.doneCount === total).length,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return {
+    total,
+    metrics,
+    teams: reportTeams,
+    members,
+    finished: members
+      .filter((m) => total > 0 && m.doneCount === total)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    outstanding: members
+      .filter((m) => total === 0 || m.doneCount < total)
+      .sort((a, b) => a.doneCount - b.doneCount || a.name.localeCompare(b.name)),
+  };
+}

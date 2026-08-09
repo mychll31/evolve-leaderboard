@@ -109,11 +109,9 @@ export function buildNav({
     { href: "/dashboard", label: "Dashboard", short: "Home", title: "Dashboard", name: "home", icon: null, phone: true },
     { href: "/leaderboard", label: "Leaderboard", short: "Ranks", title: "Player Leaderboard", name: "ranks", icon: null, phone: true },
     { href: "/teams", label: "Teams", short: "Teams", title: "Team Standings", name: "teams", icon: null, phone: true },
+    { href: "/report", label: "Report", short: "Report", title: "Report", name: "stats", icon: null, phone: true },
   ];
 
-  if (isCoach) {
-    items.push({ href: "/coach", label: "Leader Desk", short: "Desk", title: "Leader Desk", name: "desk", icon: null, phone: true });
-  }
   if (isAdmin) {
     // Labelled "Admin", not "Metric Builder": this is the entrance to metrics,
     // teams, people, analytics, badges and import. Naming it after one tab

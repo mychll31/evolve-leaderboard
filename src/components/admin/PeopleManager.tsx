@@ -12,8 +12,6 @@ import {
 import type { PersonRow, TeamRow } from "@/db/queries/admin";
 import { Banner, Button, Field, inputClass, useAction } from "./controls";
 
-const POSITIONS = ["", "PG", "SG", "SF", "PF", "C"];
-
 export function PeopleManager({
   seasonId,
   people,
@@ -28,13 +26,18 @@ export function PeopleManager({
   const { pending, error, success, act } = useAction();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "assigned" | "unassigned">("all");
-  const [draft, setDraft] = useState({ name: "", email: "" });
+  const [draft, setDraft] = useState({
+    name: "",
+    email: "",
+    teamId: teams[0]?.id ?? "",
+    role: "member" as "member" | "coach",
+  });
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return people.filter((person) => {
-      if (filter === "assigned" && !person.membershipId) return false;
-      if (filter === "unassigned" && person.membershipId) return false;
+      if (filter === "assigned" && !person.teamId) return false;
+      if (filter === "unassigned" && person.teamId) return false;
       if (!q) return true;
       return (
         person.name.toLowerCase().includes(q) ||
@@ -45,7 +48,15 @@ export function PeopleManager({
   }, [people, query, filter]);
 
   const assign = (person: PersonRow, teamId: string) => {
-    if (!teamId) return;
+    if (!teamId) {
+      if (!person.membershipId || !person.active) return;
+      act(
+        () => setMembershipActiveAction(person.membershipId!, false),
+        { successMessage: `${person.name} unassigned` },
+      );
+      return;
+    }
+
     act(
       () =>
         upsertMembershipAction({
@@ -53,7 +64,7 @@ export function PeopleManager({
           userId: person.userId,
           teamId,
           role: person.seasonRole ?? "member",
-          position: person.position,
+          position: null,
         }),
       { successMessage: `${person.name} assigned` },
     );
@@ -96,7 +107,6 @@ export function PeopleManager({
                 <th className="px-5 py-3 text-left sm:px-6">Name</th>
                 <th className="px-2 py-3 text-left">Team</th>
                 <th className="px-2 py-3 text-left">Role</th>
-                <th className="px-2 py-3 text-left">Pos</th>
                 <th className="px-5 py-3 text-right sm:px-6">Actions</th>
               </tr>
             </thead>
@@ -152,7 +162,7 @@ export function PeopleManager({
                               userId: person.userId,
                               teamId: person.teamId!,
                               role: e.target.value as "member" | "coach",
-                              position: person.position,
+                              position: null,
                             }),
                           { successMessage: `${person.name} updated` },
                         )
@@ -160,30 +170,6 @@ export function PeopleManager({
                     >
                       <option value="member">Member</option>
                       <option value="coach">Leader</option>
-                    </select>
-                  </td>
-                  <td className="px-2 py-3">
-                    <select
-                      className={`${inputClass} w-auto py-1.5 text-[12.5px]`}
-                      value={person.position ?? ""}
-                      disabled={pending || !person.teamId}
-                      onChange={(e) =>
-                        act(() =>
-                          upsertMembershipAction({
-                            seasonId,
-                            userId: person.userId,
-                            teamId: person.teamId!,
-                            role: person.seasonRole ?? "member",
-                            position: e.target.value || null,
-                          }),
-                        )
-                      }
-                    >
-                      {POSITIONS.map((pos) => (
-                        <option key={pos} value={pos}>
-                          {pos || "—"}
-                        </option>
-                      ))}
                     </select>
                   </td>
                   <td className="px-5 py-3 text-right sm:px-6">
@@ -208,13 +194,13 @@ export function PeopleManager({
                                   ),
                                 {
                                   successMessage: person.active
-                                    ? `${person.name} removed from the roster`
+                                    ? `${person.name} unassigned`
                                     : `${person.name} restored`,
                                 },
                               )
                             }
                           >
-                            {person.active ? "Deactivate" : "Restore"}
+                            {person.active ? "Unassign" : "Restore"}
                           </Button>
                         </>
                       )}
@@ -290,16 +276,68 @@ export function PeopleManager({
               onChange={(e) => setDraft({ ...draft, email: e.target.value })}
             />
           </Field>
+          <Field label="Team">
+            <select
+              className={inputClass}
+              value={draft.teamId}
+              disabled={pending || teams.length === 0}
+              onChange={(e) => setDraft({ ...draft, teamId: e.target.value })}
+            >
+              <option value="">— select team —</option>
+              {teams.map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Role">
+            <select
+              className={inputClass}
+              value={draft.role}
+              disabled={pending}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  role: e.target.value as "member" | "coach",
+                })
+              }
+            >
+              <option value="member">Member</option>
+              <option value="coach">Leader</option>
+            </select>
+          </Field>
 
           {error && <Banner tone="error">{error}</Banner>}
           {success && <Banner tone="success">{success}</Banner>}
 
           <Button
-            disabled={pending}
+            disabled={pending || !draft.teamId}
             onClick={() =>
-              act(() => createUserAction(draft), {
-                successMessage: "Person added — now assign them a team",
-                onDone: () => setDraft({ name: "", email: "" }),
+              act(async () => {
+                const created = await createUserAction({
+                  name: draft.name,
+                  email: draft.email,
+                });
+                if (!created.ok || !created.data) return created;
+
+                const assigned = await upsertMembershipAction({
+                  seasonId,
+                  userId: created.data,
+                  teamId: draft.teamId,
+                  role: draft.role,
+                  position: null,
+                });
+                return assigned;
+              }, {
+                successMessage: "Person added",
+                onDone: () =>
+                  setDraft({
+                    name: "",
+                    email: "",
+                    teamId: teams[0]?.id ?? "",
+                    role: "member",
+                  }),
               })
             }
           >

@@ -16,7 +16,7 @@ export function BottomNav({
   const items = buildNav({ isCoach, isAdmin }).filter((i) => i.phone);
 
   return (
-    <nav className="border-line fixed inset-x-0 bottom-0 z-30 flex border-t bg-white/96 px-2 pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-lg lg:hidden">
+    <nav className="border-line fixed inset-x-0 bottom-0 z-30 flex overflow-x-auto border-t bg-white/96 px-2 pt-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-lg lg:hidden">
       {items.map((item) => {
         const active = pathname.startsWith(item.href);
         const color = active ? "var(--color-primary)" : "var(--color-ink-4)";
@@ -25,7 +25,7 @@ export function BottomNav({
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className="flex flex-1 flex-col items-center gap-1.5 pt-1"
+            className="flex min-w-[58px] flex-1 flex-col items-center gap-1.5 pt-1"
           >
             <NavIcon name={item.name} color={color} />
             <span
