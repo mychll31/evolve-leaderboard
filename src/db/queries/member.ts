@@ -53,6 +53,7 @@ export type MemberDetail = {
   name: string;
   email: string;
   initials: string;
+  image: string | null;
   position: string | null;
   seasonRole: "member" | "coach";
   active: boolean;
@@ -146,6 +147,7 @@ export async function getMemberDetail(
       teamColor: teams.color,
       name: users.name,
       email: users.email,
+      image: users.image,
     })
     .from(memberships)
     .innerJoin(teams, eq(teams.id, memberships.teamId))
@@ -219,6 +221,7 @@ export async function getMemberDetail(
     name,
     email: membership.email ?? "",
     initials: name.slice(0, 2).toUpperCase(),
+    image: membership.image,
     position: membership.position,
     seasonRole: membership.role,
     active: membership.active,

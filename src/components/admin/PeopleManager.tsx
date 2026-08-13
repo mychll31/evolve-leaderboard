@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, SectionTitle } from "@/components/ui";
 import {
+  createPasswordLinkAction,
   createUserAction,
   setMembershipActiveAction,
   updateUserAction,
@@ -23,8 +24,14 @@ export function PeopleManager({
   teams: TeamRow[];
   currentUserId: string;
 }) {
-  const { pending, error, success, act } = useAction();
+  const { pending, error, success, act, setError, setSuccess } = useAction();
   const [query, setQuery] = useState("");
+  // Shown once, in place, for the admin to copy. Never stored: a fresh link
+  // can always be minted, and the old one stops working when it is.
+  const [passwordLink, setPasswordLink] = useState<{
+    userId: string;
+    url: string;
+  } | null>(null);
   const [filter, setFilter] = useState<"all" | "assigned" | "unassigned">("all");
   const [draft, setDraft] = useState({
     name: "",
@@ -204,6 +211,29 @@ export function PeopleManager({
                           </Button>
                         </>
                       )}
+                      <Button
+                        variant="ghost"
+                        disabled={pending}
+                        onClick={async () => {
+                          setError(null);
+                          setSuccess(null);
+                          setPasswordLink(null);
+
+                          const result = await createPasswordLinkAction(
+                            person.userId,
+                          );
+                          if (!result.ok) {
+                            setError(result.error);
+                            return;
+                          }
+                          setPasswordLink({
+                            userId: person.userId,
+                            url: result.data!,
+                          });
+                        }}
+                      >
+                        Password link
+                      </Button>
                       {person.globalRole !== "super_admin" && (
                         <Button
                           variant="ghost"
@@ -244,6 +274,21 @@ export function PeopleManager({
                           </Button>
                         )}
                     </div>
+
+                    {passwordLink?.userId === person.userId && (
+                      <div className="border-accent-line bg-accent-tint mt-2.5 rounded-xl border p-3">
+                        <p className="text-accent-dark text-[11.5px] font-extrabold">
+                          Send this to {person.name}. It works once and expires
+                          in 7 days.
+                        </p>
+                        <input
+                          readOnly
+                          value={passwordLink.url}
+                          onFocus={(event) => event.target.select()}
+                          className="border-line bg-card text-ink mt-2 w-full rounded-lg border px-3 py-2 text-[12px] font-semibold"
+                        />
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

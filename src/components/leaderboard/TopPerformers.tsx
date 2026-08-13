@@ -79,18 +79,33 @@ function Entrant({ member, place }: { member: MemberStanding; place: number }) {
       )}
 
       <div className="relative">
-        <div
-          className="font-display flex shrink-0 items-center justify-center rounded-full font-extrabold text-white"
-          style={{
-            width: spec.avatar,
-            height: spec.avatar,
-            fontSize: spec.initials,
-            background: spec.color,
-            boxShadow: `0 10px 22px -12px ${spec.color}`,
-          }}
-        >
-          {member.initials}
-        </div>
+        {member.image ? (
+          <img
+            src={member.image}
+            alt=""
+            aria-hidden
+            className="shrink-0 rounded-full object-cover"
+            style={{
+              width: spec.avatar,
+              height: spec.avatar,
+              background: spec.color,
+              boxShadow: `0 10px 22px -12px ${spec.color}`,
+            }}
+          />
+        ) : (
+          <div
+            className="font-display flex shrink-0 items-center justify-center rounded-full font-extrabold text-white"
+            style={{
+              width: spec.avatar,
+              height: spec.avatar,
+              fontSize: spec.initials,
+              background: spec.color,
+              boxShadow: `0 10px 22px -12px ${spec.color}`,
+            }}
+          >
+            {member.initials}
+          </div>
+        )}
         {/* Geometry inline, like the avatar and the block: Safari was left
             with a stylesheet where `size-6` had not been generated and drew
             this as a tall capsule beside the name. */}

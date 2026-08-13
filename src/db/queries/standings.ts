@@ -32,6 +32,8 @@ export type MemberStanding = {
   userId: string;
   name: string;
   initials: string;
+  /** Profile photo URL, null when they have not set one. */
+  image: string | null;
   position: string | null;
   teamId: string;
   teamName: string;
@@ -126,6 +128,7 @@ export async function getStandings(
           teamColor: teams.color,
           name: users.name,
           email: users.email,
+          image: users.image,
         })
         .from(memberships)
         .innerJoin(teams, eq(teams.id, memberships.teamId))
@@ -248,6 +251,7 @@ export async function getStandings(
         userId: s.row.userId,
         name,
         initials: initials(name),
+        image: s.row.image,
         position: s.row.position,
         teamId: s.row.teamId,
         teamName: s.row.teamName,

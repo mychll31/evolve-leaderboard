@@ -1,7 +1,7 @@
 # Email + Password Sign-In and Account Profiles — Design
 
 - **Date:** 2026-08-10
-- **Status:** Proposed
+- **Status:** Implemented — see §11 for where the build differs
 - **Scope:** A second way in for people without Google, plus the account page that makes it usable
 
 Google is currently the only door. Members are pre-created by an admin with an email address and
@@ -251,3 +251,36 @@ edit      src/components/shell/TopBar.tsx       render photo
 edit      src/components/shell/Sidebar.tsx      render photo
 edit      src/components/leaderboard/LeaderboardClient.tsx  render photo
 ```
+
+## 11. As built
+
+Five deliberate departures from the plan above.
+
+**Password writes live in `db/mutations/password.ts`, not `account.ts`.** Authentication and
+`setPassword` are not account edits and have no `Actor` — they run for someone who is not signed
+in yet. `account.ts` keeps the writes that do take an actor: name, avatar, and the
+current-password-checked change. Tokens went to `db/mutations/password-tokens.ts` for the same
+reason: they are database writes, and the mutation layer is where those live.
+
+**`peekPasswordSetupToken` exists alongside `consume`.** The set-password page has to know a link
+is valid before it renders a form, and spending the token on a page view would invalidate the
+form it was drawing. Peek is read-only; submit consumes.
+
+**The avatar route requires a signed-in session.** The plan said nothing about this. These are
+photographs of real people in an invite-only application, so leaving them readable by anyone
+holding the URL was the wrong default. Costs one session lookup per cache miss, which
+`immutable` makes rare.
+
+**Photos render in six places, not four.** The podium (`TopPerformers`) and the coach's roster
+(`TeamLogGrid`) draw their own circles rather than using `Avatar`, and both derive from
+`MemberStanding` — so a photo on the leaderboard row with initials on the podium directly above
+it would have looked broken. Both were a pass-through of the field already being added. The
+printable report sheet deliberately stays initials-only.
+
+**`AccountForms.tsx` exports `NameForm` and `PasswordForm` separately** rather than one
+component, so the page composes them into its own cards.
+
+The `jwt.encode` override was verified against a running server, as §8 required: a password
+sign-in returns `authjs.session-token` as a bare UUID rather than a JWT, a matching row appears
+in `session`, and that cookie authenticates a request to `/account`. Ten wrong passwords lock the
+account, after which the correct password is refused until the window passes.

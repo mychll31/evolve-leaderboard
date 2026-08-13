@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { getDb } from "@/db/client";
 import { updateStandings } from "@/db/queries/cached-standings";
 import { deleteEntry, setEntryValue } from "@/db/mutations/entries";
@@ -8,7 +9,9 @@ import {
   ConflictError,
   NotFoundError,
   SeasonLockedError,
+  assertAdmin,
 } from "@/db/mutations/guards";
+import { mintPasswordSetupToken } from "@/db/mutations/password-tokens";
 import {
   createMeeting,
   deleteMeeting,
@@ -252,6 +255,39 @@ export async function updateUserAction(userId: string, input: UserInput) {
     ...ADMIN_PATHS,
     ...SCORE_PATHS,
   ]);
+}
+
+/**
+ * Mints a one-time set-password link for someone who cannot get in — no Google
+ * account, or a forgotten password. There is no email delivery configured, so
+ * the admin copies the URL and hands it over.
+ *
+ * Deliberately outside `run()`: minting a link cannot change a score, and
+ * `run()` would expire the standings cache for every screen in the app.
+ */
+export async function createPasswordLinkAction(
+  userId: string,
+): Promise<ActionResult<string>> {
+  const actor = await requireUser();
+
+  try {
+    assertAdmin(actor);
+    const token = await mintPasswordSetupToken(getDb(), userId);
+
+    const incoming = await headers();
+    const protocol = incoming.get("x-forwarded-proto") ?? "http";
+    const host = incoming.get("host");
+
+    return {
+      ok: true,
+      data: `${protocol}://${host}/set-password?token=${encodeURIComponent(token)}`,
+    };
+  } catch (error) {
+    if (error instanceof AuthorizationError || error instanceof NotFoundError) {
+      return { ok: false, error: error.message };
+    }
+    return { ok: false, error: "Something went wrong. Please try again." };
+  }
 }
 
 export async function upsertMembershipAction(input: MembershipInput) {

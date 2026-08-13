@@ -268,6 +268,7 @@ export function LeaderboardClient({
                   <Delta value={p.delta} className="w-8 shrink-0" />
                   <Avatar
                     initials={p.initials}
+                    image={p.image}
                     color={p.teamColor}
                     size={42}
                     className="mr-4"

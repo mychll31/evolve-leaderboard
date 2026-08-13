@@ -82,12 +82,38 @@ export function Avatar({
   color,
   size = 40,
   className,
+  image,
 }: {
   initials: string;
   color: string;
   size?: number;
   className?: string;
+  /** Profile photo. Falls back to initials when absent or broken. */
+  image?: string | null;
 }) {
+  const box = {
+    width: size,
+    height: size,
+    borderRadius: Math.round(size * 0.29),
+  };
+
+  // A plain <img> rather than next/image: these are 34-72px and already cropped
+  // to size by the uploader, and `users.image` may hold a Google URL, which
+  // next/image would need `remotePatterns` configured for.
+  if (image) {
+    return (
+      <img
+        src={image}
+        alt=""
+        aria-hidden
+        width={size}
+        height={size}
+        className={clsx("shrink-0 object-cover", className)}
+        style={{ ...box, background: color }}
+      />
+    );
+  }
+
   return (
     <div
       aria-hidden
@@ -96,10 +122,8 @@ export function Avatar({
         className,
       )}
       style={{
-        width: size,
-        height: size,
+        ...box,
         background: color,
-        borderRadius: Math.round(size * 0.29),
         fontSize: Math.round(size * 0.39),
       }}
     >

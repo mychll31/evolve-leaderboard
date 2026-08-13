@@ -51,6 +51,7 @@ export default async function MemberPage(props: {
         <div className="relative flex flex-wrap items-center gap-4">
           <Avatar
             initials={member.initials}
+            image={member.image}
             color="rgba(255,255,255,.95)"
             size={72}
             className="!text-[#0F1720]"

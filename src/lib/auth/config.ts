@@ -1,8 +1,11 @@
+import { randomUUID } from "node:crypto";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm";
 import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { getDb } from "@/db/client";
+import { authenticateWithPassword } from "@/db/mutations/password";
 import { accounts, sessions, users, verificationTokens } from "@/db/schema";
 
 /**
@@ -24,16 +27,73 @@ function resolveSecret(): string | undefined {
 
 export const { handlers, auth, signIn, signOut } = NextAuth(() => {
   const db = getDb();
+  const adapter = DrizzleAdapter(db, {
+    usersTable: users,
+    accountsTable: accounts,
+    sessionsTable: sessions,
+    verificationTokensTable: verificationTokens,
+  });
 
   return {
     secret: resolveSecret(),
-    adapter: DrizzleAdapter(db, {
-      usersTable: users,
-      accountsTable: accounts,
-      sessionsTable: sessions,
-      verificationTokensTable: verificationTokens,
-    }),
+    adapter,
+    // Stated rather than inferred, because the `jwt.encode` override below is
+    // only correct while this is "database".
+    session: { strategy: "database" },
+    /**
+     * Not a JWT, despite the name.
+     *
+     * Auth.js's credentials path issues a JWT session cookie unconditionally —
+     * it calls `jwt.encode` outside the `if (useJwtSession)` guard that wraps
+     * the OAuth and email paths (@auth/core/lib/actions/callback/index.js).
+     * With database sessions that cookie resolves to nothing, so a password
+     * sign-in would appear to succeed and leave the person signed out.
+     *
+     * Overriding `encode` turns that step into "create a real session row and
+     * return its token". Under `strategy: "database"` this is the only code
+     * path that reaches it, so Google sign-in is untouched, while Auth.js keeps
+     * ownership of the cookie name, the `__Secure-` prefix, expiry and CSRF.
+     *
+     * If a future release starts calling `encode` from the database path too,
+     * the symptom is a broken Google sign-in rather than a silent weakening.
+     */
+    jwt: {
+      async encode({ token, maxAge }) {
+        const userId = token?.sub;
+        if (!userId) throw new Error("Cannot create a session without a user");
+
+        const sessionToken = randomUUID();
+        await adapter.createSession?.({
+          sessionToken,
+          userId,
+          expires: new Date(Date.now() + (maxAge ?? 0) * 1000),
+        });
+
+        return sessionToken;
+      },
+    },
     providers: [
+      Credentials({
+        credentials: {
+          email: { label: "Email", type: "email" },
+          password: { label: "Password", type: "password" },
+        },
+        /**
+         * Returns null for every kind of failure — unknown address, wrong
+         * password, locked account. Auth.js turns that into one
+         * `CredentialsSignin` error, which is exactly the granularity the
+         * sign-in page should show.
+         */
+        async authorize(credentials) {
+          const email = credentials?.email;
+          const password = credentials?.password;
+          if (typeof email !== "string" || typeof password !== "string") {
+            return null;
+          }
+
+          return authenticateWithPassword(db, { email, password });
+        },
+      }),
       Google({
         // Members are pre-created by an admin with only an email address, then
         // link their Google account on first sign-in. Without this, Auth.js
@@ -57,6 +117,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
        * pre-created `users` row is refused outright.
        */
       async signIn({ profile, account }) {
+        // `authorize()` has already checked the roster and the password; there
+        // is nothing left for this callback to add.
+        if (account?.provider === "credentials") return true;
+
         if (account?.provider !== "google") return false;
         if (!profile?.email || profile.email_verified !== true) return false;
 

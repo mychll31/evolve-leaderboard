@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import { AuthError } from "next-auth";
 import { DevSignIn } from "@/components/auth/DevSignIn";
 import { signIn } from "@/lib/auth/config";
 import {
@@ -19,14 +20,18 @@ const ERRORS: Record<string, string> = {
   Configuration:
     "Sign-in is not configured correctly. Please contact an administrator.",
   Verification: "That sign-in link has expired. Please try again.",
+  // One message covers wrong password, unknown address and locked account.
+  // Telling them apart would only help someone guessing at the roster.
+  CredentialsSignin:
+    "That email and password did not match. After several failed attempts an account is locked for 15 minutes.",
 };
 
 export default async function SignInPage(props: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; set?: string }>;
 }) {
   if (await getSessionUser()) redirect("/dashboard");
 
-  const { error } = await props.searchParams;
+  const { error, set } = await props.searchParams;
   const message = error
     ? (ERRORS[error] ?? "Something went wrong signing in. Please try again.")
     : null;
@@ -72,6 +77,15 @@ export default async function SignInPage(props: {
         </div>
 
         <div className="border-shell-line rounded-[22px] border bg-white/5 p-7 backdrop-blur">
+          {set === "1" && !message && (
+            <div
+              role="status"
+              className="mb-5 rounded-2xl border border-[#2A6B4A] bg-[#12251C] px-4 py-3 text-[13px] leading-relaxed font-medium text-[#A8E6C4]"
+            >
+              Password set. Sign in with it below.
+            </div>
+          )}
+
           {message && (
             <div
               role="alert"
@@ -93,6 +107,71 @@ export default async function SignInPage(props: {
               development only.
             </div>
           )}
+
+          <form
+            action={async (formData: FormData) => {
+              "use server";
+              try {
+                await signIn("credentials", {
+                  email: String(formData.get("email") ?? ""),
+                  password: String(formData.get("password") ?? ""),
+                  redirectTo: "/dashboard",
+                });
+              } catch (error) {
+                // A successful sign-in ends in redirect(), which throws
+                // NEXT_REDIRECT — that must be left alone. Only an AuthError
+                // means the credentials were refused.
+                if (error instanceof AuthError) {
+                  redirect("/signin?error=CredentialsSignin");
+                }
+                throw error;
+              }
+            }}
+            className="flex flex-col gap-3"
+          >
+            <label className="block">
+              <span className="text-shell-ink-2 mb-1.5 block text-[12px] font-extrabold tracking-[0.1em] uppercase">
+                Email
+              </span>
+              <input
+                type="email"
+                name="email"
+                required
+                autoComplete="email"
+                className="border-shell-line w-full rounded-xl border bg-black/25 px-4 py-3 text-[14px] font-semibold text-white outline-none placeholder:text-white/30 focus:border-white/40"
+                placeholder="you@example.com"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-shell-ink-2 mb-1.5 block text-[12px] font-extrabold tracking-[0.1em] uppercase">
+                Password
+              </span>
+              <input
+                type="password"
+                name="password"
+                required
+                autoComplete="current-password"
+                className="border-shell-line w-full rounded-xl border bg-black/25 px-4 py-3 text-[14px] font-semibold text-white outline-none placeholder:text-white/30 focus:border-white/40"
+                placeholder="••••••••••"
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="bg-accent mt-1 w-full cursor-pointer rounded-xl px-5 py-3.5 text-[14px] font-extrabold text-white transition hover:brightness-110"
+            >
+              Sign in
+            </button>
+          </form>
+
+          <div className="my-5 flex items-center gap-3">
+            <span className="bg-shell-line h-px flex-1" />
+            <span className="text-shell-ink-2 text-[11px] font-extrabold tracking-[0.14em]">
+              OR
+            </span>
+            <span className="bg-shell-line h-px flex-1" />
+          </div>
 
           <form
             action={async () => {
@@ -129,7 +208,8 @@ export default async function SignInPage(props: {
 
           <p className="text-shell-ink-2 mt-5 text-center text-[12px] leading-relaxed">
             Leaderboard is invite-only. Your admin adds your email before you can
-            sign in.
+            sign in. No password yet? Sign in with Google and set one on your
+            account page, or ask an admin for a set-up link.
           </p>
         </div>
 

@@ -1,4 +1,10 @@
-import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  blob,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
 /**
@@ -20,7 +26,40 @@ export const users = sqliteTable("user", {
   role: text("role", { enum: ["super_admin", "user"] })
     .notNull()
     .default("user"),
+  /**
+   * Null for the common case: someone who only ever signs in with Google. That
+   * is a permanent, valid state rather than a half-finished one, which is why
+   * this is nullable rather than defaulted.
+   */
+  passwordHash: text("passwordHash"),
+  passwordFailedAttempts: integer("passwordFailedAttempts")
+    .notNull()
+    .default(0),
+  passwordLockedUntil: integer("passwordLockedUntil", {
+    mode: "timestamp_ms",
+  }),
   createdAt: integer("createdAt", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+/**
+ * Avatar bytes, deliberately not a column on `user`.
+ *
+ * The user row is read on every request to resolve the session, so a 30KB blob
+ * on it would be dragged through the whole application. `users.image` holds a
+ * URL pointing at the avatar route instead, and `updatedAt` doubles as that
+ * URL's cache-busting version.
+ */
+export const userAvatars = sqliteTable("user_avatar", {
+  userId: text("userId")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  mime: text("mime", {
+    enum: ["image/webp", "image/jpeg", "image/png"],
+  }).notNull(),
+  bytes: blob("bytes", { mode: "buffer" }).notNull(),
+  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),
 });

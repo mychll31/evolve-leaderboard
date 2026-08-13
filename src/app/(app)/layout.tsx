@@ -39,6 +39,7 @@ export default async function AppLayout({
         roleLabel={roleLabel}
         teamName={own?.teamName ?? ctx.coachedTeams[0]?.name ?? null}
         initials={name.slice(0, 2).toUpperCase()}
+        image={ctx.user.image ?? null}
         isCoach={ctx.isCoach}
         isAdmin={ctx.isAdmin}
         signOut={<SignOutButton />}
@@ -51,6 +52,7 @@ export default async function AppLayout({
           unreadCount={unreadCount}
           userName={name}
           initials={name.slice(0, 2).toUpperCase()}
+          image={ctx.user.image ?? null}
           subLabel={own?.teamName ?? ctx.coachedTeams[0]?.name ?? roleLabel}
           signOut={<SignOutButton variant="panel" />}
         />

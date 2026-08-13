@@ -38,12 +38,22 @@ export function TeamLogGrid({ roster }: { roster: TeamRoster }) {
               className="border-line-2 bg-surface-2 rounded-2xl px-4 py-3.5"
             >
               <div className="flex flex-wrap items-center gap-3">
-                <span
-                  className="font-display flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold text-white"
-                  style={{ background: roster.color }}
-                >
-                  {member.initials}
-                </span>
+                {member.image ? (
+                  <img
+                    src={member.image}
+                    alt=""
+                    aria-hidden
+                    className="size-9 shrink-0 rounded-full object-cover"
+                    style={{ background: roster.color }}
+                  />
+                ) : (
+                  <span
+                    className="font-display flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold text-white"
+                    style={{ background: roster.color }}
+                  >
+                    {member.initials}
+                  </span>
+                )}
                 <Link
                   href={`/members/${member.membershipId}`}
                   className="text-ink hover:text-primary min-w-0 flex-1 truncate text-[14px] font-extrabold"

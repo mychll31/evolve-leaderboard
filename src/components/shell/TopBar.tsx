@@ -13,6 +13,7 @@ export function TopBar({
   unreadCount,
   userName,
   initials,
+  image,
   subLabel,
   signOut,
 }: {
@@ -21,6 +22,7 @@ export function TopBar({
   unreadCount: number;
   userName: string;
   initials: string;
+  image: string | null;
   /** Team where there is one, otherwise the role. */
   subLabel: string;
   /** Rendered by the layout so this stays a presentational shell. */
@@ -68,6 +70,7 @@ export function TopBar({
       <AccountMenu
         userName={userName}
         initials={initials}
+        image={image}
         subLabel={subLabel}
         signOut={signOut}
       />
@@ -82,11 +85,13 @@ export function TopBar({
 function AccountMenu({
   userName,
   initials,
+  image,
   subLabel,
   signOut,
 }: {
   userName: string;
   initials: string;
+  image: string | null;
   subLabel: string;
   signOut: React.ReactNode;
 }) {
@@ -121,7 +126,12 @@ function AccountMenu({
         aria-label={`Account: ${userName}`}
         className="hover:bg-surface-2 flex cursor-pointer items-center gap-2.5 rounded-full py-1 pr-1 pl-1 transition-colors sm:pr-2.5"
       >
-        <Avatar initials={initials} color="var(--color-primary)" size={34} />
+        <Avatar
+          initials={initials}
+          image={image}
+          color="var(--color-primary)"
+          size={34}
+        />
         <span className="hidden min-w-0 text-left sm:block">
           <span className="text-ink block truncate text-[13px] leading-tight font-extrabold">
             {userName}
@@ -157,7 +167,15 @@ function AccountMenu({
           <div className="text-ink-3 truncate text-[11.5px] font-semibold">
             {subLabel}
           </div>
-          <div className="mt-3.5">{signOut}</div>
+          <Link
+            href="/account"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="border-line text-ink hover:bg-surface-2 mt-3.5 block rounded-xl border px-3.5 py-2.5 text-center text-[13px] font-extrabold transition-colors"
+          >
+            Account settings
+          </Link>
+          <div className="mt-2">{signOut}</div>
         </div>
       )}
     </div>

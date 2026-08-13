@@ -151,6 +151,7 @@ export type TeamRosterMember = {
   membershipId: string;
   name: string;
   initials: string;
+  image: string | null;
   position: string | null;
   score: number;
   rank: number;
@@ -261,6 +262,7 @@ export async function getTeamRoster(
       membershipId: member.membershipId,
       name: member.name,
       initials: member.initials,
+      image: member.image,
       position: member.position,
       score: member.score,
       rank: member.rank,

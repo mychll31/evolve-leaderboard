@@ -12,6 +12,7 @@ export function Sidebar({
   roleLabel,
   teamName,
   initials,
+  image,
   isCoach,
   isAdmin,
   signOut,
@@ -21,6 +22,7 @@ export function Sidebar({
   roleLabel: string;
   teamName: string | null;
   initials: string;
+  image: string | null;
   isCoach: boolean;
   isAdmin: boolean;
   /**
@@ -79,10 +81,22 @@ export function Sidebar({
       <div className="flex-1" />
 
       <div className="border-shell-line border-t pt-4">
-        <div className="flex items-center gap-2.5 px-1">
-          <div className="bg-primary font-display flex size-[34px] items-center justify-center rounded-[11px] text-[15px] font-extrabold text-white">
-            {initials}
-          </div>
+        <Link
+          href="/account"
+          className="flex items-center gap-2.5 rounded-xl px-1 py-1 transition-colors hover:bg-white/5"
+        >
+          {image ? (
+            <img
+              src={image}
+              alt=""
+              aria-hidden
+              className="bg-primary size-[34px] shrink-0 rounded-[11px] object-cover"
+            />
+          ) : (
+            <div className="bg-primary font-display flex size-[34px] items-center justify-center rounded-[11px] text-[15px] font-extrabold text-white">
+              {initials}
+            </div>
+          )}
           <div className="min-w-0">
             <div className="truncate text-[12.5px] font-bold text-[#E7EDF3]">
               {userName}
@@ -92,7 +106,7 @@ export function Sidebar({
               {teamName ? ` · ${teamName}` : ""}
             </div>
           </div>
-        </div>
+        </Link>
 
         <div className="mt-3">{signOut}</div>
       </div>
