@@ -36,16 +36,24 @@ export function Field({
 
 export function Button({
   variant = "primary",
+  size = "default",
   className,
   ...rest
 }: React.ComponentProps<"button"> & {
   variant?: "primary" | "ghost" | "danger";
+  /** `compact` narrows a button down to a single glyph, such as ↑ / ↓. */
+  size?: "default" | "compact";
 }) {
   return (
     <button
       {...rest}
+      // Padding belongs to the size, not the base: a `px-*` passed through
+      // `className` cannot override a `px-*` already here — clsx concatenates,
+      // and the stylesheet's order decides the winner, not the call site's.
       className={clsx(
-        "cursor-pointer rounded-[10px] px-4 py-2.5 text-[11.5px] font-extrabold tracking-[0.06em] uppercase transition-colors disabled:cursor-default disabled:opacity-50",
+        "cursor-pointer rounded-[10px] py-2.5 text-[11.5px] font-extrabold tracking-[0.06em] uppercase transition-colors disabled:cursor-default disabled:opacity-50",
+        size === "default" && "px-4",
+        size === "compact" && "px-2.5",
         variant === "primary" && "bg-primary text-white hover:bg-primary-dark",
         variant === "ghost" &&
           "border-line text-ink-2 hover:bg-surface-2 border bg-white",

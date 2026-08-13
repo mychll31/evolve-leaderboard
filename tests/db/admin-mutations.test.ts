@@ -24,6 +24,7 @@ import {
 } from "@/db/mutations/meetings";
 import {
   createMetric,
+  reorderMetrics,
   setMetricActive,
   updateMetric,
 } from "@/db/mutations/metrics";
@@ -843,6 +844,51 @@ describe("admin mutations", () => {
         .from(metricEntries)
         .where(eq(metricEntries.metricId, quiz.id));
       expect(entries.length).toBeGreaterThan(0);
+    });
+
+    /** Order is what the up/down controls on /admin write. */
+    describe("reordering", () => {
+      const orderedIds = async (t: TestDb, seasonId: string) =>
+        (
+          await t.db
+            .select()
+            .from(metrics)
+            .where(eq(metrics.seasonId, seasonId))
+            .orderBy(metrics.sortOrder)
+        ).map((m) => m.id);
+
+      it("persists a new order as consecutive sortOrder values", async () => {
+        const before = await orderedIds(t, seasonId);
+        const reversed = [...before].reverse();
+
+        await reorderMetrics(t.db, admin, seasonId, reversed);
+
+        expect(await orderedIds(t, seasonId)).toEqual(reversed);
+        const rows = await t.db
+          .select()
+          .from(metrics)
+          .where(eq(metrics.seasonId, seasonId))
+          .orderBy(metrics.sortOrder);
+        expect(rows.map((r) => r.sortOrder)).toEqual(rows.map((_, i) => i));
+      });
+
+      it("refuses a coach", async () => {
+        const before = await orderedIds(t, seasonId);
+        await expect(
+          reorderMetrics(t.db, coach, seasonId, [...before].reverse()),
+        ).rejects.toThrow(AuthorizationError);
+        expect(await orderedIds(t, seasonId)).toEqual(before);
+      });
+
+      it("refuses a locked season", async () => {
+        const before = await orderedIds(t, seasonId);
+        await setSeasonStatus(t.db, admin, seasonId, "locked");
+
+        await expect(
+          reorderMetrics(t.db, admin, seasonId, [...before].reverse()),
+        ).rejects.toThrow(SeasonLockedError);
+        expect(await orderedIds(t, seasonId)).toEqual(before);
+      });
     });
   });
 
