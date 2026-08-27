@@ -70,13 +70,21 @@ export default async function MemberPage(props: {
             </div>
           </div>
           {member.standing && (
-            <div className="flex gap-2.5">
+            <div className="flex max-w-full flex-wrap justify-end gap-2.5">
               <div className="rounded-[14px] border border-white/30 bg-white/20 px-4 py-2.5">
                 <div className="text-[9.5px] font-extrabold tracking-[0.14em] text-white/85 uppercase">
                   Rank
                 </div>
                 <DisplayNumber className="mt-0.5 text-[26px] text-white">
                   #{member.standing.rank}
+                </DisplayNumber>
+              </div>
+              <div className="rounded-[14px] border border-white/30 bg-white/20 px-4 py-2.5">
+                <div className="text-[9.5px] font-extrabold tracking-[0.14em] text-white/85 uppercase">
+                  Points
+                </div>
+                <DisplayNumber className="mt-0.5 text-[26px] text-white">
+                  {fmt.activityPoints(member.standing.activityPoints)}
                 </DisplayNumber>
               </div>
               <div className="rounded-[14px] border border-white/30 bg-white/20 px-4 py-2.5">
@@ -122,6 +130,31 @@ export default async function MemberPage(props: {
                   </div>
                 ))}
               </div>
+              {/* Spelled out only when there is something to explain: the
+                  total below is already net, so a deduction would otherwise
+                  read as the metrics not adding up. */}
+              {member.standing.penaltyPoints > 0 && (
+                <div className="border-line-2 mt-5 border-t pt-4">
+                  <div className="flex items-baseline justify-between text-[12.5px] font-bold">
+                    <span className="text-ink-2">Points earned</span>
+                    <span className="text-ink">
+                      {fmt.activityPoints(member.standing.baseActivityPoints)}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 flex items-baseline justify-between text-[12.5px] font-bold">
+                    <span className="text-negative">Minus points</span>
+                    <span className="text-negative">
+                      −{fmt.penalty(member.standing.penaltyPoints)}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 flex items-baseline justify-between text-[12.5px] font-bold">
+                    <span className="text-ink-2">Total points</span>
+                    <span className="text-ink">
+                      {fmt.activityPoints(member.standing.activityPoints)}
+                    </span>
+                  </div>
+                </div>
+              )}
               <div className="border-line mt-5 flex items-center justify-between border-t pt-4">
                 <Delta value={member.standing.delta} />
                 <DisplayNumber className="text-ink text-[30px]">
@@ -135,6 +168,39 @@ export default async function MemberPage(props: {
               <p className="text-ink-2 mt-2 text-[13px] font-semibold">
                 Leaders do not appear in the standings.
               </p>
+            </Card>
+          )}
+
+          {member.penalties.length > 0 && (
+            <Card>
+              <Eyebrow>Minus points</Eyebrow>
+              <ul className="mt-3 flex flex-col gap-3">
+                {member.penalties.map((penalty) => (
+                  <li
+                    key={penalty.id}
+                    className="border-line-2 flex items-start justify-between gap-3 border-b pb-3 last:border-0 last:pb-0"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-ink-2 text-[13px] font-semibold">
+                        {penalty.reason || "No reason given"}
+                      </div>
+                      <div className="text-ink-4 text-[11px] font-semibold">
+                        {penalty.issuedAt.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          timeZone: "UTC",
+                        })}
+                        {penalty.issuedByName
+                          ? ` · by ${penalty.issuedByName}`
+                          : ""}
+                      </div>
+                    </div>
+                    <span className="text-negative shrink-0 text-[15px] font-extrabold">
+                      −{fmt.penalty(penalty.points)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </Card>
           )}
 

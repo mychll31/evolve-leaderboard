@@ -128,6 +128,7 @@ export function buildNav({
 const SUB_TITLES: Record<string, string> = {
   "/admin/teams": "Manage Teams",
   "/admin/people": "People",
+  "/admin/penalties": "Minus Points",
   "/admin/analytics": "Season Analytics",
   "/admin/badges": "Badges & Rollup",
   "/admin/import": "Import & Export",

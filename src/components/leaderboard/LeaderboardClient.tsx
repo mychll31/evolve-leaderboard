@@ -279,6 +279,14 @@ export function LeaderboardClient({
                     <div className="text-ink-3 truncate text-[11.5px] font-bold tracking-[0.04em]">
                       {p.teamName}
                       {p.position ? ` · ${p.position}` : ""}
+                      {/* Why the score is lower than the work suggests. The
+                          number itself is already net, so without this the
+                          board silently disagrees with the breakdown. */}
+                      {p.penaltyPoints > 0 && (
+                        <span className="text-negative ml-1.5 font-extrabold">
+                          −{fmt.penalty(p.penaltyPoints)} pts
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex-1 px-6">
@@ -297,9 +305,15 @@ export function LeaderboardClient({
                       🔥{p.streak}
                     </div>
                   </div>
-                  <div className="w-[92px] shrink-0 text-right">
+                  <div className="w-[104px] shrink-0 text-right">
+                    <Eyebrow className="text-ink-4">Total points</Eyebrow>
+                    <DisplayNumber className="text-ink text-[27px]">
+                      {fmt.activityPoints(p.activityPoints)}
+                    </DisplayNumber>
+                  </div>
+                  <div className="w-[96px] shrink-0 text-right">
                     <Eyebrow className="text-ink-4">Score</Eyebrow>
-                    <DisplayNumber className="text-ink text-[30px]">
+                    <DisplayNumber className="text-ink text-[27px]">
                       {fmt.total(p.score)}
                     </DisplayNumber>
                   </div>
@@ -313,7 +327,7 @@ export function LeaderboardClient({
             {rows.map((p) => (
               <li
                 key={p.membershipId}
-                className="border-line bg-card flex items-center gap-3 overflow-hidden rounded-2xl border py-3 pr-4"
+                className="border-line bg-card flex items-center gap-2 overflow-hidden rounded-2xl border py-3 pr-3 sm:gap-3 sm:pr-4"
               >
                 <div
                   aria-hidden
@@ -335,12 +349,32 @@ export function LeaderboardClient({
                   </div>
                   <div className="text-ink-3 truncate text-[11px] font-semibold">
                     {p.teamName} · 🔥{p.streak}
+                    {p.penaltyPoints > 0 && (
+                      <span className="text-negative ml-1.5 font-extrabold">
+                        −{fmt.penalty(p.penaltyPoints)} pts
+                      </span>
+                    )}
                   </div>
                 </div>
                 <Delta value={p.delta} />
-                <DisplayNumber className="text-ink w-14 text-right text-[24px]">
-                  {fmt.total(p.score)}
-                </DisplayNumber>
+                <div className="grid w-[148px] shrink-0 grid-cols-2 gap-2 text-right">
+                  <div>
+                    <div className="text-ink-4 text-[8.5px] leading-none font-extrabold tracking-[0.06em] uppercase">
+                      Points
+                    </div>
+                    <DisplayNumber className="text-ink mt-1 text-[22px]">
+                      {fmt.activityPoints(p.activityPoints)}
+                    </DisplayNumber>
+                  </div>
+                  <div>
+                    <div className="text-ink-4 text-[8.5px] leading-none font-extrabold tracking-[0.06em] uppercase">
+                      Score
+                    </div>
+                    <DisplayNumber className="text-ink mt-1 text-[22px]">
+                      {fmt.total(p.score)}
+                    </DisplayNumber>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>

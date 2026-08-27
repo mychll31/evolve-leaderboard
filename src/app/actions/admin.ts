@@ -25,6 +25,11 @@ import {
   type MetricInput,
 } from "@/db/mutations/metrics";
 import {
+  addPenalty,
+  deletePenalty,
+  type PenaltyInput,
+} from "@/db/mutations/penalties";
+import {
   createUser,
   importMembers,
   setMembershipActive,
@@ -62,6 +67,7 @@ const ADMIN_PATHS = [
   "/admin",
   "/admin/teams",
   "/admin/people",
+  "/admin/penalties",
   "/admin/import",
 ];
 
@@ -355,5 +361,27 @@ export async function deleteEntryAction(entryId: string) {
   return run(() => deleteEntry(getDb(), user, entryId), [
     ...SCORE_PATHS,
     "/members",
+  ]);
+}
+
+/* ------------------------------------------------------------- minus points */
+
+export async function addPenaltyAction(input: PenaltyInput) {
+  const user = await requireUser();
+  return run(() => addPenalty(getDb(), user, input), [
+    ...ADMIN_PATHS,
+    ...SCORE_PATHS,
+    "/members",
+    "/report",
+  ]);
+}
+
+export async function deletePenaltyAction(penaltyId: string) {
+  const user = await requireUser();
+  return run(() => deletePenalty(getDb(), user, penaltyId), [
+    ...ADMIN_PATHS,
+    ...SCORE_PATHS,
+    "/members",
+    "/report",
   ]);
 }

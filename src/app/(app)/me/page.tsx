@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { Card, SectionTitle } from "@/components/ui";
+import { Card, SectionTitle, fmt } from "@/components/ui";
 import { FlipCard, type LogRow } from "@/components/me/FlipCard";
 import { getDb } from "@/db/client";
 import { getBadges } from "@/db/queries/badges";
@@ -48,6 +48,16 @@ export default async function MePage() {
     { label: "Badges earned", value: `${badges.filter((b) => b.owned).length}` },
     { label: "Weeks tracked", value: `${history.length}` },
   ];
+
+  // Only when there is one: a permanent "Minus points: 0" row would read as a
+  // warning to everybody who has never been docked.
+  if (member.penaltyPoints > 0) {
+    log.push({
+      label: "Minus points",
+      value: `−${fmt.penalty(member.penaltyPoints)}`,
+      tone: "negative",
+    });
+  }
 
   return (
     <div className="mx-auto w-full max-w-[380px]">

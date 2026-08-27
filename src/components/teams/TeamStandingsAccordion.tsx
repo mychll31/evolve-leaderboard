@@ -74,6 +74,14 @@ export function TeamStandingsAccordion({
                   {fmt.score(team.points)}%
                 </DisplayNumber>
                 <Eyebrow className="text-ink-4">Team score</Eyebrow>
+                {/* The total above already has this taken off. Named here so
+                    a team that slipped can see it was a sanction, not a
+                    teammate quietly losing their work. */}
+                {team.penaltyPoints > 0 && (
+                  <div className="text-negative text-[11px] font-extrabold">
+                    −{fmt.penalty(team.penaltyPoints)} pts
+                  </div>
+                )}
               </div>
             </div>
 

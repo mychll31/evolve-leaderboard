@@ -22,8 +22,10 @@ export type TeamStanding = {
   abbr: string;
   color: string;
   rank: number;
-  /** Sum of member scores — the prototype's arbitrary `score x 21` is gone. */
+  /** Sum of member scores, deductions already taken off each one. */
   points: number;
+  /** Points deducted across the roster, as a positive magnitude. */
+  penaltyPoints: number;
   coachName: string | null;
   memberCount: number;
   /** Weeks this team finished top of the weekly team standings. */
@@ -124,7 +126,10 @@ export async function getTeamStandings(
       abbr: team.abbr,
       color: team.color,
       rank: 0,
+      // Member scores are already net of their own deductions, so a team's
+      // total falls by exactly what its people lost — no second subtraction.
       points: roster.reduce((sum, m) => sum + m.score, 0),
+      penaltyPoints: roster.reduce((sum, m) => sum + m.penaltyPoints, 0),
       coachName: coachByTeam.get(team.id) ?? null,
       memberCount: roster.length,
       wins: wins.get(team.id) ?? 0,

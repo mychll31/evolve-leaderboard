@@ -15,6 +15,13 @@
       "when": 1786029811619,
       "tag": "0001_lively_ted_forrester",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787644175305,
+      "tag": "0002_modern_squirrel_girl",
+      "breakpoints": true
     }
   ]
 }

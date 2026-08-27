@@ -104,3 +104,43 @@ export const metricEntries = sqliteTable(
       .where(sql`${t.meetingId} is null`),
   ],
 );
+
+/**
+ * Admin-issued point deductions.
+ *
+ * Kept out of `metric_entry` on purpose: an entry answers "what did this
+ * person score on this metric", is clamped to 0-100, and one row per
+ * member/metric is the whole point of its unique index. A deduction answers
+ * something else entirely — "what was taken off, and why" — and a member can
+ * collect several of them, each with its own reason and its own audit trail.
+ * Forcing them into the same table would mean either losing that history or
+ * losing the uniqueness that stops duplicate scores.
+ *
+ * `points` is always stored as a positive magnitude and subtracted at scoring
+ * time, so the sign lives in one place rather than in every caller.
+ */
+export const penalties = sqliteTable(
+  "penalty",
+  {
+    id: id(),
+    seasonId: text("seasonId")
+      .notNull()
+      .references(() => seasons.id, { onDelete: "cascade" }),
+    membershipId: text("membershipId")
+      .notNull()
+      .references(() => memberships.id, { onDelete: "cascade" }),
+    /** Positive magnitude, subtracted from earned activity points. */
+    points: real("points").notNull(),
+    reason: text("reason"),
+    issuedBy: text("issuedBy").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    issuedAt: integer("issuedAt", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => [
+    index("penalty_season_idx").on(t.seasonId),
+    index("penalty_membership_idx").on(t.membershipId),
+  ],
+);

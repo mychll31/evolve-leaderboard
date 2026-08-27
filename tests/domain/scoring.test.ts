@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   aggregate,
+  applyPenalty,
   combine,
   normalize,
   scoreBreakdown,
   scoreMember,
+  totalPenalty,
 } from "@/domain/scoring";
 import type { Entry, Metric } from "@/domain/types";
 
@@ -116,5 +118,34 @@ describe("scoreMember", () => {
 
   it("scores a member with no entries as 0, not NaN", () => {
     expect(scoreMember(metrics, [], 0)).toBe(0);
+  });
+});
+
+describe("minus points", () => {
+  it("adds deductions up", () => {
+    expect(totalPenalty([2, 3, 5])).toBe(10);
+  });
+
+  it("treats no deductions as nothing taken off", () => {
+    expect(totalPenalty([])).toBe(0);
+  });
+
+  it("ignores a negative row rather than handing points back", () => {
+    // A deduction is stored as a magnitude. A negative one could only come
+    // from a bad import, and awarding points for it would be worse than
+    // dropping it.
+    expect(totalPenalty([5, -3])).toBe(5);
+  });
+
+  it("takes the deduction off the activity-point total", () => {
+    expect(applyPenalty(80, 12.5)).toBe(67.5);
+  });
+
+  it("leaves a clean point total alone", () => {
+    expect(applyPenalty(80, 0)).toBe(80);
+  });
+
+  it("floors at zero rather than going negative", () => {
+    expect(applyPenalty(10, 40)).toBe(0);
   });
 });

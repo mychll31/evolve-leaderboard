@@ -6,6 +6,7 @@ import { normalize } from "./normalize";
 export { aggregate } from "./aggregate";
 export { combine, type ScorePart } from "./combine";
 export { normalize } from "./normalize";
+export { applyPenalty, totalPenalty } from "./penalty";
 
 /**
  * Per-metric detail behind a member's score.

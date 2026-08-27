@@ -5,13 +5,14 @@ import {
   memberships,
   metricEntries,
   metrics,
+  penalties,
   scoreSnapshots,
   seasons,
   teams,
   users,
 } from "@/db/schema";
 import { rankMembers } from "@/domain/ranking";
-import { scoreBreakdown } from "@/domain/scoring";
+import { applyPenalty, scoreBreakdown, totalPenalty } from "@/domain/scoring";
 import { currentStreak } from "@/domain/streaks";
 import type { Entry, Meeting, Metric } from "@/domain/types";
 
@@ -37,7 +38,16 @@ export type MemberStanding = {
   teamName: string;
   teamAbbr: string;
   teamColor: string;
+  /** Final score: the metric average with deductions already taken off. */
   score: number;
+  /** The metric average alone, before any deduction. */
+  baseScore: number;
+  /** Sum of all activity values before deductions. */
+  baseActivityPoints: number;
+  /** Activity-point total after deductions. */
+  activityPoints: number;
+  /** Points an admin has deducted, as a positive magnitude. */
+  penaltyPoints: number;
   rank: number;
   /** Rank at the most recent weekly snapshot; null before the first one. */
   prevRank: number | null;
@@ -97,7 +107,7 @@ export async function getActiveSeason(db: Database): Promise<SeasonRow | null> {
 /**
  * The single source of truth every screen reads from.
  *
- * Five bounded queries, then all scoring, ranking and streak work happens in
+ * Six bounded queries, then all scoring, ranking and streak work happens in
  * the pure domain layer. Turso is a network hop, so the thing to avoid is not
  * volume but *chattiness* — one query per player would be an order of
  * magnitude slower than loading every entry at once.
@@ -107,56 +117,69 @@ export async function getStandings(
   season: SeasonRow,
   now: Date = new Date(),
 ): Promise<Standings> {
-  const [metricRows, meetingRows, memberRows, entryRows, snapshotRows] =
-    await Promise.all([
-      db
-        .select()
-        .from(metrics)
-        .where(and(eq(metrics.seasonId, season.id), eq(metrics.active, true)))
-        .orderBy(metrics.sortOrder),
-      db.select().from(meetings).where(eq(meetings.seasonId, season.id)),
-      db
-        .select({
-          membershipId: memberships.id,
-          userId: memberships.userId,
-          position: memberships.position,
-          teamId: teams.id,
-          teamName: teams.name,
-          teamAbbr: teams.abbr,
-          teamColor: teams.color,
-          name: users.name,
-          email: users.email,
-        })
-        .from(memberships)
-        .innerJoin(teams, eq(teams.id, memberships.teamId))
-        .innerJoin(users, eq(users.id, memberships.userId))
-        .where(
-          and(
-            eq(memberships.seasonId, season.id),
-            eq(memberships.role, "member"),
-            eq(memberships.active, true),
-          ),
+  const [
+    metricRows,
+    meetingRows,
+    memberRows,
+    entryRows,
+    snapshotRows,
+    penaltyRows,
+  ] = await Promise.all([
+    db
+      .select()
+      .from(metrics)
+      .where(and(eq(metrics.seasonId, season.id), eq(metrics.active, true)))
+      .orderBy(metrics.sortOrder),
+    db.select().from(meetings).where(eq(meetings.seasonId, season.id)),
+    db
+      .select({
+        membershipId: memberships.id,
+        userId: memberships.userId,
+        position: memberships.position,
+        teamId: teams.id,
+        teamName: teams.name,
+        teamAbbr: teams.abbr,
+        teamColor: teams.color,
+        name: users.name,
+        email: users.email,
+      })
+      .from(memberships)
+      .innerJoin(teams, eq(teams.id, memberships.teamId))
+      .innerJoin(users, eq(users.id, memberships.userId))
+      .where(
+        and(
+          eq(memberships.seasonId, season.id),
+          eq(memberships.role, "member"),
+          eq(memberships.active, true),
         ),
-      db
-        .select({
-          membershipId: metricEntries.membershipId,
-          metricId: metricEntries.metricId,
-          meetingId: metricEntries.meetingId,
-          value: metricEntries.value,
-          status: metricEntries.status,
-        })
-        .from(metricEntries)
-        // Deliberately NOT filtered to `approved` in SQL. Scoring ignores
-        // anything unapproved on its own, but the streak counter needs to see
-        // pending entries to tell "not judged yet" apart from "never checked
-        // in" — filtering here would silently break streaks the moment a coach
-        // fell behind on approvals.
-        .where(eq(metricEntries.seasonId, season.id)),
-      db
-        .select()
-        .from(scoreSnapshots)
-        .where(eq(scoreSnapshots.seasonId, season.id)),
-    ]);
+      ),
+    db
+      .select({
+        membershipId: metricEntries.membershipId,
+        metricId: metricEntries.metricId,
+        meetingId: metricEntries.meetingId,
+        value: metricEntries.value,
+        status: metricEntries.status,
+      })
+      .from(metricEntries)
+      // Deliberately NOT filtered to `approved` in SQL. Scoring ignores
+      // anything unapproved on its own, but the streak counter needs to see
+      // pending entries to tell "not judged yet" apart from "never checked
+      // in" — filtering here would silently break streaks the moment a coach
+      // fell behind on approvals.
+      .where(eq(metricEntries.seasonId, season.id)),
+    db
+      .select()
+      .from(scoreSnapshots)
+      .where(eq(scoreSnapshots.seasonId, season.id)),
+    db
+      .select({
+        membershipId: penalties.membershipId,
+        points: penalties.points,
+      })
+      .from(penalties)
+      .where(eq(penalties.seasonId, season.id)),
+  ]);
 
   const metricDefs: Metric[] = metricRows.map((m) => ({
     id: m.id,
@@ -197,13 +220,33 @@ export async function getStandings(
     }
   }
 
+  // Deductions are summed per member once, for the same reason entries are
+  // bucketed above: filtering the full list per member would be quadratic.
+  const penaltyByMember = new Map<string, number[]>();
+  for (const row of penaltyRows) {
+    const list = penaltyByMember.get(row.membershipId);
+    if (list) list.push(row.points);
+    else penaltyByMember.set(row.membershipId, [row.points]);
+  }
+
   const scored = memberRows.map((row) => {
     const entries = byMember.get(row.membershipId) ?? [];
     const parts = scoreBreakdown(metricDefs, entries, heldCount);
-    const score =
+    const baseActivityPoints = parts.reduce(
+      (sum, part) => sum + part.value,
+      0,
+    );
+    const baseScore =
       parts.length === 0
         ? 0
-        : parts.reduce((sum, part) => sum + part.value, 0) / parts.length;
+        : baseActivityPoints / parts.length;
+    const penaltyPoints = totalPenalty(
+      penaltyByMember.get(row.membershipId) ?? [],
+    );
+    const activityPoints = applyPenalty(baseActivityPoints, penaltyPoints);
+    // The percentage is derived from net activity points. Deducting 100 points
+    // therefore removes one full 100-point activity from the numerator.
+    const score = parts.length === 0 ? 0 : activityPoints / parts.length;
     const attendance =
       parts.find((p) => p.metric.key === "attendance")?.value ?? 0;
     const streak = attendanceMetricId
@@ -216,6 +259,10 @@ export async function getStandings(
     return {
       row,
       score,
+      baseScore,
+      baseActivityPoints,
+      activityPoints,
+      penaltyPoints,
       attendance,
       streak,
       breakdown: parts.map<BreakdownPart>((p) => ({
@@ -254,6 +301,10 @@ export async function getStandings(
         teamAbbr: s.row.teamAbbr,
         teamColor: s.row.teamColor,
         score: s.score,
+        baseScore: s.baseScore,
+        baseActivityPoints: s.baseActivityPoints,
+        activityPoints: s.activityPoints,
+        penaltyPoints: s.penaltyPoints,
         rank,
         prevRank,
         delta: prevRank === null ? 0 : prevRank - rank,

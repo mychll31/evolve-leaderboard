@@ -5,7 +5,11 @@ import { DisplayNumber, fmt } from "@/components/ui";
 import type { MemberStanding } from "@/db/queries/standings";
 import type { BadgeView } from "@/db/queries/badges";
 
-export type LogRow = { label: string; value: string; tone?: "accent" };
+export type LogRow = {
+  label: string;
+  value: string;
+  tone?: "accent" | "negative";
+};
 
 /**
  * The player card from the phone design: tap to flip between stats and the
@@ -102,7 +106,13 @@ export function FlipCard({
                   {row.label}
                 </span>
                 <DisplayNumber
-                  className={`text-[20px] ${row.tone === "accent" ? "text-accent" : "text-ink"}`}
+                  className={`text-[20px] ${
+                    row.tone === "accent"
+                      ? "text-accent"
+                      : row.tone === "negative"
+                        ? "text-negative"
+                        : "text-ink"
+                  }`}
                 >
                   {row.value}
                 </DisplayNumber>

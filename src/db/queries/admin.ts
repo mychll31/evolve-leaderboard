@@ -1,10 +1,11 @@
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import {
   meetings,
   memberships,
   metricEntries,
   metrics,
+  penalties,
   seasons,
   teams,
   users,
@@ -261,5 +262,128 @@ export async function listMetrics(
     hasEntries: Number(
       counts.find((c) => c.metricId === metric.id)?.n ?? 0,
     ) > 0,
+  }));
+}
+
+export type PenaltyRow = {
+  id: string;
+  membershipId: string;
+  memberName: string;
+  teamId: string;
+  teamName: string;
+  teamColor: string;
+  /** Positive magnitude that was taken off. */
+  points: number;
+  reason: string | null;
+  issuedByName: string | null;
+  issuedAt: Date;
+};
+
+/**
+ * Every deduction issued this season, newest first.
+ *
+ * Returned as a flat list rather than grouped by member because the admin
+ * screen needs both views — the running total per person and the individual
+ * sanctions behind it — and grouping in the client keeps this one query.
+ */
+export async function listPenalties(
+  db: Database,
+  seasonId: string,
+): Promise<PenaltyRow[]> {
+  const rows = await db
+    .select({
+      id: penalties.id,
+      membershipId: penalties.membershipId,
+      memberName: users.name,
+      memberEmail: users.email,
+      teamId: teams.id,
+      teamName: teams.name,
+      teamColor: teams.color,
+      points: penalties.points,
+      reason: penalties.reason,
+      issuedBy: penalties.issuedBy,
+      issuedAt: penalties.issuedAt,
+    })
+    .from(penalties)
+    .innerJoin(memberships, eq(memberships.id, penalties.membershipId))
+    .innerJoin(teams, eq(teams.id, memberships.teamId))
+    .innerJoin(users, eq(users.id, memberships.userId))
+    .where(eq(penalties.seasonId, seasonId))
+    .orderBy(desc(penalties.issuedAt));
+
+  // Who issued each one is resolved in a second bounded query rather than a
+  // fourth join: `users` is already joined here for the member, and aliasing
+  // it again for the issuer defeats the query builder's type inference.
+  const issuerIds = [
+    ...new Set(rows.map((row) => row.issuedBy).filter((id) => id !== null)),
+  ];
+  const issuers =
+    issuerIds.length === 0
+      ? []
+      : await db
+          .select({ id: users.id, name: users.name })
+          .from(users)
+          .where(inArray(users.id, issuerIds));
+  const issuerName = new Map(issuers.map((row) => [row.id, row.name]));
+
+  return rows.map((row) => ({
+    id: row.id,
+    membershipId: row.membershipId,
+    memberName: row.memberName ?? row.memberEmail ?? "Unknown",
+    teamId: row.teamId,
+    teamName: row.teamName,
+    teamColor: row.teamColor,
+    points: row.points,
+    reason: row.reason,
+    issuedByName: row.issuedBy ? (issuerName.get(row.issuedBy) ?? null) : null,
+    issuedAt: row.issuedAt,
+  }));
+}
+
+export type PenaltyTargetRow = {
+  membershipId: string;
+  name: string;
+  teamId: string;
+  teamName: string;
+  teamColor: string;
+};
+
+/**
+ * Who can be docked: active, scored members of the season.
+ *
+ * Leaders are left out because they carry no score — a deduction against one
+ * would be recorded and then never show up anywhere.
+ */
+export async function listPenaltyTargets(
+  db: Database,
+  seasonId: string,
+): Promise<PenaltyTargetRow[]> {
+  const rows = await db
+    .select({
+      membershipId: memberships.id,
+      name: users.name,
+      email: users.email,
+      teamId: teams.id,
+      teamName: teams.name,
+      teamColor: teams.color,
+    })
+    .from(memberships)
+    .innerJoin(teams, eq(teams.id, memberships.teamId))
+    .innerJoin(users, eq(users.id, memberships.userId))
+    .where(
+      and(
+        eq(memberships.seasonId, seasonId),
+        eq(memberships.role, "member"),
+        eq(memberships.active, true),
+      ),
+    )
+    .orderBy(asc(users.name));
+
+  return rows.map((row) => ({
+    membershipId: row.membershipId,
+    name: row.name ?? row.email ?? "Unknown",
+    teamId: row.teamId,
+    teamName: row.teamName,
+    teamColor: row.teamColor,
   }));
 }

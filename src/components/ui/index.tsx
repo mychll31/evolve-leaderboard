@@ -235,4 +235,16 @@ export const fmt = {
   total: (n: number) => `${n.toFixed(1)}%`,
   pct: (n: number) => `${Math.round(n)}%`,
   points: (n: number) => Math.round(n).toLocaleString(),
+  /** Sum of activity values, preserving one decimal when a value is partial. */
+  activityPoints: (n: number) =>
+    n.toLocaleString("en-US", {
+      minimumFractionDigits: Number.isInteger(n) ? 0 : 1,
+      maximumFractionDigits: 1,
+    }),
+  /**
+   * A deduction, as a magnitude without its sign — callers put the minus in
+   * themselves so the number and the sign can be styled separately. Whole
+   * numbers stay whole, which is what an admin typed in nearly every case.
+   */
+  penalty: (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1)),
 };

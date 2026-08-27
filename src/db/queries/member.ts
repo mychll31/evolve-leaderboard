@@ -1,9 +1,10 @@
-import { aliasedTable, and, asc, eq, isNull } from "drizzle-orm";
+import { aliasedTable, and, asc, desc, eq, isNull } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import {
   memberships,
   metricEntries,
   metrics,
+  penalties,
   teams,
   users,
 } from "@/db/schema";
@@ -47,6 +48,16 @@ export type SelfLogRow = {
   locked: boolean;
 };
 
+/** One deduction against this member, as the detail page shows it. */
+export type MemberPenalty = {
+  id: string;
+  /** Positive magnitude that was taken off. */
+  points: number;
+  reason: string | null;
+  issuedByName: string | null;
+  issuedAt: Date;
+};
+
 export type MemberDetail = {
   membershipId: string;
   userId: string;
@@ -62,6 +73,8 @@ export type MemberDetail = {
   /** Null for coaches, who are not scored. */
   standing: MemberStanding | null;
   seasonMetrics: SeasonMetricRow[];
+  /** Minus points against them this season, newest first. */
+  penalties: MemberPenalty[];
 };
 
 /**
@@ -155,7 +168,7 @@ export async function getMemberDetail(
 
   if (!membership || membership.seasonId !== standings.season.id) return null;
 
-  const [metricRows, entryRows] = await Promise.all([
+  const [metricRows, entryRows, penaltyRows] = await Promise.all([
     db
       .select()
       .from(metrics)
@@ -184,6 +197,18 @@ export async function getMemberDetail(
       .leftJoin(recorder, eq(recorder.id, metricEntries.recordedBy))
       .leftJoin(decider, eq(decider.id, metricEntries.decidedBy))
       .where(eq(metricEntries.membershipId, membershipId)),
+    db
+      .select({
+        id: penalties.id,
+        points: penalties.points,
+        reason: penalties.reason,
+        issuedByName: users.name,
+        issuedAt: penalties.issuedAt,
+      })
+      .from(penalties)
+      .leftJoin(users, eq(users.id, penalties.issuedBy))
+      .where(eq(penalties.membershipId, membershipId))
+      .orderBy(desc(penalties.issuedAt)),
   ]);
 
   const toAudit = (row: (typeof entryRows)[number]): EntryAudit => ({
@@ -228,5 +253,6 @@ export async function getMemberDetail(
     standing:
       standings.members.find((m) => m.membershipId === membershipId) ?? null,
     seasonMetrics,
+    penalties: penaltyRows,
   };
 }
